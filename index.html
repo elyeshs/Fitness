@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SportTrack | Minimalist Performance</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="logo">Sport<span>Track</span></div>
+        <ul class="nav-links">
+            <li class="active" onclick="showSection('profile')">Profil & IMC</li>
+            <li onclick="showSection('planning')">Planning Hebdo</li>
+            <li onclick="showSection('cardio')">Suivi Cardio</li>
+        </ul>
+    </nav>
+
+    <main class="content">
+        <!-- Section Profil / IMC -->
+        <section id="profile" class="active-section">
+            <header>
+                <h1>Profil Physique</h1>
+                <p>Évaluez votre état de forme actuel.</p>
+            </header>
+            <div class="card">
+                <form id="bmi-form">
+                    <div class="input-grid">
+                        <div class="field">
+                            <label>Taille (cm)</label>
+                            <input type="number" id="height" placeholder="Ex: 180" required>
+                        </div>
+                        <div class="field">
+                            <label>Poids (kg)</label>
+                            <input type="number" id="weight" placeholder="Ex: 75" required>
+                        </div>
+                        <div class="field">
+                            <label>Date de naissance</label>
+                            <input type="date" id="dob" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">Calculer l'Indice</button>
+                </form>
+                <div id="bmi-result" class="result-area"></div>
+            </div>
+        </section>
+
+        <!-- Section Planning -->
+        <section id="planning">
+            <header>
+                <h1>Planification</h1>
+                <p>Organisez votre semaine d'entraînement.</p>
+            </header>
+            <div class="grid-days">
+                <!-- Les jours seront générés par JS -->
+            </div>
+        </section>
+
+        <!-- Section Cardio -->
+        <section id="cardio">
+            <header>
+                <h1>Performance Cardio</h1>
+                <p>Enregistrez vos séances de course ou de marche.</p>
+            </header>
+            <div class="card">
+                <form id="cardio-form">
+                    <div class="input-grid">
+                        <div class="field">
+                            <label>Vitesse (km/h)</label>
+                            <input type="number" step="0.1" id="speed" required>
+                        </div>
+                        <div class="field">
+                            <label>Temps (min)</label>
+                            <input type="number" id="duration" required>
+                        </div>
+                        <div class="field">
+                            <label>Pente (%)</label>
+                            <input type="number" id="incline" value="0">
+                        </div>
+                        <div class="field">
+                            <label>Distance (km)</label>
+                            <input type="number" step="0.01" id="distance" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">Enregistrer la séance</button>
+                </form>
+            </div>
+            <div class="history">
+                <h3>Historique Récent</h3>
+                <ul id="cardio-list"></ul>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

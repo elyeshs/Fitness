@@ -1,0 +1,157 @@
+:root {
+    --bg-color: #f8f9fa;
+    --sidebar-color: #1a1d23;
+    --accent-color: #2c5282; /* Bleu Présidentiel */
+    --text-main: #2d3748;
+    --text-light: #718096;
+    --white: #ffffff;
+    --border-radius: 8px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    display: flex;
+}
+
+/* Navigation */
+.sidebar {
+    width: 260px;
+    height: 100vh;
+    background: var(--sidebar-color);
+    color: white;
+    padding: 2rem;
+    position: fixed;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 3rem;
+    letter-spacing: -1px;
+}
+
+.logo span { color: var(--accent-color); }
+
+.nav-links { list-style: none; }
+
+.nav-links li {
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: 0.3s;
+    color: #a0aec0;
+}
+
+.nav-links li:hover, .nav-links li.active {
+    background: rgba(255,255,255,0.05);
+    color: white;
+}
+
+/* Content Area */
+.content {
+    margin-left: 260px;
+    padding: 3rem;
+    width: 100%;
+}
+
+header { margin-bottom: 2.5rem; }
+
+h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+
+section { display: none; animation: fadeIn 0.4s ease; }
+
+section.active-section { display: block; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Cards & Forms */
+.card {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
+}
+
+.input-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.field label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-light);
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    outline: none;
+    transition: 0.2s;
+}
+
+input:focus { border-color: var(--accent-color); }
+
+.btn-primary {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* Planning Grid */
+.grid-days {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.day-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--accent-color);
+}
+
+.day-card h4 { margin-bottom: 1rem; color: var(--accent-color); }
+
+/* Results */
+.result-area {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.status-normal { background: #c6f6d5; color: #2f855a; }
+.status-warning { background: #feebc8; color: #c05621; }
+.status-danger { background: #fed7d7; color: #9b2c2c; }
+
+.history ul { list-style: none; }
+.history li {
+    padding: 10px;
+    border-bottom: 1px solid #edf2f7;
+    font-size: 0.9rem;
+}
