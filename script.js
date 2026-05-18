@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadProfileData();
     initMacroControls();
-    initSleepControl();
+    initFoodTracker();
     renderWeight();
     renderRecords();
     renderCalendar();
@@ -48,20 +48,22 @@ profileForm.addEventListener('submit', (e) => {
         gender: document.getElementById('gender').value,
         age: parseInt(document.getElementById('age').value),
         height: parseFloat(document.getElementById('height').value),
-        activityLevel: parseFloat(document.getElementById('activity-level').value)
+        activityLevel: parseFloat(document.getElementById('activity-level').value),
+        energyGoal: document.getElementById('energy-goal').value
     };
-    safeSetItem('userProfileBaseV2', profileData);
+    safeSetItem('userProfileBaseV3', profileData);
     profileModal.classList.add('hidden');
     recalculatePhysiqueAndCalories();
 });
 
 function loadProfileData() {
-    const saved = safeGetItem('userProfileBaseV2', 'null');
+    const saved = safeGetItem('userProfileBaseV3', 'null');
     if (saved) {
-        document.getElementById('gender').value = saved.gender;
-        document.getElementById('age').value = saved.age;
-        document.getElementById('height').value = saved.height;
-        document.getElementById('activity-level').value = saved.activityLevel;
+        document.getElementById('gender').value = saved.gender || "male";
+        document.getElementById('age').value = saved.age || 25;
+        document.getElementById('height').value = saved.height || 175;
+        document.getElementById('activity-level').value = saved.activityLevel || 1.2;
+        document.getElementById('energy-goal').value = saved.energyGoal || "deficit";
     }
 }
 
@@ -69,45 +71,104 @@ function loadProfileData() {
 function updateConsistencyStreak() {
     const monthlyData = safeGetItem('calendarData', '{}');
     const countDisplay = document.getElementById('streak-days-count');
-    
     let totalSessionsThisMonth = Object.keys(monthlyData).length;
     countDisplay.innerText = totalSessionsThisMonth;
 }
 
-// === NOUVELLE FONCTIONNALITÉ : LOG SOMMEIL & RÉCUPÉRATION ===
-function initSleepControl() {
-    const sleepForm = document.getElementById('sleep-form');
-    sleepForm.addEventListener('submit', (e) => {
+// === NOUVELLE FONCTIONNALITÉ : JOURNAL ALIMENTAIRE & SOUVENIR LOCAL ===
+function initFoodTracker() {
+    const foodForm = document.getElementById('food-form');
+    
+    foodForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const hours = parseFloat(document.getElementById('sleep-hours').value);
-        safeSetItem('latestSleepHours', hours);
-        sleepForm.reset();
-        renderSleepScore();
+        const name = document.getElementById('food-name').value.trim();
+        const p = parseFloat(document.getElementById('food-p').value) || 0;
+        const l = parseFloat(document.getElementById('food-l').value) || 0;
+        const g = parseFloat(document.getElementById('food-g').value) || 0;
+        const qty = parseFloat(document.getElementById('food-qty').value) || 0;
+
+        // Calcul au prorata du poids consommé
+        const factor = qty / 100;
+        const logEntry = {
+            id: Date.now(),
+            name: name,
+            prot: p * factor,
+            fat: l * factor,
+            carb: g * factor,
+            kcal: ((p * 4) + (l * 9) + (g * 4)) * factor
+        };
+
+        // Sauvegarde de l'aliment pour la mémoire des raccourcis
+        saveFoodToDictionary(name, p, l, g);
+
+        // Ajout au journal du jour
+        let dailyLog = safeGetItem('dailyFoodLog', '[]');
+        dailyLog.push(logEntry);
+        safeSetItem('dailyFoodLog', dailyLog);
+
+        foodForm.reset();
+        renderFoodTrackerUI();
+        recalculatePhysiqueAndCalories();
     });
-    renderSleepScore();
+
+    renderFoodTrackerUI();
 }
 
-function renderSleepScore() {
-    const hours = safeGetItem('latestSleepHours', '0');
-    const progressBar = document.getElementById('sleep-progress-bar');
-    const scoreText = document.getElementById('sleep-score-text');
+function saveFoodToDictionary(name, p, l, g) {
+    let dict = safeGetItem('foodDictionary', '[]');
+    // Éviter les doublons de nom
+    dict = dict.filter(item => item.name.toLowerCase() !== name.toLowerCase());
+    dict.push({ name, p, l, g });
+    // Conserver uniquement les 6 derniers aliments recherchés/saisis
+    if (dict.length > 6) dict.shift();
+    safeSetItem('foodDictionary', dict);
+}
+
+function renderFoodTrackerUI() {
+    // Rendu des puces mémoires de raccourcis
+    const dictContainer = document.getElementById('quick-food-container');
+    const dict = safeGetItem('foodDictionary', '[]');
     
-    if (hours === 0) {
-        progressBar.style.width = "0%";
-        scoreText.innerText = "Aucun log aujourd'hui (Objectif : 8h)";
-        return;
+    if (dict.length === 0) {
+        dictContainer.innerHTML = `<span style="font-size:0.65rem; color:var(--text-muted); font-style:italic;">Vos raccourcis d'aliments s'afficheront ici.</span>`;
+    } else {
+        dictContainer.innerHTML = dict.map(item => `
+            <span class="quick-food-chip" onclick="prefillFoodForm('${escapeHtml(item.name)}', ${item.p}, ${item.l}, ${item.g})">
+                + ${escapeHtml(item.name)}
+            </span>
+        `).join('');
     }
 
-    let percentage = Math.min(100, (hours / 8) * 100);
-    progressBar.style.width = `${percentage}%`;
-    
-    if(percentage >= 100) {
-        scoreText.innerText = `Nuit complète : ${hours}h (Récupération Optimale)`;
-    } else if (percentage >= 75) {
-        scoreText.innerText = `Nuit moyenne : ${hours}h (Récupération Correcte)`;
+    // Rendu de la liste des repas consommés aujourd'hui
+    const chipsContainer = document.getElementById('food-log-chips');
+    const dailyLog = safeGetItem('dailyFoodLog', '[]');
+
+    if(dailyLog.length === 0) {
+        chipsContainer.innerHTML = `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Aucun aliment enregistré aujourd'hui.</span>`;
     } else {
-        scoreText.innerText = `Déficit de sommeil : ${hours}h (Entraînement Prudent)`;
+        chipsContainer.innerHTML = dailyLog.map(item => `
+            <div class="food-chip">
+                <span>${escapeHtml(item.name)} (${Math.round(item.kcal)} kcal)</span>
+                <button onclick="deleteFoodLog(${item.id})">&times;</button>
+            </div>
+        `).join('');
     }
+}
+
+function prefillFoodForm(name, p, l, g) {
+    document.getElementById('food-name').value = name;
+    document.getElementById('food-p').value = p;
+    document.getElementById('food-l').value = l;
+    document.getElementById('food-g').value = g;
+    document.getElementById('food-qty').focus();
+}
+
+function deleteFoodLog(id) {
+    let dailyLog = safeGetItem('dailyFoodLog', '[]');
+    dailyLog = dailyLog.filter(item => item.id !== id);
+    safeSetItem('dailyFoodLog', dailyLog);
+    renderFoodTrackerUI();
+    recalculatePhysiqueAndCalories();
 }
 
 // === GESTION INTERACTIVE HYBRIDE DES MACRONUTRIMENTS ===
@@ -150,13 +211,15 @@ function saveManualMacrosFromFields() {
     safeSetItem('manualMacrosValues', {
         prot: parseInt(inputProt.value) || 0, fat: parseInt(inputFat.value) || 0, carb: parseInt(inputCarb.value) || 0
     });
+    recalculatePhysiqueAndCalories();
 }
 
-// === CENTRAL PROCESSING UNIT : CALCULS MÉTABOLIQUES & TENDANCES ===
+// === CENTRAL PROCESSING UNIT : CALCULS MÉTABOLIQUES & ALIMENTATION ===
 function recalculatePhysiqueAndCalories() {
-    const profile = safeGetItem('userProfileBaseV2', 'null');
+    const profile = safeGetItem('userProfileBaseV3', 'null');
     const weights = safeGetItem('weightHistory');
     const macroMode = safeGetItem('macroConfigMode', '"auto"');
+    const dailyLog = safeGetItem('dailyFoodLog', '[]');
     
     const bmiNum = document.getElementById('bmi-num');
     const bmiText = document.getElementById('bmi-text');
@@ -166,8 +229,19 @@ function recalculatePhysiqueAndCalories() {
 
     const calBaseDisplay = document.getElementById('cal-base');
     const calMaintenanceDisplay = document.getElementById('cal-maintenance');
-    const calDeficitDisplay = document.getElementById('cal-deficit');
-    const calSurplusDisplay = document.getElementById('cal-surplus');
+    const calTargetDisplay = document.getElementById('cal-target');
+    const calConsumedDisplay = document.getElementById('cal-consumed');
+
+    // Totalisation des nutriments consommés
+    let totalP = 0, totalL = 0, totalG = 0, totalKcal = 0;
+    dailyLog.forEach(item => {
+        totalP += item.prot; totalL += item.fat; totalG += item.carb; totalKcal += item.kcal;
+    });
+
+    calConsumedDisplay.innerText = `${Math.round(totalKcal)} kcal`;
+    document.getElementById('track-p').innerText = `Reçu : ${Math.round(totalP)}g`;
+    document.getElementById('track-l').innerText = `Reçu : ${Math.round(totalL)}g`;
+    document.getElementById('track-g').innerText = `Reçu : ${Math.round(totalG)}g`;
 
     if (weights.length >= 2) {
         const diff = (weights[weights.length - 1].weight - weights[weights.length - 2].weight).toFixed(1);
@@ -180,7 +254,7 @@ function recalculatePhysiqueAndCalories() {
         bmiNum.innerText = "--"; bmiText.innerText = "Profil incomplet";
         colorBox.className = "bmi-value bg-default";
         calBaseDisplay.innerText = "--"; calMaintenanceDisplay.innerText = "--";
-        calDeficitDisplay.innerText = "--"; calSurplusDisplay.innerText = "--";
+        calTargetDisplay.innerText = "--";
         if (macroMode === "auto") { inputProt.value = 0; inputFat.value = 0; inputCarb.value = 0; }
         return;
     }
@@ -202,15 +276,20 @@ function recalculatePhysiqueAndCalories() {
         : (10 * activeWeight + 6.25 * profile.height - 5 * profile.age - 161);
 
     const maintenance = bmr * profile.activityLevel;
+    let targetCalories = maintenance;
+
+    const goal = profile.energyGoal || "deficit";
+    if (goal === "deficit") targetCalories = Math.max(1200, maintenance - 500);
+    else if (goal === "surplus") targetCalories = maintenance + 300;
+
     calBaseDisplay.innerText = `${Math.round(bmr)} kcal`;
     calMaintenanceDisplay.innerText = `${Math.round(maintenance)} kcal`;
-    calDeficitDisplay.innerText = `${Math.round(Math.max(1200, maintenance - 500))} kcal`;
-    calSurplusDisplay.innerText = `${Math.round(maintenance + 300)} kcal`;
+    calTargetDisplay.innerText = `${Math.round(targetCalories)} kcal`;
 
     if (macroMode === "auto") {
         inputProt.value = Math.round(activeWeight * 2);
         inputFat.value = Math.round(activeWeight * 1);
-        inputCarb.value = Math.round(Math.max(0, (maintenance - ((activeWeight * 2 * 4) + (activeWeight * 1 * 9))) / 4));
+        inputCarb.value = Math.round(Math.max(0, (targetCalories - ((activeWeight * 2 * 4) + (activeWeight * 1 * 9))) / 4));
     }
 }
 
@@ -336,7 +415,7 @@ function renderCalendar() {
 function renderStats(stats, total) {
     const list = document.getElementById('monthly-stats'); list.innerHTML = "";
     const keys = Object.keys(stats);
-    if (keys.length === 0) { list.innerHTML = `<li style="font-style:italic; color:var(--text-muted);">Aucune planification.</li>`; return; }
+    if (keys.length === 0) { list.innerHTML = `<li style="font-style:italic; color:var(--text-muted); )">Aucune planification.</li>`; return; }
     keys.forEach(k => { list.innerHTML += `<li>${k} <span>${((stats[k]/total)*100).toFixed(0)}%</span></li>`; });
 }
 
@@ -388,7 +467,7 @@ function cancelCardioEdit() {
     document.getElementById('cardio-submit-btn').innerText = "OK"; document.getElementById('cardio-cancel-btn').classList.add('hidden');
 }
 
-// === NOUVELLE FONCTION DES COURBES SMOOTH RECTILIGNES AVEC DEGRADES ET GRIDLINES ===
+// === COURBES INTERACTIVES AREA (STYLE BENTO PREMIUM) ===
 function generateBentoAreaChart(containerId, dataPoints, labels, unitStr = "", isCardio = false) {
     const container = document.getElementById(containerId);
     if (dataPoints.length === 0) {
@@ -460,10 +539,11 @@ function escapeHtml(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").r
 // === MODULE RECONSTITUTION BACKUPS SOUVERAINS ===
 function exportDataData() {
     const obj = {
-        userProfileBaseV2: localStorage.getItem('userProfileBaseV2'), weightHistory: localStorage.getItem('weightHistory'),
+        userProfileBaseV3: localStorage.getItem('userProfileBaseV3'), weightHistory: localStorage.getItem('weightHistory'),
         calendarData: localStorage.getItem('calendarData'), cardioHistory: localStorage.getItem('cardioHistory'),
         elitePersonalRecords: localStorage.getItem('elitePersonalRecords'), macroConfigMode: localStorage.getItem('macroConfigMode'),
-        manualMacrosValues: localStorage.getItem('manualMacrosValues'), latestSleepHours: localStorage.getItem('latestSleepHours')
+        manualMacrosValues: localStorage.getItem('manualMacrosValues'), dailyFoodLog: localStorage.getItem('dailyFoodLog'),
+        foodDictionary: localStorage.getItem('foodDictionary')
     };
     const a = document.createElement('a');
     a.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(obj)));
@@ -477,14 +557,15 @@ function importDataData(event) {
     reader.onload = function(e) {
         try {
             const json = JSON.parse(e.target.result);
-            if (json.userProfileBaseV2) localStorage.setItem('userProfileBaseV2', json.userProfileBaseV2);
+            if (json.userProfileBaseV3) localStorage.setItem('userProfileBaseV3', json.userProfileBaseV3);
             if (json.weightHistory) localStorage.setItem('weightHistory', json.weightHistory);
             if (json.calendarData) localStorage.setItem('calendarData', json.calendarData);
             if (json.cardioHistory) localStorage.setItem('cardioHistory', json.cardioHistory);
             if (json.elitePersonalRecords) localStorage.setItem('elitePersonalRecords', json.elitePersonalRecords);
             if (json.macroConfigMode) localStorage.setItem('macroConfigMode', json.macroConfigMode);
             if (json.manualMacrosValues) localStorage.setItem('manualMacrosValues', json.manualMacrosValues);
-            if (json.latestSleepHours) localStorage.setItem('latestSleepHours', json.latestSleepHours);
+            if (json.dailyFoodLog) localStorage.setItem('dailyFoodLog', json.dailyFoodLog);
+            if (json.foodDictionary) localStorage.setItem('foodDictionary', json.foodDictionary);
             alert("Restauration Bento achevée."); window.location.reload();
         } catch (err) { alert("Format invalide."); }
     };
