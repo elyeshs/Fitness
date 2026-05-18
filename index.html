@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wally Sport | Dashboard Unique</title>
+    <title>Wally Sport | Red Energy Dashboard</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -20,8 +20,8 @@
         
         <section class="card" id="section-profil">
             <div class="section-header">
-                <h2>Profil Physique</h2>
-                <p>Vos données de base et votre statut IMC</p>
+                <h2>Profil Physique & IMC</h2>
+                <p>Évaluez votre indice de masse corporelle en temps réel.</p>
             </div>
             
             <form id="profile-form">
@@ -35,11 +35,11 @@
                         <input type="number" id="height" placeholder="Ex: 175" required>
                     </div>
                     <div class="input-group">
-                        <label>Poids actuel (kg)</label>
+                        <label>Poids initial (kg)</label>
                         <input type="number" id="weight" step="0.1" placeholder="Ex: 70" required>
                     </div>
                 </div>
-                <button type="submit" class="btn-action">Mettre à jour le profil</button>
+                <button type="submit" class="btn-action">Enregistrer les données de base</button>
             </form>
 
             <div id="bmi-display" class="bmi-container hidden">
@@ -49,15 +49,65 @@
                 </div>
                 <div class="bmi-status">
                     <h3 id="bmi-text">--</h3>
-                    <p id="bmi-advice">Données enregistrées.</p>
+                    <p id="bmi-advice">Statut mis à jour.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card" id="section-poids">
+            <div class="section-header">
+                <h2>Suivi Évolution du Poids</h2>
+                <p>Enregistrez vos pesées régulières pour analyser votre progression.</p>
+            </div>
+
+            <div class="two-col-layout">
+                <div>
+                    <form id="weight-form">
+                        <input type="hidden" id="w-edit-index" value="-1">
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label>Date de la pesée</label>
+                                <input type="date" id="w-date" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Poids observé (kg)</label>
+                                <input type="number" id="w-weight" step="0.1" placeholder="Ex: 69.5" required>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-action" id="weight-submit-btn">Ajouter la pesée</button>
+                            <button type="button" class="btn-cancel hidden" id="weight-cancel-btn" onclick="cancelWeightEdit()">Annuler</button>
+                        </div>
+                    </form>
+
+                    <div class="table-container">
+                        <table id="weight-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Poids</th>
+                                    <th>Progression</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="weight-body">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="graph-box">
+                    <h3>Courbe d'évolution du poids</h3>
+                    <div class="chart-container" id="weight-chart">
+                        </div>
                 </div>
             </div>
         </section>
 
         <section class="card" id="section-planning">
             <div class="section-header">
-                <h2>Calendrier Mensuel & Statistiques</h2>
-                <p>Cliquez sur un jour pour ajouter, modifier ou supprimer (laissez vide) une séance.</p>
+                <h2>Calendrier Mensuel & Statistiques (Répartition %)</h2>
+                <p>Cliquez sur un jour pour planifier ou modifier une activité.</p>
             </div>
             
             <div class="planning-layout">
@@ -75,7 +125,7 @@
                 </div>
                 
                 <div class="stats-wrapper">
-                    <h3>Statistiques du mois</h3>
+                    <h3>Distribution des entraînements</h3>
                     <ul id="monthly-stats" class="stats-list">
                         </ul>
                 </div>
@@ -84,55 +134,65 @@
 
         <section class="card" id="section-cardio">
             <div class="section-header">
-                <h2>Suivi des Séances Cardio</h2>
-                <p>Ajoutez, modifiez ou supprimez vos performances.</p>
+                <h2>Suivi & Analyse des Séances Cardio</h2>
+                <p>Mesurez vos performances de vitesse, durée, distance et inclinaison.</p>
             </div>
             
-            <form id="cardio-form">
-                <input type="hidden" id="c-edit-index" value="-1">
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label>Date de la séance</label>
-                        <input type="date" id="c-date" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Vitesse (km/h)</label>
-                        <input type="number" id="c-speed" step="0.1" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Temps (min)</label>
-                        <input type="number" id="c-time" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Pente (%)</label>
-                        <input type="number" id="c-incline" value="0">
-                    </div>
-                    <div class="input-group">
-                        <label>Distance (km)</label>
-                        <input type="number" id="c-dist" step="0.01" required>
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn-action" id="cardio-submit-btn">Ajouter la séance</button>
-                    <button type="button" class="btn-cancel hidden" id="cardio-cancel-btn" onclick="cancelCardioEdit()">Annuler</button>
-                </div>
-            </form>
+            <div class="two-col-layout">
+                <div>
+                    <form id="cardio-form">
+                        <input type="hidden" id="c-edit-index" value="-1">
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label>Date du cardio</label>
+                                <input type="date" id="c-date" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Vitesse (km/h)</label>
+                                <input type="number" id="c-speed" step="0.1" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Temps (min)</label>
+                                <input type="number" id="c-time" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Pente (%)</label>
+                                <input type="number" id="c-incline" step="0.1" value="0">
+                            </div>
+                            <div class="input-group">
+                                <label>Distance (km)</label>
+                                <input type="number" id="c-dist" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-action" id="cardio-submit-btn">Ajouter la séance</button>
+                            <button type="button" class="btn-cancel hidden" id="cardio-cancel-btn" onclick="cancelCardioEdit()">Annuler</button>
+                        </div>
+                    </form>
 
-            <div class="table-container">
-                <table id="cardio-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Vitesse</th>
-                            <th>Temps</th>
-                            <th>Pente</th>
-                            <th>Distance</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cardio-body">
-                        </tbody>
-                </table>
+                    <div class="table-container">
+                        <table id="cardio-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Vitesse</th>
+                                    <th>Temps</th>
+                                    <th>Pente</th>
+                                    <th>Distance</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cardio-body">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="graph-box">
+                    <h3>Volume de Distance Cardio (km)</h3>
+                    <div class="chart-container" id="cardio-chart">
+                        </div>
+                </div>
             </div>
         </section>
 
