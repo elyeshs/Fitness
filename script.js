@@ -1,4 +1,4 @@
-// HELPER POUR UN ACCÈS SECURISE LOCALSTORAGE
+// SYSTÈME DE VÉRIFICATION DES ENTRÉES ET DU STOCKAGE LOCAL
 function safeGetItem(key, defaultValue = '[]') {
     try {
         const item = localStorage.getItem(key);
@@ -12,62 +12,114 @@ function safeSetItem(key, data) {
     try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
 }
 
-// === CENTRALISATION INITIALISATION ===
+// === BOUTONS ET EVENEMENTS DE LA FENETRE MODALE PROFIL ===
+const profileModal = document.getElementById('profile-modal');
+const openProfileBtn = document.getElementById('open-profile-btn');
+const closeProfileBtn = document.getElementById('close-profile-btn');
+const cancelProfileBtn = document.getElementById('cancel-profile-btn');
+const profileForm = document.getElementById('profile-form');
+
+openProfileBtn.addEventListener('click', () => profileModal.classList.remove('hidden'));
+closeProfileBtn.addEventListener('click', () => profileModal.classList.add('hidden'));
+cancelProfileBtn.addEventListener('click', () => profileModal.classList.add('hidden'));
+
+// Fermeture si clic à l'extérieur de la boîte blanche
+window.addEventListener('click', (e) => {
+    if (e.target === profileModal) { profileModal.classList.add('hidden'); }
+});
+
+// === APPLICATION BOOTSTRAP INITIALISATION ===
 document.addEventListener('DOMContentLoaded', () => {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('fr-FR', options);
 
-    // Initialisation des dates courantes dans les formulaires
+    // Initialisation automatique des dates des formulaires
     document.getElementById('c-date').valueAsDate = new Date();
     document.getElementById('w-date').valueAsDate = new Date();
 
-    loadProfile();
-    renderCalendar();
+    loadProfileData();
     renderWeight();
+    renderCalendar();
     renderCardio();
 });
 
-// === SECTION PROFIL / IMC ===
-const profileForm = document.getElementById('profile-form');
+// === SAUVEGARDE DU PROFIL MORPHOLOGIQUE (POPUP MODAL) ===
 profileForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const birthdate = document.getElementById('birthdate').value;
-    const weight = parseFloat(document.getElementById('weight').value);
-    const height = parseFloat(document.getElementById('height').value) / 100;
-    const bmi = (weight / (height * height)).toFixed(1);
+    const height = parseFloat(document.getElementById('height').value);
     
-    let status = "", colorClass = "";
-    if (bmi < 18.5) { status = "Insuffisance pondérale"; colorClass = "bg-warning"; }
-    else if (bmi < 25) { status = "Corpulence normale"; colorClass = "bg-normal"; }
-    else if (bmi < 30) { status = "Surpoids"; colorClass = "bg-warning"; }
-    else { status = "Obésité"; colorClass = "bg-danger"; }
-
-    const profileData = { birthdate, weight, height: height*100, bmi, status, colorClass };
-    safeSetItem('userProfile', profileData);
-    updateBmiDisplay(profileData);
+    const profileData = { birthdate, height };
+    safeSetItem('userProfileBase', profileData);
+    
+    profileModal.classList.add('hidden'); // Fermeture automatique
+    recalculateDynamicBMI(); // Actualiser directement sur l'écran d'accueil
 });
 
-function loadProfile() {
-    const savedProfile = safeGetItem('userProfile', 'null');
-    if (savedProfile) {
-        document.getElementById('birthdate').value = savedProfile.birthdate;
-        document.getElementById('weight').value = savedProfile.weight;
-        document.getElementById('height').value = savedProfile.height;
-        updateBmiDisplay(savedProfile);
+function loadProfileData() {
+    const saved = safeGetItem('userProfileBase', 'null');
+    if (saved) {
+        document.getElementById('birthdate').value = saved.birthdate;
+        document.getElementById('height').value = saved.height;
     }
 }
 
-function updateBmiDisplay(data) {
-    const display = document.getElementById('bmi-display');
+// === SYSTÈME DE RECALCUL AUTOMATIQUE DE L'IMC PAR RAPPORT AU DERNIER POIDS ===
+function recalculateDynamicBMI() {
+    const profile = safeGetItem('userProfileBase', 'null');
+    const weights = safeGetItem('weightHistory'); // Déjà trié chronologiquement par fonction parent
+    
+    const bmiNum = document.getElementById('bmi-num');
+    const bmiText = document.getElementById('bmi-text');
+    const bmiAdvice = document.getElementById('bmi-advice');
     const colorBox = document.getElementById('bmi-color-box');
-    document.getElementById('bmi-num').innerText = data.bmi;
-    document.getElementById('bmi-text').innerText = data.status;
-    colorBox.className = `bmi-value ${data.colorClass}`;
-    display.classList.remove('hidden');
+
+    if (!profile || !profile.height) {
+        bmiNum.innerText = "--";
+        bmiText.innerText = "Profil incomplet";
+        colorBox.className = "bmi-value bg-default";
+        return;
+    }
+
+    let activeWeight = 0;
+    if (weights.length > 0) {
+        // Prendre la pesée chronologiquement la plus récente (dernier élément du tableau trié)
+        activeWeight = weights[weights.length - 1].weight;
+    } else {
+        bmiNum.innerText = "--";
+        bmiText.innerText = "En attente de poids";
+        bmiAdvice.innerText = "Veuillez entrer une pesée ci-dessous dans le tableau de suivi pour voir votre IMC évoluer.";
+        colorBox.className = "bmi-value bg-default";
+        return;
+    }
+
+    const hMeter = profile.height / 100;
+    const bmi = (activeWeight / (hMeter * hMeter)).toFixed(1);
+    
+    bmiNum.innerText = bmi;
+    colorBox.classList.remove('bg-normal', 'bg-warning', 'bg-danger', 'bg-default');
+
+    if (bmi < 18.5) {
+        bmiText.innerText = `Insuffisance pondérale (${activeWeight} kg)`;
+        bmiAdvice.innerText = "Votre poids actuel est inférieur à la moyenne recommandée.";
+        colorBox.classList.add('bg-warning');
+    } else if (bmi < 25) {
+        bmiText.innerText = `Corpulence normale (${activeWeight} kg)`;
+        bmiAdvice.innerText = "Félicitations, vous êtes dans la zone de poids équilibrée.";
+        colorBox.classList.add('bg-normal');
+    } else if (bmi < 30) {
+        bmiText.innerText = `Surpoids (${activeWeight} kg)`;
+        bmiAdvice.innerText = "Attention à votre répartition calorique et maintenez l'effort cardio.";
+        colorBox.classList.add('bg-warning');
+    } else {
+        bmiText.innerText = `Obésité (${activeWeight} kg)`;
+        bmiAdvice.innerText = "Consultez un spécialiste pour structurer un déficit sécurisé.";
+        colorBox.classList.add('bg-danger');
+    }
 }
 
 
-// === SECTION SUIVI DE POIDS (AVEC PROGRESSION ET GRAPH) ===
+// === SECTION SUIVI DE POIDS HISTORIQUE ===
 const weightForm = document.getElementById('weight-form');
 weightForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -82,7 +134,7 @@ weightForm.addEventListener('submit', (e) => {
     if (editIndex === "-1") { history.push(dataObj); } 
     else { history[parseInt(editIndex)] = dataObj; cancelWeightEdit(); }
 
-    // Tri par date chronologique pour calculer l'évolution correctement
+    // Tri strict par date chronologique
     history.sort((a, b) => new Date(a.date) - new Date(b.date));
     safeSetItem('weightHistory', history);
     
@@ -93,19 +145,14 @@ weightForm.addEventListener('submit', (e) => {
 
 function renderWeight() {
     const body = document.getElementById('weight-body');
-    const history = safeGetItem('weightHistory'); // Historique Chronologique
-    
-    // Inversion pour affichage (du plus récent au plus ancien dans le tableau)
-    const displayHistory = [...history].reverse();
+    const history = safeGetItem('weightHistory');
+    const displayHistory = [...history].reverse(); // Récents en haut de liste
 
     body.innerHTML = displayHistory.map((s, idx) => {
-        // Trouver l'index réel dans le tableau d'origine chronologique
         const realIndex = history.findIndex(x => x.date === s.date && x.weight === s.weight);
-        
         let targetProgressionStr = "—";
         let progClass = "prog-equal";
 
-        // Comparaison avec la pesée précédente (realIndex - 1)
         if (realIndex > 0) {
             const diff = (s.weight - history[realIndex - 1].weight).toFixed(1);
             if (diff > 0) { targetProgressionStr = `+${diff} kg`; progClass = "prog-positive"; }
@@ -126,7 +173,8 @@ function renderWeight() {
         `;
     }).join('');
 
-    generateSVGChart('weight-chart', history.map(item => item.weight), history.map(item => formatDate(item.date)));
+    generateInteractiveChart('weight-chart', history.map(item => item.weight), history.map(item => formatDate(item.date)), "kg");
+    recalculateDynamicBMI(); // Calcul instantané de l'IMC
 }
 
 function editWeight(index) {
@@ -140,7 +188,7 @@ function editWeight(index) {
 }
 
 function deleteWeight(index) {
-    if (confirm("Supprimer cette pesée ?")) {
+    if (confirm("Supprimer cette ligne de poids ?")) {
         let history = safeGetItem('weightHistory');
         history.splice(index, 1);
         safeSetItem('weightHistory', history);
@@ -157,7 +205,7 @@ function cancelWeightEdit() {
 }
 
 
-// === SECTION CALENDRIER ET STATISTIQUES % ===
+// === SECTION CALENDRIER ET STATISTIQUES EN % ===
 let currentCalDate = new Date();
 function changeMonth(offset) { currentCalDate.setMonth(currentCalDate.getMonth() + offset); renderCalendar(); }
 
@@ -201,7 +249,7 @@ function renderCalendar() {
 }
 
 function promptActivity(dateKey, currentActivity, displayDate) {
-    const newActivity = prompt(`Activité du ${displayDate} (Ex: Push, Pull, Cardio) :\nLaissez vide pour effacer.`, currentActivity);
+    const newActivity = prompt(`Séance du ${displayDate} (Ex: Push, Pull, Cardio) :\nLaissez vide pour supprimer.`, currentActivity);
     if (newActivity !== null) {
         const monthlyData = safeGetItem('calendarData', '{}');
         if (newActivity.trim() === "") { delete monthlyData[dateKey]; } 
@@ -216,7 +264,7 @@ function renderStats(stats, total) {
     list.innerHTML = "";
     const keys = Object.keys(stats);
     
-    if (keys.length === 0) { list.innerHTML = `<li>Aucune séance planifiée.</li>`; return; }
+    if (keys.length === 0) { list.innerHTML = `<li>Aucune séance planifiée ce mois-ci.</li>`; return; }
 
     keys.forEach(activity => {
         const percentage = ((stats[activity] / total) * 100).toFixed(0);
@@ -225,7 +273,7 @@ function renderStats(stats, total) {
 }
 
 
-// === SECTION CARDIO (AVEC GRAPHIQUE ET PENTE DECIMALE) ===
+// === SECTION CARDIO (SUPPORT DECIMAL POUR LA PENTE) ===
 const cardioForm = document.getElementById('cardio-form');
 cardioForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -233,7 +281,7 @@ cardioForm.addEventListener('submit', (e) => {
         date: document.getElementById('c-date').value,
         speed: document.getElementById('c-speed').value,
         time: document.getElementById('c-time').value,
-        incline: parseFloat(document.getElementById('c-incline').value).toFixed(1), // Prise en compte décimale explicite
+        incline: parseFloat(document.getElementById('c-incline').value).toFixed(1), // Autorise & fixe la valeur décimale
         dist: parseFloat(document.getElementById('c-dist').value)
     };
 
@@ -243,7 +291,7 @@ cardioForm.addEventListener('submit', (e) => {
     if (editIndex === "-1") { history.push(session); } 
     else { history[parseInt(editIndex)] = session; cancelCardioEdit(); }
 
-    history.sort((a, b) => new Date(a.date) - new Date(b.date)); // Tri Chronologique pour graphes
+    history.sort((a, b) => new Date(a.date) - new Date(b.date));
     safeSetItem('cardioHistory', history);
     
     renderCardio();
@@ -254,7 +302,7 @@ cardioForm.addEventListener('submit', (e) => {
 function renderCardio() {
     const body = document.getElementById('cardio-body');
     const history = safeGetItem('cardioHistory');
-    const displayHistory = [...history].reverse(); // Recul temporel visuel
+    const displayHistory = [...history].reverse();
 
     body.innerHTML = displayHistory.map((s, idx) => {
         const realIndex = history.findIndex(x => x.date === s.date && x.dist === s.dist && x.time === s.time);
@@ -273,7 +321,7 @@ function renderCardio() {
         `;
     }).join('');
 
-    generateSVGChart('cardio-chart', history.map(item => item.dist), history.map(item => formatDate(item.date)), true);
+    generateInteractiveChart('cardio-chart', history.map(item => item.dist), history.map(item => formatDate(item.date)), "km", true);
 }
 
 function editCardio(index) {
@@ -308,20 +356,20 @@ function cancelCardioEdit() {
 }
 
 
-// === MOTEUR DE GRAPHIQUES HISTORIQUES NATIVE SVG RENDERER ===
-function generateSVGChart(containerId, dataPoints, labels, isCardio = false) {
+// === ENGIN DE RENDU DE GRAPHIQUES SVG INTERACTIFS AVEC VALEUR AU SURVOL ===
+function generateInteractiveChart(containerId, dataPoints, labels, unitStr = "", isCardio = false) {
     const container = document.getElementById(containerId);
     if (dataPoints.length === 0) {
-        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.85rem; margin:auto;">En attente de données...</div>`;
+        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.85rem; margin:auto;">En attente de relevés...</div>`;
         return;
     }
 
-    const maxVal = Math.max(...dataPoints) * 1.1 || 10;
-    const minVal = isCardio ? 0 : Math.min(...dataPoints) * 0.9;
+    const maxVal = Math.max(...dataPoints) * 1.05 || 10;
+    const minVal = isCardio ? 0 : Math.min(...dataPoints) * 0.95;
     const range = maxVal - minVal;
 
-    const width = 300;
-    const height = 150;
+    const width = 320;
+    const height = 160;
     const padding = 20;
 
     let pointsCoords = "";
@@ -329,24 +377,28 @@ function generateSVGChart(containerId, dataPoints, labels, isCardio = false) {
 
     dataPoints.forEach((val, i) => {
         const x = padding + i * stepX;
-        const y = height - padding - ((val - minVal) / range) * (height - padding * 2);
+        const y = height - padding - ((val - minVal) / (range || 1)) * (height - padding * 2);
         pointsCoords += `${x},${y} `;
     });
 
-    // Tracé de la ligne et des points
-    let svgContent = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%;">`;
+    let svgContent = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; overflow:visible;">`;
     
-    // Grille de fond
-    svgContent += `<line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="#2d3748" stroke-width="1"/>`;
+    // Grille horizontale basse
+    svgContent += `<line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="#cbd5e1" stroke-width="1.5"/>`;
     
-    // Ligne principale polyline
+    // Ligne brisée (Polyline)
     svgContent += `<polyline points="${pointsCoords}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
     
-    // Cercles pour les points d'intersection
+    // Génération des nœuds de données interactifs avec élément <title> pour affichage au survol
     dataPoints.forEach((val, i) => {
         const x = padding + i * stepX;
-        const y = height - padding - ((val - minVal) / range) * (height - padding * 2);
-        svgContent += `<circle cx="${x}" cy="${y}" r="4" fill="var(--white)" stroke="var(--primary)" stroke-width="2"/>`;
+        const y = height - padding - ((val - minVal) / (range || 1)) * (height - padding * 2);
+        
+        svgContent += `
+            <circle cx="${x}" cy="${y}" r="4.5" fill="var(--white)" stroke="var(--primary)" stroke-width="2.5">
+                <title>Date: ${labels[i]}\nValeur: ${val} ${unitStr}</title>
+            </circle>
+        `;
     });
 
     svgContent += `</svg>`;
