@@ -12,7 +12,7 @@ function safeSetItem(key, data) {
     try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
 }
 
-// === INTERACTION FENÊTRE POPUP MODAL ===
+// === CONFIGURATION GENERALE & POPUPS ===
 const profileModal = document.getElementById('profile-modal');
 const openProfileBtn = document.getElementById('open-profile-btn');
 const closeProfileBtn = document.getElementById('close-profile-btn');
@@ -28,7 +28,7 @@ window.addEventListener('click', (e) => {
     if (e.target === profileModal) { profileModal.classList.add('hidden'); }
 });
 
-// === DEMARRAGE GLOBAL DE L'APPLICATION ===
+// === INITIATION GLOBAL AU CHARGEMENT ===
 document.addEventListener('DOMContentLoaded', () => {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('fr-FR', options);
@@ -37,13 +37,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('w-date').valueAsDate = new Date();
 
     loadProfileData();
+    initMacroControls();
     renderWeight();
+    renderRecords();
     renderCalendar();
     renderCardio();
-    renderHydration();
 });
 
-// === SAUVEGARDE FORMULAIRE PROFIL MORPHOLOGIQUE ===
+// === ENREGISTREMENT ET CHARGEMENT DU PROFIL MORPHOLOGIQUE ===
 profileForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const gender = document.getElementById('gender').value;
@@ -68,73 +69,135 @@ function loadProfileData() {
     }
 }
 
-// === ENGINE DE RECALCUL : IMC, CALORIES & NOUVEAUX MACRONUTRIMENTS ===
+
+// === GESTION DES MACRONUTRIMENTS HYBRIDES (AUTO VS SAISIE MANUELLE) ===
+const radioAuto = document.getElementById('macro-mode-auto');
+const radioManual = document.getElementById('macro-mode-manual');
+const inputProt = document.getElementById('input-macro-prot');
+const inputFat = document.getElementById('input-macro-fat');
+const inputCarb = document.getElementById('input-macro-carb');
+
+function initMacroControls() {
+    const mode = safeGetItem('macroConfigMode', '"auto"');
+    if (mode === "manual") {
+        radioManual.checked = true;
+        setMacroInputsDisabled(false);
+        const savedManual = safeGetItem('manualMacrosValues', '{"prot":0,"fat":0,"carb":0}');
+        inputProt.value = savedManual.prot;
+        inputFat.value = savedManual.fat;
+        inputCarb.value = savedManual.carb;
+    } else {
+        radioAuto.checked = true;
+        setMacroInputsDisabled(true);
+    }
+
+    radioAuto.addEventListener('change', () => handleMacroModeChange("auto"));
+    radioManual.addEventListener('change', () => handleMacroModeChange("manual"));
+
+    [inputProt, inputFat, inputCarb].forEach(input => {
+        input.addEventListener('input', saveManualMacrosFromFields);
+    });
+}
+
+function setMacroInputsDisabled(disabled) {
+    inputProt.disabled = disabled;
+    inputFat.disabled = disabled;
+    inputCarb.disabled = disabled;
+}
+
+function handleMacroModeChange(mode) {
+    safeSetItem('macroConfigMode', mode);
+    if (mode === "auto") {
+        setMacroInputsDisabled(true);
+        recalculatePhysiqueAndCalories();
+    } else {
+        setMacroInputsDisabled(false);
+        saveManualMacrosFromFields();
+    }
+}
+
+function saveManualMacrosFromFields() {
+    const values = {
+        prot: parseInt(inputProt.value) || 0,
+        fat: parseInt(inputFat.value) || 0,
+        carb: parseInt(inputCarb.value) || 0
+    };
+    safeSetItem('manualMacrosValues', values);
+}
+
+
+// === CORE ENGINE : CALCULS METABOLIQUES & TENDANCE DELTA 7J ===
 function recalculatePhysiqueAndCalories() {
     const profile = safeGetItem('userProfileBaseV2', 'null');
     const weights = safeGetItem('weightHistory');
+    const macroMode = safeGetItem('macroConfigMode', '"auto"');
     
-    // Selecteurs DOM
     const bmiNum = document.getElementById('bmi-num');
     const bmiText = document.getElementById('bmi-text');
     const bmiAdvice = document.getElementById('bmi-advice');
     const colorBox = document.getElementById('bmi-color-box');
+    const deltaDisplay = document.getElementById('weight-delta-display');
 
     const calBaseDisplay = document.getElementById('cal-base');
     const calMaintenanceDisplay = document.getElementById('cal-maintenance');
     const calDeficitDisplay = document.getElementById('cal-deficit');
     const calSurplusDisplay = document.getElementById('cal-surplus');
 
-    const protDisplay = document.getElementById('macro-protein');
-    const fatDisplay = document.getElementById('macro-fat');
-    const carbDisplay = document.getElementById('macro-carb');
+    // Calcul de la tendance Delta Hebdomadaire
+    if (weights.length >= 2) {
+        const lastWeight = weights[weights.length - 1].weight;
+        const prevWeight = weights[weights.length - 2].weight;
+        const diff = (lastWeight - prevWeight).toFixed(1);
+        if (diff > 0) {
+            deltaDisplay.innerText = `+${diff} kg (Dernier)`;
+            deltaDisplay.style.color = "var(--navy)";
+        } else if (diff < 0) {
+            deltaDisplay.innerText = `${diff} kg (Dernier)`;
+            deltaDisplay.style.color = "var(--gold-hover)";
+        } else {
+            deltaDisplay.innerText = "Stable (0.0 kg)";
+            deltaDisplay.style.color = "var(--text-muted)";
+        }
+    } else {
+        deltaDisplay.innerText = "—";
+    }
 
-    if (!profile || !profile.height || !profile.age) {
+    if (!profile || !profile.height || !profile.age || weights.length === 0) {
         bmiNum.innerText = "--"; bmiText.innerText = "Profil incomplet";
         colorBox.className = "bmi-value bg-default";
         calBaseDisplay.innerText = "--"; calMaintenanceDisplay.innerText = "--";
         calDeficitDisplay.innerText = "--"; calSurplusDisplay.innerText = "--";
-        protDisplay.innerText = "-- g"; fatDisplay.innerText = "-- g"; carbDisplay.innerText = "-- g";
+        if (macroMode === "auto") { inputProt.value = 0; inputFat.value = 0; inputCarb.value = 0; }
         return;
     }
 
-    let activeWeight = 0;
-    if (weights.length > 0) {
-        activeWeight = weights[weights.length - 1].weight;
-    } else {
-        bmiNum.innerText = "--"; bmiText.innerText = "En attente de poids";
-        bmiAdvice.innerText = "Veuillez entrer une pesée ci-dessous pour lancer les calculs physiologiques.";
-        colorBox.className = "bmi-value bg-default";
-        calBaseDisplay.innerText = "--"; calMaintenanceDisplay.innerText = "--";
-        calDeficitDisplay.innerText = "--"; calSurplusDisplay.innerText = "--";
-        protDisplay.innerText = "-- g"; fatDisplay.innerText = "-- g"; carbDisplay.innerText = "-- g";
-        return;
-    }
+    const activeWeight = weights[weights.length - 1].weight;
 
-    // 1. IMC Rendu
+    // 1. Calcul Indice IMC
     const hMeter = profile.height / 100;
     const bmi = (activeWeight / (hMeter * hMeter)).toFixed(1);
     bmiNum.innerText = bmi;
-    colorBox.classList.remove('bg-normal', 'bg-warning', 'bg-danger', 'bg-default');
+    colorBox.className = "bmi-value";
 
     if (bmi < 18.5) {
         bmiText.innerText = `Insuffisance pondérale (${activeWeight} kg)`;
-        bmiAdvice.innerText = "Votre poids de base est inférieur à l'indice de santé classique.";
+        bmiAdvice.innerText = "Indice inférieur aux recommandations de santé standard.";
         colorBox.classList.add('bg-warning');
     } else if (bmi < 25) {
         bmiText.innerText = `Corpulence normale (${activeWeight} kg)`;
-        bmiAdvice.innerText = "Parfait ! Votre ratio poids/taille actuel est idéal.";
+        bmiAdvice.innerText = "Votre ratio poids/taille est idéal pour la performance.";
         colorBox.classList.add('bg-normal');
     } else if (bmi < 30) {
         bmiText.innerText = `Surpoids (${activeWeight} kg)`;
-        bmiAdvice.innerText = "Zone de vigilance. Surveillez vos apports et maintenez l'effort physique.";
+        bmiAdvice.innerText = "Zone de vigilance athlétique. Surveillez la balance.";
         colorBox.classList.add('bg-warning');
     } else {
         bmiText.innerText = `Obésité (${activeWeight} kg)`;
-        bmiAdvice.innerText = "Poids à risque métabolique élevé. Structurez un déficit calorique calibré.";
+        bmiAdvice.innerText = "Facteur limitant de performance. Structurez votre alimentation.";
         colorBox.classList.add('bg-danger');
     }
 
-    // 2. Calories (Mifflin-St Jeor)
+    // 2. Équations Métaboliques (Mifflin-St Jeor)
     let bmr = 0;
     if (profile.gender === "male") {
         bmr = 10 * activeWeight + 6.25 * profile.height - 5 * profile.age + 5;
@@ -151,74 +214,68 @@ function recalculatePhysiqueAndCalories() {
     calDeficitDisplay.innerText = `${Math.round(Math.max(1200, deficit))} kcal`;
     calSurplusDisplay.innerText = `${Math.round(surplus)} kcal`;
 
-    // 3. Calcul automatique des Macronutriments (Basé sur la maintenance athlétique)
-    const pGrams = activeWeight * 2; // 2g par kg de poids de corps
-    const fGrams = activeWeight * 1; // 1g par kg de poids de corps
-    const remainingKcal = maintenance - ((pGrams * 4) + (fGrams * 9));
-    const cGrams = Math.max(0, remainingKcal / 4);
+    // 3. Rendu des Macronutriments si Mode Auto activé
+    if (macroMode === "auto") {
+        const pGrams = activeWeight * 2;
+        const fGrams = activeWeight * 1;
+        const remainingKcal = maintenance - ((pGrams * 4) + (fGrams * 9));
+        const cGrams = Math.max(0, remainingKcal / 4);
 
-    protDisplay.innerText = `${Math.round(pGrams)} g`;
-    fatDisplay.innerText = `${Math.round(fGrams)} g`;
-    carbDisplay.innerText = `${Math.round(cGrams)} g`;
-}
-
-
-// === INTERACTIVE HYDRATION WATER TRACKER ===
-function getTodayKey() {
-    return new Date().toISOString().split('T')[0];
-}
-
-function renderHydration() {
-    const today = getTodayKey();
-    const data = safeGetItem('hydrationHistory', '{}');
-    const currentGlasses = data[today] || 0;
-    
-    document.getElementById('water-liters').innerText = (currentGlasses * 0.25).toFixed(1);
-    
-    const fillPercent = Math.min(100, (currentGlasses / 8) * 100);
-    document.getElementById('water-progress-fill').style.width = `${fillPercent}%`;
-
-    const cupsGrid = document.getElementById('cups-grid');
-    cupsGrid.innerHTML = "";
-    
-    for (let i = 1; i <= 8; i++) {
-        const isFilled = i <= currentGlasses;
-        cupsGrid.innerHTML += `
-            <div class="cup-item ${isFilled ? 'filled' : ''}" onclick="toggleCupDirect(${i}, ${currentGlasses})">
-                ${isFilled ? '🥛' : '💧'}
-            </div>
-        `;
-    }
-}
-
-function addWaterGlass() {
-    const today = getTodayKey();
-    let data = safeGetItem('hydrationHistory', '{}');
-    data[today] = (data[today] || 0) + 1;
-    safeSetItem('hydrationHistory', data);
-    renderHydration();
-}
-
-function toggleCupDirect(index, current) {
-    const today = getTodayKey();
-    let data = safeGetItem('hydrationHistory', '{}');
-    data[today] = index === current ? index - 1 : index;
-    safeSetItem('hydrationHistory', data);
-    renderHydration();
-}
-
-function resetWaterDay() {
-    if(confirm("Vider le compteur d'eau pour aujourd'hui ?")) {
-        const today = getTodayKey();
-        let data = safeGetItem('hydrationHistory', '{}');
-        delete data[today];
-        safeSetItem('hydrationHistory', data);
-        renderHydration();
+        inputProt.value = Math.round(pGrams);
+        inputFat.value = Math.round(fGrams);
+        inputCarb.value = Math.round(cGrams);
     }
 }
 
 
-// === HISTORIQUE DE POIDS ===
+// === GESTION DU HALL OF FAME (RECORDS PERSONNELS) ===
+const recordForm = document.getElementById('record-form');
+recordForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('rec-name').value.trim();
+    const value = document.getElementById('rec-value').value.trim();
+    
+    let records = safeGetItem('elitePersonalRecords', '[]');
+    records.push({ id: Date.now(), name, value });
+    safeSetItem('elitePersonalRecords', records);
+    
+    recordForm.reset();
+    renderRecords();
+});
+
+function renderRecords() {
+    const container = document.getElementById('records-container');
+    const records = safeGetItem('elitePersonalRecords', '[]');
+    
+    if(records.length === 0) {
+        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; grid-column:1/-1; font-style:italic;">Aucun record enregistré pour le moment.</div>`;
+        return;
+    }
+    
+    container.innerHTML = records.map(rec => `
+        <div class="record-elite-card">
+            <button class="delete-record-btn" onclick="deleteRecord(${rec.id})">&times;</button>
+            <div class="record-elite-title">${escapeHtml(rec.name)}</div>
+            <div class="record-elite-value">${escapeHtml(rec.value)}</div>
+        </div>
+    `).join('');
+}
+
+function deleteRecord(id) {
+    if(confirm("Supprimer ce record du Hall of Fame ?")) {
+        let records = safeGetItem('elitePersonalRecords', '[]');
+        records = records.filter(r => r.id !== id);
+        safeSetItem('elitePersonalRecords', records);
+        renderRecords();
+    }
+}
+
+function escapeHtml(str) {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+
+// === MODULE HISTORIQUE DE POIDS ===
 const weightForm = document.getElementById('weight-form');
 weightForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -285,7 +342,7 @@ function editWeight(index) {
 }
 
 function deleteWeight(index) {
-    if (confirm("Supprimer cette pesée ?")) {
+    if (confirm("Supprimer cette ligne de pesée ?")) {
         let history = safeGetItem('weightHistory');
         history.splice(index, 1);
         safeSetItem('weightHistory', history);
@@ -302,7 +359,7 @@ function cancelWeightEdit() {
 }
 
 
-// === CALENDRIER ET COMPOSANT DE BADGES AUTOMATIQUES ===
+// === CALENDRIER ET PLANIFICATION ELITE ===
 let currentCalDate = new Date();
 function changeMonth(offset) { currentCalDate.setMonth(currentCalDate.getMonth() + offset); renderCalendar(); }
 
@@ -335,16 +392,13 @@ function renderCalendar() {
             statsCounter[norm] = (statsCounter[norm] || 0) + 1;
             totalCount++;
 
-            // Moteur d'assignation automatique des badges
             let badgeClass = "badge-default";
-            let iconPrefix = "🏋️‍♂️ ";
             if (norm.includes("CARDIO") || norm.includes("RUN") || norm.includes("VELO") || norm.includes("COURSE")) {
                 badgeClass = "badge-cardio";
-                iconPrefix = "🏃‍♂️ ";
             } else if (norm.includes("PUSH") || norm.includes("PULL") || norm.includes("LEGS") || norm.includes("MUSCU")) {
                 badgeClass = "badge-muscu";
             }
-            badgeHtml = `<span class="cal-badge ${badgeClass}">${iconPrefix}${activity}</span>`;
+            badgeHtml = `<span class="cal-badge ${badgeClass}">${activity}</span>`;
         }
 
         const dayDiv = document.createElement('div');
@@ -358,7 +412,7 @@ function renderCalendar() {
 }
 
 function promptActivity(dateKey, currentActivity, displayDate) {
-    const newActivity = prompt(`Activité du ${displayDate} (Ex: Cardio, Push, Pull, Jambes) :\nLaissez vide pour supprimer.`, currentActivity);
+    const newActivity = prompt(`Planification du ${displayDate} (Ex: Cardio, Push, Haut du corps) :\nLaisser vide pour effacer l'activité.`, currentActivity);
     if (newActivity !== null) {
         const monthlyData = safeGetItem('calendarData', '{}');
         if (newActivity.trim() === "") { delete monthlyData[dateKey]; } 
@@ -373,7 +427,7 @@ function renderStats(stats, total) {
     list.innerHTML = "";
     const keys = Object.keys(stats);
     
-    if (keys.length === 0) { list.innerHTML = `<li>Aucune activité enregistrée ce mois-ci.</li>`; return; }
+    if (keys.length === 0) { list.innerHTML = `<li>Aucun entraînement planifié ce mois-ci.</li>`; return; }
 
     keys.forEach(activity => {
         const percentage = ((stats[activity] / total) * 100).toFixed(0);
@@ -382,7 +436,7 @@ function renderStats(stats, total) {
 }
 
 
-// === HISTORIQUE CARDIO ===
+// === TRACKING PERFORMANCE CARDIO ===
 const cardioForm = document.getElementById('cardio-form');
 cardioForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -448,7 +502,7 @@ function editCardio(index) {
 }
 
 function deleteCardio(index) {
-    if (confirm("Supprimer cette ligne cardio ?")) {
+    if (confirm("Supprimer cette séance cardio ?")) {
         let history = safeGetItem('cardioHistory');
         history.splice(index, 1);
         safeSetItem('cardioHistory', history);
@@ -465,16 +519,16 @@ function cancelCardioEdit() {
 }
 
 
-// === RENDU DU RECTANGLE INTERACTIF SVG (INFO-BULLES HTML FLOTTANTES PREMIUM) ===
+// === RENDU DU RECTANGLE INTERACTIF SVG (INFO-BULLES FLOATING COUTURE) ===
 function generatePremiumChart(containerId, dataPoints, labels, unitStr = "", isCardio = false) {
     const container = document.getElementById(containerId);
     if (dataPoints.length === 0) {
-        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.85rem; margin:auto;">En attente de relevés...</div>`;
+        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; margin:auto; font-style:italic;">En attente de rapports analytiques...</div>`;
         return;
     }
 
-    const maxVal = Math.max(...dataPoints) * 1.05 || 10;
-    const minVal = isCardio ? 0 : Math.min(...dataPoints) * 0.95;
+    const maxVal = Math.max(...dataPoints) * 1.03 || 10;
+    const minVal = isCardio ? 0 : Math.min(...dataPoints) * 0.97;
     const range = maxVal - minVal;
 
     const width = 320; const height = 160; const padding = 20;
@@ -488,16 +542,15 @@ function generatePremiumChart(containerId, dataPoints, labels, unitStr = "", isC
     });
 
     let svg = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; overflow:visible;">`;
-    svg += `<line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="#cbd5e1" stroke-width="1.5"/>`;
-    svg += `<polyline points="${pointsCoords}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+    svg += `<line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="#cbd5e1" stroke-width="1"/>`;
+    svg += `<polyline points="${pointsCoords}" fill="none" stroke="var(--navy)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
     
     dataPoints.forEach((val, i) => {
         const x = padding + i * stepX;
         const y = height - padding - ((val - minVal) / (range || 1)) * (height - padding * 2);
         
-        // Attachement des fonctions de déplacement custom tooltip sur l'élément circle
         svg += `
-            <circle cx="${x}" cy="${y}" r="4.5" fill="var(--white)" stroke="var(--primary)" stroke-width="2.5"
+            <circle cx="${x}" cy="${y}" r="4" fill="var(--white)" stroke="var(--gold)" stroke-width="2"
                 onmouseover="showCustomTooltip(event, '${labels[i]}', '${val} ${unitStr}')"
                 onmousemove="moveCustomTooltip(event)"
                 onmouseout="hideCustomTooltip()">
@@ -509,7 +562,6 @@ function generatePremiumChart(containerId, dataPoints, labels, unitStr = "", isC
     container.innerHTML = svg;
 }
 
-// LOGIQUE DES ÉVÉNEMENTS DU HOVER FLOATING TOOLTIP
 function showCustomTooltip(e, dateLabel, valueLabel) {
     tooltipElement.innerHTML = `<strong>Date :</strong> ${dateLabel}<br/><strong>Valeur :</strong> ${valueLabel}`;
     tooltipElement.classList.remove('hidden');
@@ -518,8 +570,8 @@ function showCustomTooltip(e, dateLabel, valueLabel) {
 }
 
 function moveCustomTooltip(e) {
-    tooltipElement.style.left = (e.pageX + 15) + "px";
-    tooltipElement.style.top = (e.pageY - 15) + "px";
+    tooltipElement.style.left = (e.pageX + 12) + "px";
+    tooltipElement.style.top = (e.pageY - 12) + "px";
 }
 
 function hideCustomTooltip() {
@@ -534,20 +586,23 @@ function formatDate(dateString) {
 }
 
 
-// === ENGINE DE BACKUP DE SÉCURITÉ (EXPORT / IMPORT AUTOMATIQUE) ===
+// === SYNC COMPOSANTE BACKUP DE SECURITE (JSON SOUVERAIN) ===
 function exportDataData() {
     const fullBackupObject = {
         userProfileBaseV2: localStorage.getItem('userProfileBaseV2'),
         weightHistory: localStorage.getItem('weightHistory'),
         calendarData: localStorage.getItem('calendarData'),
         cardioHistory: localStorage.getItem('cardioHistory'),
-        hydrationHistory: localStorage.getItem('hydrationHistory')
+        elitePersonalRecords: localStorage.getItem('elitePersonalRecords'),
+        macroConfigMode: localStorage.getItem('macroConfigMode'),
+        manualMacrosValues: localStorage.getItem('manualMacrosValues')
     };
 
+    const todayStr = new Date().toISOString().split('T')[0];
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullBackupObject));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `wallysport_backup_${getTodayKey()}.json`);
+    downloadAnchor.setAttribute("download", `wallysport_elite_${todayStr}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -566,17 +621,18 @@ function importDataData(event) {
         try {
             const importedJSON = JSON.parse(e.target.result);
             
-            // Validation et restauration sélective des clés détectées
             if (importedJSON.userProfileBaseV2) localStorage.setItem('userProfileBaseV2', importedJSON.userProfileBaseV2);
             if (importedJSON.weightHistory) localStorage.setItem('weightHistory', importedJSON.weightHistory);
             if (importedJSON.calendarData) localStorage.setItem('calendarData', importedJSON.calendarData);
             if (importedJSON.cardioHistory) localStorage.setItem('cardioHistory', importedJSON.cardioHistory);
-            if (importedJSON.hydrationHistory) localStorage.setItem('hydrationHistory', importedJSON.hydrationHistory);
+            if (importedJSON.elitePersonalRecords) localStorage.setItem('elitePersonalRecords', importedJSON.elitePersonalRecords);
+            if (importedJSON.macroConfigMode) localStorage.setItem('macroConfigMode', importedJSON.macroConfigMode);
+            if (importedJSON.manualMacrosValues) localStorage.setItem('manualMacrosValues', importedJSON.manualMacrosValues);
             
-            alert("Restauration complète effectuée avec succès ! Le tableau de bord va s'actualiser.");
+            alert("Restauration Elite accomplie. Redémarrage de l'architecture.");
             window.location.reload();
         } catch (err) {
-            alert("Erreur de lecture : Le fichier fourni n'est pas un fichier de sauvegarde Wally Sport valide.");
+            alert("Restauration refusée : Structure du fichier JSON invalide ou corrompue.");
         }
     };
     reader.readAsText(file);
