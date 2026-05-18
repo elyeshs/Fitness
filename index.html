@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wally Sport | Red Energy Light Dashboard</title>
+    <title>Wally Sport | Red Energy Premium Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 </head>
@@ -14,12 +14,14 @@
             <div class="brand">Wally<span>Sport</span></div>
             <div class="header-right">
                 <div class="header-date" id="current-date-display"></div>
-                <button class="profile-icon-btn" id="open-profile-btn" title="Gérer le Profil">
+                <button class="profile-icon-btn" id="open-profile-btn" title="Gérer le Profil & Sauvegardes">
                     👤
                 </button>
             </div>
         </div>
     </header>
+
+    <div id="chart-tooltip" class="custom-tooltip hidden"></div>
 
     <main class="dashboard container">
         
@@ -31,12 +33,12 @@
                 </div>
                 <div class="bmi-status">
                     <h3 id="bmi-text">Profil incomplet</h3>
-                    <p id="bmi-advice">Cliquez sur l'icône de profil 👤 en haut à droite pour configurer votre âge, taille, sexe et activité.</p>
+                    <p id="bmi-advice">Cliquez sur le bouton profil 👤 en haut à droite pour configurer vos données de base.</p>
                 </div>
             </div>
 
             <div id="calories-display" class="calories-container border-left-sep">
-                <h3 class="summary-title">Bilan Énergétique Personnel</h3>
+                <h3 class="summary-title">Bilan Énergétique & Macronutriments</h3>
                 <div class="calories-grid">
                     <div class="cal-block">
                         <span class="cal-val" id="cal-base">--</span>
@@ -44,7 +46,7 @@
                     </div>
                     <div class="cal-block highlighted-cal">
                         <span class="cal-val" id="cal-maintenance">--</span>
-                        <small>Maintenance (Maintien)</small>
+                        <small>Maintenance Énergétique</small>
                     </div>
                     <div class="cal-block deficit-cal">
                         <span class="cal-val" id="cal-deficit">--</span>
@@ -55,13 +57,56 @@
                         <small>Objectif Prise (+300 kcal)</small>
                     </div>
                 </div>
+
+                <div class="macros-wrapper">
+                    <h4>Cibles de nutriments quotidiennes recommandées :</h4>
+                    <div class="macros-grid">
+                        <div class="macro-bar-item item-prot">
+                            <span class="macro-label">Protéines (2g/kg)</span>
+                            <span class="macro-weight" id="macro-protein">-- g</span>
+                        </div>
+                        <div class="macro-bar-item item-fat">
+                            <span class="macro-label">Lipides (1g/kg)</span>
+                            <span class="macro-weight" id="macro-fat">-- g</span>
+                        </div>
+                        <div class="macro-bar-item item-carb">
+                            <span class="macro-label">Glucides (Reste)</span>
+                            <span class="macro-weight" id="macro-carb">-- g</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card hydration-card">
+            <div class="hydration-header">
+                <div>
+                    <h2>Suivi d'Hydratation Quotidien</h2>
+                    <p>Objectif optimal : 2 Litres (8 verres de 250ml) pour maximiser vos performances.</p>
+                </div>
+                <div class="hydration-counter-main">
+                    <span id="water-liters">0.0</span> / 2.0 L
+                </div>
+            </div>
+            <div class="hydration-layout">
+                <div class="cups-container" id="cups-grid">
+                    </div>
+                <div class="water-progress-box">
+                    <div class="water-progress-bar-bg">
+                        <div class="water-progress-bar-fill" id="water-progress-fill" style="width: 0%;"></div>
+                    </div>
+                    <div class="hydration-actions">
+                        <button class="btn-small btn-edit" onclick="addWaterGlass()">＋ Ajouter un verre (250ml)</button>
+                        <button class="btn-small btn-delete" onclick="resetWaterDay()">Réinitialiser la journée</button>
+                    </div>
+                </div>
             </div>
         </section>
 
         <section class="card" id="section-poids">
             <div class="section-header">
                 <h2>Suivi Évolution du Poids</h2>
-                <p>Enregistrez vos pesées régulières. L'IMC et vos besoins caloriques évoluent dynamiquement selon votre dernier poids.</p>
+                <p>Enregistrez vos pesées régulières. L'IMC et vos besoins énergétiques évoluent dynamiquement selon votre dernier poids.</p>
             </div>
 
             <div class="two-col-layout">
@@ -101,7 +146,7 @@
                 </div>
 
                 <div class="graph-box">
-                    <h3>Courbe d'évolution du poids (Survolez les points)</h3>
+                    <h3>Courbe d'évolution du poids</h3>
                     <div class="chart-container" id="weight-chart">
                         </div>
                 </div>
@@ -111,7 +156,7 @@
         <section class="card" id="section-planning">
             <div class="section-header">
                 <h2>Calendrier Mensuel & Statistiques (Répartition %)</h2>
-                <p>Cliquez sur un jour pour planifier ou modifier une activité.</p>
+                <p>Cliquez sur un jour pour planifier une activité. Le système applique des badges automatiques selon vos mots-clés.</p>
             </div>
             
             <div class="planning-layout">
@@ -205,7 +250,7 @@
     <div class="modal-overlay hidden" id="profile-modal">
         <div class="modal-card">
             <div class="modal-header">
-                <h2>Données Morphologiques & Activité</h2>
+                <h2>Données Morphologiques & Sauvegardes</h2>
                 <button class="close-modal-btn" id="close-profile-btn">&times;</button>
             </div>
             <form id="profile-form">
@@ -234,7 +279,18 @@
                             <option value="1.725">Très actif (Entraînement quotidien intensif)</option>
                         </select>
                     </div>
-                    <p class="modal-info-text">Note : Le poids de calcul provient automatiquement de votre dernière pesée insérée dans le tableau principal.</p>
+                    
+                    <hr class="modal-sep">
+                    
+                    <div class="backup-section">
+                        <h3>Administration de la base de données</h3>
+                        <p class="backup-desc">Téléchargez une sauvegarde locale de vos données ou restaurez un fichier précédemment exporté.</p>
+                        <div class="backup-actions">
+                            <button type="button" class="btn-small btn-edit" onclick="exportDataData()">💾 Exporter les Données</button>
+                            <button type="button" class="btn-small btn-delete" onclick="triggerImportField()">📥 Importer un fichier</button>
+                            <input type="file" id="import-file-field" class="hidden" accept=".json" onchange="importDataData(event)">
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" id="cancel-profile-btn">Fermer</button>
