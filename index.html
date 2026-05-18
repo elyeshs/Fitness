@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wally Sport | Red Energy Dashboard</title>
+    <title>Wally Sport | Red Energy Light Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 </head>
@@ -12,44 +12,26 @@
     <header class="top-header">
         <div class="container header-container">
             <div class="brand">Wally<span>Sport</span></div>
-            <div class="header-date" id="current-date-display"></div>
+            <div class="header-right">
+                <div class="header-date" id="current-date-display"></div>
+                <button class="profile-icon-btn" id="open-profile-btn" title="Gérer le Profil">
+                    👤
+                </button>
+            </div>
         </div>
     </header>
 
     <main class="dashboard container">
         
-        <section class="card" id="section-profil">
-            <div class="section-header">
-                <h2>Profil Physique & IMC</h2>
-                <p>Évaluez votre indice de masse corporelle en temps réel.</p>
-            </div>
-            
-            <form id="profile-form">
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label>Date de naissance</label>
-                        <input type="date" id="birthdate" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Taille (cm)</label>
-                        <input type="number" id="height" placeholder="Ex: 175" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Poids initial (kg)</label>
-                        <input type="number" id="weight" step="0.1" placeholder="Ex: 70" required>
-                    </div>
-                </div>
-                <button type="submit" class="btn-action">Enregistrer les données de base</button>
-            </form>
-
-            <div id="bmi-display" class="bmi-container hidden">
-                <div class="bmi-value" id="bmi-color-box">
+        <section class="card bmi-summary-card">
+            <div id="bmi-display" class="bmi-container">
+                <div class="bmi-value bg-default" id="bmi-color-box">
                     <span id="bmi-num">--</span>
                     <small>IMC</small>
                 </div>
                 <div class="bmi-status">
-                    <h3 id="bmi-text">--</h3>
-                    <p id="bmi-advice">Statut mis à jour.</p>
+                    <h3 id="bmi-text">Profil incomplet</h3>
+                    <p id="bmi-advice">Cliquez sur l'icône de profil en haut à droite pour configurer votre taille et votre date de naissance.</p>
                 </div>
             </div>
         </section>
@@ -57,7 +39,7 @@
         <section class="card" id="section-poids">
             <div class="section-header">
                 <h2>Suivi Évolution du Poids</h2>
-                <p>Enregistrez vos pesées régulières pour analyser votre progression.</p>
+                <p>Enregistrez vos pesées régulières. L'IMC de la page se mettra à jour par rapport à votre dernier poids.</p>
             </div>
 
             <div class="two-col-layout">
@@ -97,7 +79,7 @@
                 </div>
 
                 <div class="graph-box">
-                    <h3>Courbe d'évolution du poids</h3>
+                    <h3>Courbe d'évolution du poids (Survolez les points)</h3>
                     <div class="chart-container" id="weight-chart">
                         </div>
                 </div>
@@ -197,6 +179,32 @@
         </section>
 
     </main>
+
+    <div class="modal-overlay hidden" id="profile-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Données de Morphologie</h2>
+                <button class="close-modal-btn" id="close-profile-btn">&times;</button>
+            </div>
+            <form id="profile-form">
+                <div class="modal-body">
+                    <div class="input-group modal-input">
+                        <label>Date de naissance</label>
+                        <input type="date" id="birthdate" required>
+                    </div>
+                    <div class="input-group modal-input">
+                        <label>Taille fixe (cm)</label>
+                        <input type="number" id="height" placeholder="Ex: 175" required>
+                    </div>
+                    <p class="modal-info-text">Le poids utilisé pour calculer l'IMC provient de la dernière saisie de votre tableau de suivi de poids.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" id="cancel-profile-btn">Fermer</button>
+                    <button type="submit" class="btn-action">Sauvegarder</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
