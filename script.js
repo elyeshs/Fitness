@@ -1,4 +1,4 @@
-// SYSTÈME DE VÉRIFICATION DES ENTRÉES ET DU STOCKAGE LOCAL
+// STOCKAGE LOCAL SÉCURISÉ
 function safeGetItem(key, defaultValue = '[]') {
     try {
         const item = localStorage.getItem(key);
@@ -12,7 +12,7 @@ function safeSetItem(key, data) {
     try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
 }
 
-// === BOUTONS ET EVENEMENTS DE LA FENETRE MODALE PROFIL ===
+// === GESTION DE LA FENETRE MODALE PROFIL ===
 const profileModal = document.getElementById('profile-modal');
 const openProfileBtn = document.getElementById('open-profile-btn');
 const closeProfileBtn = document.getElementById('close-profile-btn');
@@ -23,17 +23,15 @@ openProfileBtn.addEventListener('click', () => profileModal.classList.remove('hi
 closeProfileBtn.addEventListener('click', () => profileModal.classList.add('hidden'));
 cancelProfileBtn.addEventListener('click', () => profileModal.classList.add('hidden'));
 
-// Fermeture si clic à l'extérieur de la boîte blanche
 window.addEventListener('click', (e) => {
     if (e.target === profileModal) { profileModal.classList.add('hidden'); }
 });
 
-// === APPLICATION BOOTSTRAP INITIALISATION ===
+// === DEMARRAGE DE L'APPLICATION ===
 document.addEventListener('DOMContentLoaded', () => {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('fr-FR', options);
 
-    // Initialisation automatique des dates des formulaires
     document.getElementById('c-date').valueAsDate = new Date();
     document.getElementById('w-date').valueAsDate = new Date();
 
@@ -43,56 +41,77 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCardio();
 });
 
-// === SAUVEGARDE DU PROFIL MORPHOLOGIQUE (POPUP MODAL) ===
+// === SAUVEGARDE DU PROFIL MORPHOLOGIQUE (AGE DIRECT, SEXE, ACTIVITE) ===
 profileForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const birthdate = document.getElementById('birthdate').value;
+    const gender = document.getElementById('gender').value;
+    const age = parseInt(document.getElementById('age').value);
     const height = parseFloat(document.getElementById('height').value);
+    const activityLevel = parseFloat(document.getElementById('activity-level').value);
     
-    const profileData = { birthdate, height };
-    safeSetItem('userProfileBase', profileData);
+    const profileData = { gender, age, height, activityLevel };
+    safeSetItem('userProfileBaseV2', profileData);
     
-    profileModal.classList.add('hidden'); // Fermeture automatique
-    recalculateDynamicBMI(); // Actualiser directement sur l'écran d'accueil
+    profileModal.classList.add('hidden');
+    recalculatePhysiqueAndCalories(); // Recalcul immédiat global
 });
 
 function loadProfileData() {
-    const saved = safeGetItem('userProfileBase', 'null');
+    const saved = safeGetItem('userProfileBaseV2', 'null');
     if (saved) {
-        document.getElementById('birthdate').value = saved.birthdate;
+        document.getElementById('gender').value = saved.gender;
+        document.getElementById('age').value = saved.age;
         document.getElementById('height').value = saved.height;
+        document.getElementById('activity-level').value = saved.activityLevel;
     }
 }
 
-// === SYSTÈME DE RECALCUL AUTOMATIQUE DE L'IMC PAR RAPPORT AU DERNIER POIDS ===
-function recalculateDynamicBMI() {
-    const profile = safeGetItem('userProfileBase', 'null');
-    const weights = safeGetItem('weightHistory'); // Déjà trié chronologiquement par fonction parent
+// === RECALCUL DYNAMIQUE COMBINÉ : IMC & CONFIGURATION DES CALORIES CORPORELLES ===
+function recalculatePhysiqueAndCalories() {
+    const profile = safeGetItem('userProfileBaseV2', 'null');
+    const weights = safeGetItem('weightHistory');
     
+    // Éléments IMC
     const bmiNum = document.getElementById('bmi-num');
     const bmiText = document.getElementById('bmi-text');
     const bmiAdvice = document.getElementById('bmi-advice');
     const colorBox = document.getElementById('bmi-color-box');
 
-    if (!profile || !profile.height) {
+    // Éléments Calories
+    const calBaseDisplay = document.getElementById('cal-base');
+    const calMaintenanceDisplay = document.getElementById('cal-maintenance');
+    const calDeficitDisplay = document.getElementById('cal-deficit');
+    const calSurplusDisplay = document.getElementById('cal-surplus');
+
+    if (!profile || !profile.height || !profile.age) {
         bmiNum.innerText = "--";
         bmiText.innerText = "Profil incomplet";
         colorBox.className = "bmi-value bg-default";
+        
+        calBaseDisplay.innerText = "--";
+        calMaintenanceDisplay.innerText = "--";
+        calDeficitDisplay.innerText = "--";
+        calSurplusDisplay.innerText = "--";
         return;
     }
 
     let activeWeight = 0;
     if (weights.length > 0) {
-        // Prendre la pesée chronologiquement la plus récente (dernier élément du tableau trié)
-        activeWeight = weights[weights.length - 1].weight;
+        activeWeight = weights[weights.length - 1].weight; // Dernier poids chronologique
     } else {
         bmiNum.innerText = "--";
         bmiText.innerText = "En attente de poids";
-        bmiAdvice.innerText = "Veuillez entrer une pesée ci-dessous dans le tableau de suivi pour voir votre IMC évoluer.";
+        bmiAdvice.innerText = "Veuillez entrer une pesée ci-dessous pour activer les suivis énergétiques.";
         colorBox.className = "bmi-value bg-default";
+
+        calBaseDisplay.innerText = "--";
+        calMaintenanceDisplay.innerText = "--";
+        calDeficitDisplay.innerText = "--";
+        calSurplusDisplay.innerText = "--";
         return;
     }
 
+    // 1. CALCUL DE L'IMC
     const hMeter = profile.height / 100;
     const bmi = (activeWeight / (hMeter * hMeter)).toFixed(1);
     
@@ -105,17 +124,35 @@ function recalculateDynamicBMI() {
         colorBox.classList.add('bg-warning');
     } else if (bmi < 25) {
         bmiText.innerText = `Corpulence normale (${activeWeight} kg)`;
-        bmiAdvice.innerText = "Félicitations, vous êtes dans la zone de poids équilibrée.";
+        bmiAdvice.innerText = "Félicitations, votre ratio de poids est parfaitement équilibré.";
         colorBox.classList.add('bg-normal');
     } else if (bmi < 30) {
         bmiText.innerText = `Surpoids (${activeWeight} kg)`;
-        bmiAdvice.innerText = "Attention à votre répartition calorique et maintenez l'effort cardio.";
+        bmiAdvice.innerText = "Attention à votre alimentation. Intensifiez vos entraînements.";
         colorBox.classList.add('bg-warning');
     } else {
         bmiText.innerText = `Obésité (${activeWeight} kg)`;
-        bmiAdvice.innerText = "Consultez un spécialiste pour structurer un déficit sécurisé.";
+        bmiAdvice.innerText = "Consultez un professionnel pour réguler efficacement votre métabolisme.";
         colorBox.classList.add('bg-danger');
     }
+
+    // 2. CALCUL DES BESOINS CALORIQUES (Formule Mifflin-St Jeor)
+    let bmr = 0;
+    if (profile.gender === "male") {
+        bmr = 10 * activeWeight + 6.25 * profile.height - 5 * profile.age + 5;
+    } else {
+        bmr = 10 * activeWeight + 6.25 * profile.height - 5 * profile.age - 161;
+    }
+
+    const maintenance = bmr * profile.activityLevel;
+    const deficit = maintenance - 500;
+    const surplus = maintenance + 300;
+
+    // Affichage des valeurs arrondies
+    calBaseDisplay.innerText = `${Math.round(bmr)} kcal`;
+    calMaintenanceDisplay.innerText = `${Math.round(maintenance)} kcal`;
+    calDeficitDisplay.innerText = `${Math.round(Math.max(1200, deficit))} kcal`; // Sécurité plancher métabolique
+    calSurplusDisplay.innerText = `${Math.round(surplus)} kcal`;
 }
 
 
@@ -134,7 +171,6 @@ weightForm.addEventListener('submit', (e) => {
     if (editIndex === "-1") { history.push(dataObj); } 
     else { history[parseInt(editIndex)] = dataObj; cancelWeightEdit(); }
 
-    // Tri strict par date chronologique
     history.sort((a, b) => new Date(a.date) - new Date(b.date));
     safeSetItem('weightHistory', history);
     
@@ -146,7 +182,7 @@ weightForm.addEventListener('submit', (e) => {
 function renderWeight() {
     const body = document.getElementById('weight-body');
     const history = safeGetItem('weightHistory');
-    const displayHistory = [...history].reverse(); // Récents en haut de liste
+    const displayHistory = [...history].reverse();
 
     body.innerHTML = displayHistory.map((s, idx) => {
         const realIndex = history.findIndex(x => x.date === s.date && x.weight === s.weight);
@@ -174,7 +210,7 @@ function renderWeight() {
     }).join('');
 
     generateInteractiveChart('weight-chart', history.map(item => item.weight), history.map(item => formatDate(item.date)), "kg");
-    recalculateDynamicBMI(); // Calcul instantané de l'IMC
+    recalculatePhysiqueAndCalories(); // Met à jour à la fois IMC et Calories
 }
 
 function editWeight(index) {
@@ -273,7 +309,7 @@ function renderStats(stats, total) {
 }
 
 
-// === SECTION CARDIO (SUPPORT DECIMAL POUR LA PENTE) ===
+// === SECTION CARDIO (AVEC ENTRÉE PENTE DÉCIMALE) ===
 const cardioForm = document.getElementById('cardio-form');
 cardioForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -281,7 +317,7 @@ cardioForm.addEventListener('submit', (e) => {
         date: document.getElementById('c-date').value,
         speed: document.getElementById('c-speed').value,
         time: document.getElementById('c-time').value,
-        incline: parseFloat(document.getElementById('c-incline').value).toFixed(1), // Autorise & fixe la valeur décimale
+        incline: parseFloat(document.getElementById('c-incline').value).toFixed(1),
         dist: parseFloat(document.getElementById('c-dist').value)
     };
 
@@ -356,7 +392,7 @@ function cancelCardioEdit() {
 }
 
 
-// === ENGIN DE RENDU DE GRAPHIQUES SVG INTERACTIFS AVEC VALEUR AU SURVOL ===
+// === RENDU INTERACTIF SVG AVEC INFO-BULLE (VALEUR AU SURVOL) ===
 function generateInteractiveChart(containerId, dataPoints, labels, unitStr = "", isCardio = false) {
     const container = document.getElementById(containerId);
     if (dataPoints.length === 0) {
@@ -382,14 +418,9 @@ function generateInteractiveChart(containerId, dataPoints, labels, unitStr = "",
     });
 
     let svgContent = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; overflow:visible;">`;
-    
-    // Grille horizontale basse
     svgContent += `<line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="#cbd5e1" stroke-width="1.5"/>`;
-    
-    // Ligne brisée (Polyline)
     svgContent += `<polyline points="${pointsCoords}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
     
-    // Génération des nœuds de données interactifs avec élément <title> pour affichage au survol
     dataPoints.forEach((val, i) => {
         const x = padding + i * stepX;
         const y = height - padding - ((val - minVal) / (range || 1)) * (height - padding * 2);
