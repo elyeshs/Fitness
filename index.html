@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wally Sport | Red Energy Premium Dashboard</title>
+    <title>Wally Sport Elite | Premium Dashboard</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <header class="top-header">
         <div class="container header-container">
-            <div class="brand">Wally<span>Sport</span></div>
+            <div class="brand">Wally<span>Sport Elite</span></div>
             <div class="header-right">
                 <div class="header-date" id="current-date-display"></div>
                 <button class="profile-icon-btn" id="open-profile-btn" title="Gérer le Profil & Sauvegardes">
@@ -33,12 +35,16 @@
                 </div>
                 <div class="bmi-status">
                     <h3 id="bmi-text">Profil incomplet</h3>
-                    <p id="bmi-advice">Cliquez sur le bouton profil 👤 en haut à droite pour configurer vos données de base.</p>
+                    <p id="bmi-advice">Configurez vos données via le bouton profil 👤 en haut à droite.</p>
+                    <div class="delta-trend-box">
+                        <span class="delta-label">Tendance hebdomadaire :</span>
+                        <span class="delta-value" id="weight-delta-display">—</span>
+                    </div>
                 </div>
             </div>
 
             <div id="calories-display" class="calories-container border-left-sep">
-                <h3 class="summary-title">Bilan Énergétique & Macronutriments</h3>
+                <h3 class="summary-title">Bilan Énergétique Recommandé</h3>
                 <div class="calories-grid">
                     <div class="cal-block">
                         <span class="cal-val" id="cal-base">--</span>
@@ -59,54 +65,75 @@
                 </div>
 
                 <div class="macros-wrapper">
-                    <h4>Cibles de nutriments quotidiennes recommandées :</h4>
+                    <div class="macros-header-control">
+                        <h4>Objectifs de Macronutriments</h4>
+                        <div class="macro-mode-selectors">
+                            <label class="radio-label">
+                                <input type="radio" name="macro-mode" value="auto" checked id="macro-mode-auto">
+                                <span>Calcul Automatique</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="macro-mode" value="manual" id="macro-mode-manual">
+                                <span>Saisie Manuelle</span>
+                            </label>
+                        </div>
+                    </div>
+                    
                     <div class="macros-grid">
                         <div class="macro-bar-item item-prot">
-                            <span class="macro-label">Protéines (2g/kg)</span>
-                            <span class="macro-weight" id="macro-protein">-- g</span>
+                            <span class="macro-label">Protéines</span>
+                            <div class="macro-input-wrapper">
+                                <input type="number" id="input-macro-prot" class="macro-editable-input" value="0" disabled>
+                                <span class="macro-unit">g</span>
+                            </div>
                         </div>
                         <div class="macro-bar-item item-fat">
-                            <span class="macro-label">Lipides (1g/kg)</span>
-                            <span class="macro-weight" id="macro-fat">-- g</span>
+                            <span class="macro-label">Lipides</span>
+                            <div class="macro-input-wrapper">
+                                <input type="number" id="input-macro-fat" class="macro-editable-input" value="0" disabled>
+                                <span class="macro-unit">g</span>
+                            </div>
                         </div>
                         <div class="macro-bar-item item-carb">
-                            <span class="macro-label">Glucides (Reste)</span>
-                            <span class="macro-weight" id="macro-carb">-- g</span>
+                            <span class="macro-label">Glucides</span>
+                            <div class="macro-input-wrapper">
+                                <input type="number" id="input-macro-carb" class="macro-editable-input" value="0" disabled>
+                                <span class="macro-unit">g</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="card hydration-card">
-            <div class="hydration-header">
-                <div>
-                    <h2>Suivi d'Hydratation Quotidien</h2>
-                    <p>Objectif optimal : 2 Litres (8 verres de 250ml) pour maximiser vos performances.</p>
-                </div>
-                <div class="hydration-counter-main">
-                    <span id="water-liters">0.0</span> / 2.0 L
-                </div>
+        <section class="card" id="section-records">
+            <div class="section-header">
+                <h2>Le Hall of Fame</h2>
+                <p>Gravez dans le marbre vos records personnels (1RM en force, vitesse ou chronomètres de référence).</p>
             </div>
-            <div class="hydration-layout">
-                <div class="cups-container" id="cups-grid">
+            <div class="records-layout">
+                <form id="record-form" class="record-mini-form">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Exercice / Défi</label>
+                            <input type="text" id="rec-name" placeholder="Ex: Développé Couché, 5 km" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Performance</label>
+                            <input type="text" id="rec-value" placeholder="Ex: 120 kg, 19:45" required>
+                        </div>
                     </div>
-                <div class="water-progress-box">
-                    <div class="water-progress-bar-bg">
-                        <div class="water-progress-bar-fill" id="water-progress-fill" style="width: 0%;"></div>
+                    <button type="submit" class="btn-action">Enregistrer le Record</button>
+                </form>
+                <div class="records-display-grid" id="records-container">
                     </div>
-                    <div class="hydration-actions">
-                        <button class="btn-small btn-edit" onclick="addWaterGlass()">＋ Ajouter un verre (250ml)</button>
-                        <button class="btn-small btn-delete" onclick="resetWaterDay()">Réinitialiser la journée</button>
-                    </div>
-                </div>
             </div>
         </section>
 
         <section class="card" id="section-poids">
             <div class="section-header">
                 <h2>Suivi Évolution du Poids</h2>
-                <p>Enregistrez vos pesées régulières. L'IMC et vos besoins énergétiques évoluent dynamiquement selon votre dernier poids.</p>
+                <p>Enregistrez vos pesées régulières pour mettre à jour automatiquement vos analyses et graphiques.</p>
             </div>
 
             <div class="two-col-layout">
@@ -120,7 +147,7 @@
                             </div>
                             <div class="input-group">
                                 <label>Poids observé (kg)</label>
-                                <input type="number" id="w-weight" step="0.1" placeholder="Ex: 69.5" required>
+                                <input type="number" id="w-weight" step="0.1" placeholder="Ex: 78.5" required>
                             </div>
                         </div>
                         <div class="form-actions">
@@ -155,8 +182,8 @@
 
         <section class="card" id="section-planning">
             <div class="section-header">
-                <h2>Calendrier Mensuel & Statistiques (Répartition %)</h2>
-                <p>Cliquez sur un jour pour planifier une activité. Le système applique des badges automatiques selon vos mots-clés.</p>
+                <h2>Calendrier Mensuel & Statistiques</h2>
+                <p>Planifiez vos séances de sport. Les badges de couleur distinguent intelligemment vos blocs de travail.</p>
             </div>
             
             <div class="planning-layout">
@@ -183,8 +210,8 @@
 
         <section class="card" id="section-cardio">
             <div class="section-header">
-                <h2>Suivi & Analyse des Séances Cardio</h2>
-                <p>Mesurez vos performances de vitesse, durée, distance et inclinaison.</p>
+                <h2>Analyse des Séances Cardio</h2>
+                <p>Suivez l'évolution de vos paramètres physiques complexes d'endurance.</p>
             </div>
             
             <div class="two-col-layout">
@@ -264,11 +291,11 @@
                     </div>
                     <div class="input-group modal-input">
                         <label>Votre Âge (en années)</label>
-                        <input type="number" id="age" min="1" max="120" placeholder="Ex: 28" required>
+                        <input type="number" id="age" min="1" max="120" placeholder="Ex: 32" required>
                     </div>
                     <div class="input-group modal-input">
                         <label>Taille fixe (cm)</label>
-                        <input type="number" id="height" placeholder="Ex: 175" required>
+                        <input type="number" id="height" placeholder="Ex: 180" required>
                     </div>
                     <div class="input-group modal-input">
                         <label>Niveau d'activité physique</label>
@@ -283,8 +310,8 @@
                     <hr class="modal-sep">
                     
                     <div class="backup-section">
-                        <h3>Administration de la base de données</h3>
-                        <p class="backup-desc">Téléchargez une sauvegarde locale de vos données ou restaurez un fichier précédemment exporté.</p>
+                        <h3>Administration Globale</h3>
+                        <p class="backup-desc">Téléchargez une sauvegarde locale chiffrée en JSON ou effectuez une restauration complète de vos données historiques.</p>
                         <div class="backup-actions">
                             <button type="button" class="btn-small btn-edit" onclick="exportDataData()">💾 Exporter les Données</button>
                             <button type="button" class="btn-small btn-delete" onclick="triggerImportField()">📥 Importer un fichier</button>
