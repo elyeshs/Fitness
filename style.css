@@ -1,7 +1,7 @@
 :root {
     --primary: #e60000; /* Rouge Vif Énergique */
     --primary-hover: #b30000;
-    --bg-body: #f4f7f9; /* Retour Mode Clair Strict */
+    --bg-body: #f4f7f9; /* Mode Clair Strict */
     --card-bg: #ffffff;
     --text-dark: #1e293b;
     --text-muted: #64748b;
@@ -10,7 +10,7 @@
     --radius: 12px;
     --shadow: 0 10px 25px rgba(230, 0, 0, 0.05);
     
-    /* Indicateurs IMC */
+    /* Indicateurs Physiologiques */
     --color-normal: #10b981;
     --color-warning: #f59e0b;
     --color-danger: #ef4444;
@@ -35,7 +35,7 @@ body {
     padding: 0 1.5rem;
 }
 
-/* HEADER LIGHT AVEC ICONE DE PROFIL POPUP */
+/* HEADER LIGHT AVEC ICONE DE PROFIL */
 .top-header {
     background: var(--white);
     border-bottom: 3px solid var(--primary);
@@ -71,7 +71,6 @@ body {
     font-size: 0.95rem;
 }
 
-/* Bouton profil rond en haut à droite */
 .profile-icon-btn {
     width: 46px;
     height: 46px;
@@ -109,8 +108,23 @@ body {
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.bmi-summary-card {
+/* NOUVELLE GRILLE DU RECAP PHYSIQUE (IMC & CALORIES COMBINÉS) */
+.stats-summary-grid {
     border-left: 6px solid var(--primary);
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+    gap: 2rem;
+    align-items: center;
+}
+
+@media (max-width: 850px) {
+    .stats-summary-grid { grid-template-columns: 1fr; }
+    .border-left-sep { border-left: none !important; padding-left: 0 !important; border-top: 1px solid #e2e8f0; padding-top: 1.5rem; }
+}
+
+.border-left-sep {
+    border-left: 2px solid #e2e8f0;
+    padding-left: 2rem;
 }
 
 .section-header {
@@ -127,10 +141,7 @@ body {
     font-weight: 800;
 }
 
-.section-header p {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
+.section-header p { font-size: 0.85rem; color: var(--text-muted); }
 
 /* DISPOSITION DOUBLE COLONNE POUR GRAPHIQUES */
 .two-col-layout {
@@ -143,7 +154,7 @@ body {
     .two-col-layout { grid-template-columns: 1fr; }
 }
 
-/* FORMULAIRES COULEURS VIVES */
+/* FORMULAIRES & SELECTIONS */
 .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -160,7 +171,7 @@ body {
     text-transform: uppercase;
 }
 
-input {
+input, select {
     width: 100%;
     padding: 11px;
     background: #ffffff;
@@ -170,9 +181,10 @@ input {
     color: var(--text-dark);
     outline: none;
     transition: all 0.2s;
+    font-family: inherit;
 }
 
-input:focus { 
+input:focus, select:focus { 
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(230, 0, 0, 0.1);
 }
@@ -195,7 +207,7 @@ input:focus {
 .btn-cancel { background: #e2e8f0; color: var(--text-dark); }
 .btn-cancel:hover { background: #cbd5e1; }
 
-/* IMC PERMANENT SUR PAGE */
+/* BLOC RENDU IMC */
 .bmi-container {
     display: flex;
     align-items: center;
@@ -222,7 +234,54 @@ input:focus {
 .bg-danger { background-color: var(--color-danger); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
 .bg-default { background-color: var(--text-muted); }
 
-/* CALENDRIER MENSUEL */
+/* STYLE DU CALCULATEUR DE CALORIES DYNAMIQUE */
+.summary-title {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin-bottom: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+.calories-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
+}
+
+.cal-block {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.cal-val {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text-dark);
+}
+
+.cal-block small {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.highlighted-cal { border-color: #3b82f6; background: #f0f6ff; }
+.highlighted-cal .cal-val { color: #1d4ed8; }
+
+.deficit-cal { border-color: var(--color-normal); background: #f0fdf4; }
+.deficit-cal .cal-val { color: #15803d; }
+
+.surplus-cal { border-color: var(--primary); background: #fff5f5; }
+.surplus-cal .cal-val { color: var(--primary); }
+
+/* CALENDRIER */
 .planning-layout {
     display: grid;
     grid-template-columns: 1.3fr 0.7fr;
@@ -287,7 +346,7 @@ input:focus {
 .cal-date { font-size: 0.75rem; font-weight: 800; color: var(--text-muted); align-self: flex-end; }
 .cal-content { font-size: 0.75rem; font-weight: 800; color: var(--primary); text-align: center; word-break: break-all; margin-top: 4px;}
 
-/* STATS ET ENTRAINEMENTS GRAPH-BOX */
+/* GRAPH-BOX & BLOCS VISUELS */
 .stats-wrapper, .graph-box {
     background: #f8fafc;
     border: 2px solid #e2e8f0;
@@ -319,25 +378,24 @@ input:focus {
     justify-content: center;
 }
 
-/* SVG INTERACTION AU SURVOL */
 svg circle {
     cursor: pointer;
     transition: r 0.2s ease, fill 0.2s ease;
 }
 svg circle:hover {
     r: 7;
-    fill: #ffeb3b !important; /* Jaune fluo pour l'interactivité */
+    fill: #ffeb3b !important;
 }
 
-/* COMPOSANT STRUCTURÉ DES TABLEAUX */
+/* TABLEAUX */
 .table-container { overflow-x: auto; margin-top: 1.2rem; }
 table { width: 100%; border-collapse: collapse; text-align: left; }
 th { padding: 12px; color: var(--text-muted); border-bottom: 2px solid var(--border); background: #f1f5f9; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; }
 td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; color: var(--text-dark); }
 
 .progression { font-weight: 700; font-size: 0.85rem; }
-.prog-positive { color: var(--color-danger); } /* Prise de masse */
-.prog-negative { color: var(--color-normal); } /* Perte */
+.prog-positive { color: var(--color-danger); }
+.prog-negative { color: var(--color-normal); }
 .prog-equal { color: var(--text-muted); }
 
 .action-btns { display: flex; gap: 4px; }
@@ -349,11 +407,10 @@ td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; color: 
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15, 23, 42, 0.6); /* Fond semi-sombre flou */
+    background: rgba(15, 23, 42, 0.6);
     backdrop-filter: blur(4px);
     display: flex; align-items: center; justify-content: center;
     z-index: 2000;
-    transition: opacity 0.2s ease;
 }
 
 .modal-card {
