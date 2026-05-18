@@ -23,7 +23,7 @@
 
     <main class="dashboard container">
         
-        <section class="card bmi-summary-card">
+        <section class="card stats-summary-grid">
             <div id="bmi-display" class="bmi-container">
                 <div class="bmi-value bg-default" id="bmi-color-box">
                     <span id="bmi-num">--</span>
@@ -31,7 +31,29 @@
                 </div>
                 <div class="bmi-status">
                     <h3 id="bmi-text">Profil incomplet</h3>
-                    <p id="bmi-advice">Cliquez sur l'icône de profil en haut à droite pour configurer votre taille et votre date de naissance.</p>
+                    <p id="bmi-advice">Cliquez sur l'icône de profil 👤 en haut à droite pour configurer votre âge, taille, sexe et activité.</p>
+                </div>
+            </div>
+
+            <div id="calories-display" class="calories-container border-left-sep">
+                <h3 class="summary-title">Bilan Énergétique Personnel</h3>
+                <div class="calories-grid">
+                    <div class="cal-block">
+                        <span class="cal-val" id="cal-base">--</span>
+                        <small>Métabolisme de Base</small>
+                    </div>
+                    <div class="cal-block highlighted-cal">
+                        <span class="cal-val" id="cal-maintenance">--</span>
+                        <small>Maintenance (Maintien)</small>
+                    </div>
+                    <div class="cal-block deficit-cal">
+                        <span class="cal-val" id="cal-deficit">--</span>
+                        <small>Objectif Perte (-500 kcal)</small>
+                    </div>
+                    <div class="cal-block surplus-cal">
+                        <span class="cal-val" id="cal-surplus">--</span>
+                        <small>Objectif Prise (+300 kcal)</small>
+                    </div>
                 </div>
             </div>
         </section>
@@ -39,7 +61,7 @@
         <section class="card" id="section-poids">
             <div class="section-header">
                 <h2>Suivi Évolution du Poids</h2>
-                <p>Enregistrez vos pesées régulières. L'IMC de la page se mettra à jour par rapport à votre dernier poids.</p>
+                <p>Enregistrez vos pesées régulières. L'IMC et vos besoins caloriques évoluent dynamiquement selon votre dernier poids.</p>
             </div>
 
             <div class="two-col-layout">
@@ -183,20 +205,36 @@
     <div class="modal-overlay hidden" id="profile-modal">
         <div class="modal-card">
             <div class="modal-header">
-                <h2>Données de Morphologie</h2>
+                <h2>Données Morphologiques & Activité</h2>
                 <button class="close-modal-btn" id="close-profile-btn">&times;</button>
             </div>
             <form id="profile-form">
                 <div class="modal-body">
                     <div class="input-group modal-input">
-                        <label>Date de naissance</label>
-                        <input type="date" id="birthdate" required>
+                        <label>Sexe biologique</label>
+                        <select id="gender" required>
+                            <option value="male">Homme</option>
+                            <option value="female">Femme</option>
+                        </select>
+                    </div>
+                    <div class="input-group modal-input">
+                        <label>Votre Âge (en années)</label>
+                        <input type="number" id="age" min="1" max="120" placeholder="Ex: 28" required>
                     </div>
                     <div class="input-group modal-input">
                         <label>Taille fixe (cm)</label>
                         <input type="number" id="height" placeholder="Ex: 175" required>
                     </div>
-                    <p class="modal-info-text">Le poids utilisé pour calculer l'IMC provient de la dernière saisie de votre tableau de suivi de poids.</p>
+                    <div class="input-group modal-input">
+                        <label>Niveau d'activité physique</label>
+                        <select id="activity-level" required>
+                            <option value="1.2">Sédentaire (Peu ou pas d'exercice)</option>
+                            <option value="1.375">Légèrement actif (Exercice 1 à 3 fois/semaine)</option>
+                            <option value="1.55">Modérément actif (Exercice 3 à 5 fois/semaine)</option>
+                            <option value="1.725">Très actif (Entraînement quotidien intensif)</option>
+                        </select>
+                    </div>
+                    <p class="modal-info-text">Note : Le poids de calcul provient automatiquement de votre dernière pesée insérée dans le tableau principal.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" id="cancel-profile-btn">Fermer</button>
