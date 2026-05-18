@@ -1,4 +1,4 @@
-// GESTION DU STOCKAGE LOCAL SÉCURISÉ
+// SYSTÈME DE STOCKAGE LOCAL ROBUSTE
 function safeGetItem(key, defaultValue = '[]') {
     try {
         const item = localStorage.getItem(key);
@@ -12,7 +12,7 @@ function safeSetItem(key, data) {
     try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
 }
 
-// === CONFIGURATION GENERALE & POPUPS ===
+// MANAGEMENT NAVIGATION / POPUPS GLOBALES
 const profileModal = document.getElementById('profile-modal');
 const openProfileBtn = document.getElementById('open-profile-btn');
 const closeProfileBtn = document.getElementById('close-profile-btn');
@@ -23,12 +23,9 @@ const tooltipElement = document.getElementById('chart-tooltip');
 openProfileBtn.addEventListener('click', () => profileModal.classList.remove('hidden'));
 closeProfileBtn.addEventListener('click', () => profileModal.classList.add('hidden'));
 cancelProfileBtn.addEventListener('click', () => profileModal.classList.add('hidden'));
+window.addEventListener('click', (e) => { if (e.target === profileModal) profileModal.classList.add('hidden'); });
 
-window.addEventListener('click', (e) => {
-    if (e.target === profileModal) { profileModal.classList.add('hidden'); }
-});
-
-// === INITIATION GLOBAL AU CHARGEMENT ===
+// CYCLE DE VIE INITIALISATION DASHBOARD
 document.addEventListener('DOMContentLoaded', () => {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('fr-FR', options);
@@ -38,23 +35,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadProfileData();
     initMacroControls();
+    initSleepControl();
     renderWeight();
     renderRecords();
     renderCalendar();
     renderCardio();
 });
 
-// === ENREGISTREMENT ET CHARGEMENT DU PROFIL MORPHOLOGIQUE ===
 profileForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const gender = document.getElementById('gender').value;
-    const age = parseInt(document.getElementById('age').value);
-    const height = parseFloat(document.getElementById('height').value);
-    const activityLevel = parseFloat(document.getElementById('activity-level').value);
-    
-    const profileData = { gender, age, height, activityLevel };
+    const profileData = {
+        gender: document.getElementById('gender').value,
+        age: parseInt(document.getElementById('age').value),
+        height: parseFloat(document.getElementById('height').value),
+        activityLevel: parseFloat(document.getElementById('activity-level').value)
+    };
     safeSetItem('userProfileBaseV2', profileData);
-    
     profileModal.classList.add('hidden');
     recalculatePhysiqueAndCalories();
 });
@@ -69,8 +65,52 @@ function loadProfileData() {
     }
 }
 
+// === NOUVELLE FONCTIONNALITÉ : SÉRIE D'ASSIDUITÉ (STREAK) ===
+function updateConsistencyStreak() {
+    const monthlyData = safeGetItem('calendarData', '{}');
+    const countDisplay = document.getElementById('streak-days-count');
+    
+    let totalSessionsThisMonth = Object.keys(monthlyData).length;
+    countDisplay.innerText = totalSessionsThisMonth;
+}
 
-// === GESTION DES MACRONUTRIMENTS HYBRIDES (AUTO VS SAISIE MANUELLE) ===
+// === NOUVELLE FONCTIONNALITÉ : LOG SOMMEIL & RÉCUPÉRATION ===
+function initSleepControl() {
+    const sleepForm = document.getElementById('sleep-form');
+    sleepForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const hours = parseFloat(document.getElementById('sleep-hours').value);
+        safeSetItem('latestSleepHours', hours);
+        sleepForm.reset();
+        renderSleepScore();
+    });
+    renderSleepScore();
+}
+
+function renderSleepScore() {
+    const hours = safeGetItem('latestSleepHours', '0');
+    const progressBar = document.getElementById('sleep-progress-bar');
+    const scoreText = document.getElementById('sleep-score-text');
+    
+    if (hours === 0) {
+        progressBar.style.width = "0%";
+        scoreText.innerText = "Aucun log aujourd'hui (Objectif : 8h)";
+        return;
+    }
+
+    let percentage = Math.min(100, (hours / 8) * 100);
+    progressBar.style.width = `${percentage}%`;
+    
+    if(percentage >= 100) {
+        scoreText.innerText = `Nuit complète : ${hours}h (Récupération Optimale)`;
+    } else if (percentage >= 75) {
+        scoreText.innerText = `Nuit moyenne : ${hours}h (Récupération Correcte)`;
+    } else {
+        scoreText.innerText = `Déficit de sommeil : ${hours}h (Entraînement Prudent)`;
+    }
+}
+
+// === GESTION INTERACTIVE HYBRIDE DES MACRONUTRIMENTS ===
 const radioAuto = document.getElementById('macro-mode-auto');
 const radioManual = document.getElementById('macro-mode-manual');
 const inputProt = document.getElementById('input-macro-prot');
@@ -93,40 +133,26 @@ function initMacroControls() {
 
     radioAuto.addEventListener('change', () => handleMacroModeChange("auto"));
     radioManual.addEventListener('change', () => handleMacroModeChange("manual"));
-
-    [inputProt, inputFat, inputCarb].forEach(input => {
-        input.addEventListener('input', saveManualMacrosFromFields);
-    });
+    [inputProt, inputFat, inputCarb].forEach(i => i.addEventListener('input', saveManualMacrosFromFields));
 }
 
 function setMacroInputsDisabled(disabled) {
-    inputProt.disabled = disabled;
-    inputFat.disabled = disabled;
-    inputCarb.disabled = disabled;
+    inputProt.disabled = disabled; inputFat.disabled = disabled; inputCarb.disabled = disabled;
 }
 
 function handleMacroModeChange(mode) {
     safeSetItem('macroConfigMode', mode);
-    if (mode === "auto") {
-        setMacroInputsDisabled(true);
-        recalculatePhysiqueAndCalories();
-    } else {
-        setMacroInputsDisabled(false);
-        saveManualMacrosFromFields();
-    }
+    if (mode === "auto") { setMacroInputsDisabled(true); recalculatePhysiqueAndCalories(); } 
+    else { setMacroInputsDisabled(false); saveManualMacrosFromFields(); }
 }
 
 function saveManualMacrosFromFields() {
-    const values = {
-        prot: parseInt(inputProt.value) || 0,
-        fat: parseInt(inputFat.value) || 0,
-        carb: parseInt(inputCarb.value) || 0
-    };
-    safeSetItem('manualMacrosValues', values);
+    safeSetItem('manualMacrosValues', {
+        prot: parseInt(inputProt.value) || 0, fat: parseInt(inputFat.value) || 0, carb: parseInt(inputCarb.value) || 0
+    });
 }
 
-
-// === CORE ENGINE : CALCULS METABOLIQUES & TENDANCE DELTA 7J ===
+// === CENTRAL PROCESSING UNIT : CALCULS MÉTABOLIQUES & TENDANCES ===
 function recalculatePhysiqueAndCalories() {
     const profile = safeGetItem('userProfileBaseV2', 'null');
     const weights = safeGetItem('weightHistory');
@@ -143,21 +169,9 @@ function recalculatePhysiqueAndCalories() {
     const calDeficitDisplay = document.getElementById('cal-deficit');
     const calSurplusDisplay = document.getElementById('cal-surplus');
 
-    // Calcul de la tendance Delta Hebdomadaire
     if (weights.length >= 2) {
-        const lastWeight = weights[weights.length - 1].weight;
-        const prevWeight = weights[weights.length - 2].weight;
-        const diff = (lastWeight - prevWeight).toFixed(1);
-        if (diff > 0) {
-            deltaDisplay.innerText = `+${diff} kg (Dernier)`;
-            deltaDisplay.style.color = "var(--navy)";
-        } else if (diff < 0) {
-            deltaDisplay.innerText = `${diff} kg (Dernier)`;
-            deltaDisplay.style.color = "var(--gold-hover)";
-        } else {
-            deltaDisplay.innerText = "Stable (0.0 kg)";
-            deltaDisplay.style.color = "var(--text-muted)";
-        }
+        const diff = (weights[weights.length - 1].weight - weights[weights.length - 2].weight).toFixed(1);
+        deltaDisplay.innerText = diff > 0 ? `+${diff} kg` : `${diff} kg`;
     } else {
         deltaDisplay.innerText = "—";
     }
@@ -172,73 +186,41 @@ function recalculatePhysiqueAndCalories() {
     }
 
     const activeWeight = weights[weights.length - 1].weight;
-
-    // 1. Calcul Indice IMC
     const hMeter = profile.height / 100;
     const bmi = (activeWeight / (hMeter * hMeter)).toFixed(1);
     bmiNum.innerText = bmi;
     colorBox.className = "bmi-value";
 
-    if (bmi < 18.5) {
-        bmiText.innerText = `Insuffisance pondérale (${activeWeight} kg)`;
-        bmiAdvice.innerText = "Indice inférieur aux recommandations de santé standard.";
-        colorBox.classList.add('bg-warning');
-    } else if (bmi < 25) {
-        bmiText.innerText = `Corpulence normale (${activeWeight} kg)`;
-        bmiAdvice.innerText = "Votre ratio poids/taille est idéal pour la performance.";
-        colorBox.classList.add('bg-normal');
-    } else if (bmi < 30) {
-        bmiText.innerText = `Surpoids (${activeWeight} kg)`;
-        bmiAdvice.innerText = "Zone de vigilance athlétique. Surveillez la balance.";
-        colorBox.classList.add('bg-warning');
-    } else {
-        bmiText.innerText = `Obésité (${activeWeight} kg)`;
-        bmiAdvice.innerText = "Facteur limitant de performance. Structurez votre alimentation.";
-        colorBox.classList.add('bg-danger');
-    }
+    if (bmi < 18.5) { bmiText.innerText = "Insuffisance"; colorBox.classList.add('bg-warning'); } 
+    else if (bmi < 25) { bmiText.innerText = "Normal"; colorBox.classList.add('bg-normal'); } 
+    else if (bmi < 30) { bmiText.innerText = "Surpoids"; colorBox.classList.add('bg-warning'); } 
+    else { bmiText.innerText = "Obésité"; colorBox.classList.add('bg-danger'); }
+    bmiAdvice.innerText = `Basé sur votre pesée de ${activeWeight} kg.`;
 
-    // 2. Équations Métaboliques (Mifflin-St Jeor)
-    let bmr = 0;
-    if (profile.gender === "male") {
-        bmr = 10 * activeWeight + 6.25 * profile.height - 5 * profile.age + 5;
-    } else {
-        bmr = 10 * activeWeight + 6.25 * profile.height - 5 * profile.age - 161;
-    }
+    let bmr = profile.gender === "male" 
+        ? (10 * activeWeight + 6.25 * profile.height - 5 * profile.age + 5)
+        : (10 * activeWeight + 6.25 * profile.height - 5 * profile.age - 161);
 
     const maintenance = bmr * profile.activityLevel;
-    const deficit = maintenance - 500;
-    const surplus = maintenance + 300;
-
     calBaseDisplay.innerText = `${Math.round(bmr)} kcal`;
     calMaintenanceDisplay.innerText = `${Math.round(maintenance)} kcal`;
-    calDeficitDisplay.innerText = `${Math.round(Math.max(1200, deficit))} kcal`;
-    calSurplusDisplay.innerText = `${Math.round(surplus)} kcal`;
+    calDeficitDisplay.innerText = `${Math.round(Math.max(1200, maintenance - 500))} kcal`;
+    calSurplusDisplay.innerText = `${Math.round(maintenance + 300)} kcal`;
 
-    // 3. Rendu des Macronutriments si Mode Auto activé
     if (macroMode === "auto") {
-        const pGrams = activeWeight * 2;
-        const fGrams = activeWeight * 1;
-        const remainingKcal = maintenance - ((pGrams * 4) + (fGrams * 9));
-        const cGrams = Math.max(0, remainingKcal / 4);
-
-        inputProt.value = Math.round(pGrams);
-        inputFat.value = Math.round(fGrams);
-        inputCarb.value = Math.round(cGrams);
+        inputProt.value = Math.round(activeWeight * 2);
+        inputFat.value = Math.round(activeWeight * 1);
+        inputCarb.value = Math.round(Math.max(0, (maintenance - ((activeWeight * 2 * 4) + (activeWeight * 1 * 9))) / 4));
     }
 }
 
-
-// === GESTION DU HALL OF FAME (RECORDS PERSONNELS) ===
+// === MODULE : RECORDS HISTORIQUES ===
 const recordForm = document.getElementById('record-form');
 recordForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const name = document.getElementById('rec-name').value.trim();
-    const value = document.getElementById('rec-value').value.trim();
-    
     let records = safeGetItem('elitePersonalRecords', '[]');
-    records.push({ id: Date.now(), name, value });
+    records.push({ id: Date.now(), name: document.getElementById('rec-name').value.trim(), value: document.getElementById('rec-value').value.trim() });
     safeSetItem('elitePersonalRecords', records);
-    
     recordForm.reset();
     renderRecords();
 });
@@ -246,12 +228,7 @@ recordForm.addEventListener('submit', (e) => {
 function renderRecords() {
     const container = document.getElementById('records-container');
     const records = safeGetItem('elitePersonalRecords', '[]');
-    
-    if(records.length === 0) {
-        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; grid-column:1/-1; font-style:italic;">Aucun record enregistré pour le moment.</div>`;
-        return;
-    }
-    
+    if(records.length === 0) { container.innerHTML = `<div style="color:var(--text-muted); font-size:0.75rem; font-style:italic;">Aucune marque gravée.</div>`; return; }
     container.innerHTML = records.map(rec => `
         <div class="record-elite-card">
             <button class="delete-record-btn" onclick="deleteRecord(${rec.id})">&times;</button>
@@ -260,38 +237,19 @@ function renderRecords() {
         </div>
     `).join('');
 }
+function deleteRecord(id) { if(confirm("Supprimer ce record ?")) { safeSetItem('elitePersonalRecords', safeGetItem('elitePersonalRecords', '[]').filter(r => r.id !== id)); renderRecords(); } }
 
-function deleteRecord(id) {
-    if(confirm("Supprimer ce record du Hall of Fame ?")) {
-        let records = safeGetItem('elitePersonalRecords', '[]');
-        records = records.filter(r => r.id !== id);
-        safeSetItem('elitePersonalRecords', records);
-        renderRecords();
-    }
-}
-
-function escapeHtml(str) {
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-
-// === MODULE HISTORIQUE DE POIDS ===
+// === MODULE : POIDS HISTORIQUE ===
 const weightForm = document.getElementById('weight-form');
 weightForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const date = document.getElementById('w-date').value;
-    const weight = parseFloat(document.getElementById('w-weight').value);
-    
     let history = safeGetItem('weightHistory');
     const editIndex = document.getElementById('w-edit-index').value;
-    const dataObj = { date, weight };
+    const dataObj = { date: document.getElementById('w-date').value, weight: parseFloat(document.getElementById('w-weight').value) };
 
-    if (editIndex === "-1") { history.push(dataObj); } 
-    else { history[parseInt(editIndex)] = dataObj; cancelWeightEdit(); }
-
+    if (editIndex === "-1") history.push(dataObj); else { history[parseInt(editIndex)] = dataObj; cancelWeightEdit(); }
     history.sort((a, b) => new Date(a.date) - new Date(b.date));
     safeSetItem('weightHistory', history);
-    
     renderWeight();
     weightForm.reset();
     document.getElementById('w-date').valueAsDate = new Date();
@@ -300,340 +258,235 @@ weightForm.addEventListener('submit', (e) => {
 function renderWeight() {
     const body = document.getElementById('weight-body');
     const history = safeGetItem('weightHistory');
-    const displayHistory = [...history].reverse();
-
-    body.innerHTML = displayHistory.map((s, idx) => {
+    body.innerHTML = [...history].reverse().map((s, idx) => {
         const realIndex = history.findIndex(x => x.date === s.date && x.weight === s.weight);
-        let targetStr = "—";
-        let pClass = "prog-equal";
-
+        let diffStr = "—";
         if (realIndex > 0) {
-            const diff = (s.weight - history[realIndex - 1].weight).toFixed(1);
-            if (diff > 0) { targetStr = `+${diff} kg`; pClass = "prog-positive"; }
-            else if (diff < 0) { targetStr = `${diff} kg`; pClass = "prog-negative"; }
-            else { targetStr = "0.0 kg"; }
+            let diff = (s.weight - history[realIndex - 1].weight).toFixed(1);
+            diffStr = diff > 0 ? `+${diff}` : `${diff}`;
         }
-
-        return `
-            <tr>
-                <td>${formatDate(s.date)}</td>
-                <td><strong>${s.weight} kg</strong></td>
-                <td class="progression ${pClass}">${targetStr}</td>
-                <td class="action-btns">
-                    <button onclick="editWeight(${realIndex})" class="btn-small btn-edit">Modifier</button>
-                    <button onclick="deleteWeight(${realIndex})" class="btn-small btn-delete">Supprimer</button>
-                </td>
-            </tr>
-        `;
+        return `<tr>
+            <td>${formatDate(s.date)}</td>
+            <td><strong>${s.weight} kg</strong></td>
+            <td>${diffStr}</td>
+            <td class="action-btns">
+                <button onclick="editWeight(${realIndex})" class="btn-small btn-edit">Mod</button>
+                <button onclick="deleteWeight(${realIndex})" class="btn-small btn-delete">Sup</button>
+            </td>
+        </tr>`;
     }).join('');
-
-    generatePremiumChart('weight-chart', history.map(item => item.weight), history.map(item => formatDate(item.date)), "kg");
+    generateBentoAreaChart('weight-chart', history.map(item => item.weight), history.map(item => formatDate(item.date)), "kg");
     recalculatePhysiqueAndCalories();
 }
-
-function editWeight(index) {
-    const history = safeGetItem('weightHistory');
-    const entry = history[index];
-    document.getElementById('w-date').value = entry.date;
-    document.getElementById('w-weight').value = entry.weight;
-    document.getElementById('w-edit-index').value = index;
-    document.getElementById('weight-submit-btn').innerText = "Mettre à jour";
+function editWeight(i) {
+    const entry = safeGetItem('weightHistory')[i];
+    document.getElementById('w-date').value = entry.date; document.getElementById('w-weight').value = entry.weight;
+    document.getElementById('w-edit-index').value = i; document.getElementById('weight-submit-btn').innerText = "OK";
     document.getElementById('weight-cancel-btn').classList.remove('hidden');
 }
-
-function deleteWeight(index) {
-    if (confirm("Supprimer cette ligne de pesée ?")) {
-        let history = safeGetItem('weightHistory');
-        history.splice(index, 1);
-        safeSetItem('weightHistory', history);
-        renderWeight();
-    }
-}
-
+function deleteWeight(i) { if(confirm("Supprimer la pesée ?")) { let h = safeGetItem('weightHistory'); h.splice(i, 1); safeSetItem('weightHistory', h); renderWeight(); } }
 function cancelWeightEdit() {
-    weightForm.reset();
-    document.getElementById('w-date').valueAsDate = new Date();
-    document.getElementById('w-edit-index').value = "-1";
-    document.getElementById('weight-submit-btn').innerText = "Ajouter la pesée";
-    document.getElementById('weight-cancel-btn').classList.add('hidden');
+    weightForm.reset(); document.getElementById('w-date').valueAsDate = new Date(); document.getElementById('w-edit-index').value = "-1";
+    document.getElementById('weight-submit-btn').innerText = "Ajouter"; document.getElementById('weight-cancel-btn').classList.add('hidden');
 }
 
-
-// === CALENDRIER ET PLANIFICATION ELITE ===
+// === CALENDRIER MENSUEL & ANALYSES ===
 let currentCalDate = new Date();
 function changeMonth(offset) { currentCalDate.setMonth(currentCalDate.getMonth() + offset); renderCalendar(); }
 
 function renderCalendar() {
-    const year = currentCalDate.getFullYear();
-    const month = currentCalDate.getMonth();
+    const year = currentCalDate.getFullYear(), month = currentCalDate.getMonth();
     const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
     document.getElementById('month-year-display').innerText = `${monthNames[month]} ${year}`;
 
-    const firstDay = new Date(year, month, 1).getDay();
+    const startOffset = new Date(year, month, 1).getDay() === 0 ? 6 : new Date(year, month, 1).getDay() - 1;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const startOffset = firstDay === 0 ? 6 : firstDay - 1;
-
-    const grid = document.getElementById('calendar-grid');
-    grid.innerHTML = "";
+    const grid = document.getElementById('calendar-grid'); grid.innerHTML = "";
 
     const monthlyData = safeGetItem('calendarData', '{}');
-    const statsCounter = {};
-    let totalCount = 0;
+    const statsCounter = {}; let totalCount = 0;
 
-    for (let i = 0; i < startOffset; i++) { grid.innerHTML += `<div class="cal-day empty"></div>`; }
+    for (let i = 0; i < startOffset; i++) grid.innerHTML += `<div class="cal-day empty"></div>`;
 
     for (let day = 1; day <= daysInMonth; day++) {
         const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const activity = monthlyData[dateKey] || "";
-
         let badgeHtml = "";
         if (activity) {
             const norm = activity.trim().toUpperCase();
-            statsCounter[norm] = (statsCounter[norm] || 0) + 1;
-            totalCount++;
-
-            let badgeClass = "badge-default";
-            if (norm.includes("CARDIO") || norm.includes("RUN") || norm.includes("VELO") || norm.includes("COURSE")) {
-                badgeClass = "badge-cardio";
-            } else if (norm.includes("PUSH") || norm.includes("PULL") || norm.includes("LEGS") || norm.includes("MUSCU")) {
-                badgeClass = "badge-muscu";
-            }
+            statsCounter[norm] = (statsCounter[norm] || 0) + 1; totalCount++;
+            let badgeClass = norm.includes("CARDIO") || norm.includes("RUN") ? "badge-cardio" : (norm.includes("MUSCU") || norm.includes("BODY") ? "badge-muscu" : "badge-default");
             badgeHtml = `<span class="cal-badge ${badgeClass}">${activity}</span>`;
         }
-
-        const dayDiv = document.createElement('div');
-        dayDiv.className = 'cal-day';
+        const dayDiv = document.createElement('div'); dayDiv.className = 'cal-day';
         dayDiv.innerHTML = `<span class="cal-date">${day}</span>${badgeHtml}`;
-        dayDiv.onclick = () => promptActivity(dateKey, activity, `${day} ${monthNames[month]}`);
+        dayDiv.onclick = () => {
+            const act = prompt(`Activité du ${day} ${monthNames[month]} :`, activity);
+            if (act !== null) {
+                if (act.trim() === "") delete monthlyData[dateKey]; else monthlyData[dateKey] = act.trim();
+                safeSetItem('calendarData', monthlyData); renderCalendar();
+            }
+        };
         grid.appendChild(dayDiv);
     }
-    
     renderStats(statsCounter, totalCount);
-}
-
-function promptActivity(dateKey, currentActivity, displayDate) {
-    const newActivity = prompt(`Planification du ${displayDate} (Ex: Cardio, Push, Haut du corps) :\nLaisser vide pour effacer l'activité.`, currentActivity);
-    if (newActivity !== null) {
-        const monthlyData = safeGetItem('calendarData', '{}');
-        if (newActivity.trim() === "") { delete monthlyData[dateKey]; } 
-        else { monthlyData[dateKey] = newActivity.trim(); }
-        safeSetItem('calendarData', monthlyData);
-        renderCalendar();
-    }
+    updateConsistencyStreak();
 }
 
 function renderStats(stats, total) {
-    const list = document.getElementById('monthly-stats');
-    list.innerHTML = "";
+    const list = document.getElementById('monthly-stats'); list.innerHTML = "";
     const keys = Object.keys(stats);
-    
-    if (keys.length === 0) { list.innerHTML = `<li>Aucun entraînement planifié ce mois-ci.</li>`; return; }
-
-    keys.forEach(activity => {
-        const percentage = ((stats[activity] / total) * 100).toFixed(0);
-        list.innerHTML += `<li>${activity} <span>${percentage}%</span></li>`;
-    });
+    if (keys.length === 0) { list.innerHTML = `<li style="font-style:italic; color:var(--text-muted);">Aucune planification.</li>`; return; }
+    keys.forEach(k => { list.innerHTML += `<li>${k} <span>${((stats[k]/total)*100).toFixed(0)}%</span></li>`; });
 }
 
-
-// === TRACKING PERFORMANCE CARDIO ===
+// === MODULE : SUIVI CARDIO ===
 const cardioForm = document.getElementById('cardio-form');
 cardioForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const session = {
-        date: document.getElementById('c-date').value,
-        speed: document.getElementById('c-speed').value,
-        time: document.getElementById('c-time').value,
-        incline: parseFloat(document.getElementById('c-incline').value).toFixed(1),
-        dist: parseFloat(document.getElementById('c-dist').value)
-    };
-
     let history = safeGetItem('cardioHistory');
     const editIndex = document.getElementById('c-edit-index').value;
-
-    if (editIndex === "-1") { history.push(session); } 
-    else { history[parseInt(editIndex)] = session; cancelCardioEdit(); }
-
+    const session = {
+        date: document.getElementById('c-date').value, speed: document.getElementById('c-speed').value,
+        time: document.getElementById('c-time').value, incline: parseFloat(document.getElementById('c-incline').value || 0).toFixed(1),
+        dist: parseFloat(document.getElementById('c-dist').value)
+    };
+    if (editIndex === "-1") history.push(session); else { history[parseInt(editIndex)] = session; cancelCardioEdit(); }
     history.sort((a, b) => new Date(a.date) - new Date(b.date));
     safeSetItem('cardioHistory', history);
-    
     renderCardio();
     cardioForm.reset();
     document.getElementById('c-date').valueAsDate = new Date();
 });
 
 function renderCardio() {
-    const body = document.getElementById('cardio-body');
     const history = safeGetItem('cardioHistory');
-    const displayHistory = [...history].reverse();
-
-    body.innerHTML = displayHistory.map((s, idx) => {
+    document.getElementById('cardio-body').innerHTML = [...history].reverse().map((s) => {
         const realIndex = history.findIndex(x => x.date === s.date && x.dist === s.dist && x.time === s.time);
-        return `
-            <tr>
-                <td>${formatDate(s.date)}</td>
-                <td>${s.speed} km/h</td>
-                <td>${s.time} min</td>
-                <td>${s.incline}%</td>
-                <td><strong>${s.dist} km</strong></td>
-                <td class="action-btns">
-                    <button onclick="editCardio(${realIndex})" class="btn-small btn-edit">Modifier</button>
-                    <button onclick="deleteCardio(${realIndex})" class="btn-small btn-delete">Supprimer</button>
-                </td>
-            </tr>
-        `;
+        return `<tr>
+            <td>${formatDate(s.date)}</td>
+            <td>${s.speed}km/h</td>
+            <td><strong>${s.dist}km</strong></td>
+            <td class="action-btns">
+                <button onclick="editCardio(${realIndex})" class="btn-small btn-edit">Mod</button>
+                <button onclick="deleteCardio(${realIndex})" class="btn-small btn-delete">Sup</button>
+            </td>
+        </tr>`;
     }).join('');
-
-    generatePremiumChart('cardio-chart', history.map(item => item.dist), history.map(item => formatDate(item.date)), "km", true);
+    generateBentoAreaChart('cardio-chart', history.map(item => item.dist), history.map(item => formatDate(item.date)), "km", true);
 }
-
-function editCardio(index) {
-    const history = safeGetItem('cardioHistory');
-    const s = history[index];
-    document.getElementById('c-date').value = s.date;
-    document.getElementById('c-speed').value = s.speed;
-    document.getElementById('c-time').value = s.time;
-    document.getElementById('c-incline').value = s.incline;
-    document.getElementById('c-dist').value = s.dist;
-    document.getElementById('c-edit-index').value = index;
-    
-    document.getElementById('cardio-submit-btn').innerText = "Mettre à jour";
-    document.getElementById('cardio-cancel-btn').classList.remove('hidden');
+function editCardio(i) {
+    const s = safeGetItem('cardioHistory')[i];
+    document.getElementById('c-date').value = s.date; document.getElementById('c-speed').value = s.speed;
+    document.getElementById('c-time').value = s.time; document.getElementById('c-incline').value = s.incline;
+    document.getElementById('c-dist').value = s.dist; document.getElementById('c-edit-index').value = i;
+    document.getElementById('cardio-submit-btn').innerText = "OK"; document.getElementById('cardio-cancel-btn').classList.remove('hidden');
 }
-
-function deleteCardio(index) {
-    if (confirm("Supprimer cette séance cardio ?")) {
-        let history = safeGetItem('cardioHistory');
-        history.splice(index, 1);
-        safeSetItem('cardioHistory', history);
-        renderCardio();
-    }
-}
-
+function deleteCardio(i) { if(confirm("Supprimer la séance ?")) { let h = safeGetItem('cardioHistory'); h.splice(i, 1); safeSetItem('cardioHistory', h); renderCardio(); } }
 function cancelCardioEdit() {
-    cardioForm.reset();
-    document.getElementById('c-date').valueAsDate = new Date();
-    document.getElementById('c-edit-index').value = "-1";
-    document.getElementById('cardio-submit-btn').innerText = "Ajouter la séance";
-    document.getElementById('cardio-cancel-btn').classList.add('hidden');
+    cardioForm.reset(); document.getElementById('c-date').valueAsDate = new Date(); document.getElementById('c-edit-index').value = "-1";
+    document.getElementById('cardio-submit-btn').innerText = "OK"; document.getElementById('cardio-cancel-btn').classList.add('hidden');
 }
 
-
-// === RENDU DU RECTANGLE INTERACTIF SVG (INFO-BULLES FLOATING COUTURE) ===
-function generatePremiumChart(containerId, dataPoints, labels, unitStr = "", isCardio = false) {
+// === NOUVELLE FONCTION DES COURBES SMOOTH RECTILIGNES AVEC DEGRADES ET GRIDLINES ===
+function generateBentoAreaChart(containerId, dataPoints, labels, unitStr = "", isCardio = false) {
     const container = document.getElementById(containerId);
     if (dataPoints.length === 0) {
-        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; margin:auto; font-style:italic;">En attente de rapports analytiques...</div>`;
+        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.75rem; margin:auto; font-style:italic;">En attente de rapports analytiques...</div>`;
         return;
     }
 
-    const maxVal = Math.max(...dataPoints) * 1.03 || 10;
-    const minVal = isCardio ? 0 : Math.min(...dataPoints) * 0.97;
+    const maxVal = Math.max(...dataPoints) * 1.02 || 10;
+    const minVal = isCardio ? 0 : Math.min(...dataPoints) * 0.98;
     const range = maxVal - minVal;
 
-    const width = 320; const height = 160; const padding = 20;
+    const width = 400; const height = 140; const paddingX = 25; const paddingY = 15;
+    const graphWidth = width - paddingX * 2;
+    const graphHeight = height - paddingY * 2;
+    
     let pointsCoords = "";
-    const stepX = (width - padding * 2) / (dataPoints.length > 1 ? dataPoints.length - 1 : 1);
+    const stepX = graphWidth / (dataPoints.length > 1 ? dataPoints.length - 1 : 1);
 
     dataPoints.forEach((val, i) => {
-        const x = padding + i * stepX;
-        const y = height - padding - ((val - minVal) / (range || 1)) * (height - padding * 2);
+        const x = paddingX + i * stepX;
+        const y = paddingY + graphHeight - ((val - minVal) / (range || 1)) * graphHeight;
         pointsCoords += `${x},${y} `;
     });
 
-    let svg = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; overflow:visible;">`;
-    svg += `<line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="#cbd5e1" stroke-width="1"/>`;
-    svg += `<polyline points="${pointsCoords}" fill="none" stroke="var(--navy)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
-    
-    dataPoints.forEach((val, i) => {
-        const x = padding + i * stepX;
-        const y = height - padding - ((val - minVal) / (range || 1)) * (height - padding * 2);
+    let fillCoords = `${paddingX},${height - paddingY} ` + pointsCoords + `${paddingX + (dataPoints.length - 1) * stepX},${height - paddingY}`;
+
+    let svg = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; overflow:visible;">
+        <defs>
+            <linearGradient id="gradient-${containerId}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--gold)" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="var(--gold)" stop-opacity="0.00"/>
+            </linearGradient>
+        </defs>`;
         
-        svg += `
-            <circle cx="${x}" cy="${y}" r="4" fill="var(--white)" stroke="var(--gold)" stroke-width="2"
-                onmouseover="showCustomTooltip(event, '${labels[i]}', '${val} ${unitStr}')"
-                onmousemove="moveCustomTooltip(event)"
-                onmouseout="hideCustomTooltip()">
-            </circle>
-        `;
+    // Lignes de repère (Gridlines horizontales)
+    svg += `<line x1="${paddingX}" y1="${paddingY}" x2="${width-paddingX}" y2="${paddingY}" stroke="#f1f5f9" stroke-width="1"/>`;
+    svg += `<line x1="${paddingX}" y1="${paddingY + graphHeight/2}" x2="${width-paddingX}" y2="${paddingY + graphHeight/2}" stroke="#f1f5f9" stroke-width="1"/>`;
+    svg += `<line x1="${paddingX}" y1="${height-paddingY}" x2="${width-paddingX}" y2="${height-paddingY}" stroke="#cbd5e1" stroke-width="1"/>`;
+    
+    // Remplissage sous la courbe
+    svg += `<polygon points="${fillCoords}" fill="url(#gradient-${containerId})"/>`;
+    // Ligne principale de courbe
+    svg += `<polyline points="${pointsCoords}" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    
+    // Points interactifs
+    dataPoints.forEach((val, i) => {
+        const x = paddingX + i * stepX;
+        const y = paddingY + graphHeight - ((val - minVal) / (range || 1)) * graphHeight;
+        svg += `<circle cx="${x}" cy="${y}" r="3.5" fill="var(--white)" stroke="var(--gold)" stroke-width="2"
+            style="cursor:pointer;"
+            onmouseover="showCustomTooltip(event, '${labels[i]}', '${val} ${unitStr}')"
+            onmousemove="moveCustomTooltip(event)"
+            onmouseout="hideCustomTooltip()"></circle>`;
     });
 
     svg += `</svg>`;
     container.innerHTML = svg;
 }
 
-function showCustomTooltip(e, dateLabel, valueLabel) {
-    tooltipElement.innerHTML = `<strong>Date :</strong> ${dateLabel}<br/><strong>Valeur :</strong> ${valueLabel}`;
-    tooltipElement.classList.remove('hidden');
-    tooltipElement.style.opacity = "1";
-    moveCustomTooltip(e);
+function showCustomTooltip(e, dLabel, vLabel) {
+    tooltipElement.innerHTML = `<strong>Date :</strong> ${dLabel}<br/><strong>Performance :</strong> ${vLabel}`;
+    tooltipElement.classList.remove('hidden'); moveCustomTooltip(e);
 }
+function moveCustomTooltip(e) { tooltipElement.style.left = (e.pageX + 10) + "px"; tooltipElement.style.top = (e.pageY - 15) + "px"; }
+function hideCustomTooltip() { tooltipElement.classList.add('hidden'); }
+function formatDate(s) { const d = new Date(s); return isNaN(d.getTime()) ? s : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`; }
+function escapeHtml(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
-function moveCustomTooltip(e) {
-    tooltipElement.style.left = (e.pageX + 12) + "px";
-    tooltipElement.style.top = (e.pageY - 12) + "px";
-}
-
-function hideCustomTooltip() {
-    tooltipElement.classList.add('hidden');
-    tooltipElement.style.opacity = "0";
-}
-
-function formatDate(dateString) {
-    const d = new Date(dateString);
-    if(isNaN(d.getTime())) return dateString;
-    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-
-
-// === SYNC COMPOSANTE BACKUP DE SECURITE (JSON SOUVERAIN) ===
+// === MODULE RECONSTITUTION BACKUPS SOUVERAINS ===
 function exportDataData() {
-    const fullBackupObject = {
-        userProfileBaseV2: localStorage.getItem('userProfileBaseV2'),
-        weightHistory: localStorage.getItem('weightHistory'),
-        calendarData: localStorage.getItem('calendarData'),
-        cardioHistory: localStorage.getItem('cardioHistory'),
-        elitePersonalRecords: localStorage.getItem('elitePersonalRecords'),
-        macroConfigMode: localStorage.getItem('macroConfigMode'),
-        manualMacrosValues: localStorage.getItem('manualMacrosValues')
+    const obj = {
+        userProfileBaseV2: localStorage.getItem('userProfileBaseV2'), weightHistory: localStorage.getItem('weightHistory'),
+        calendarData: localStorage.getItem('calendarData'), cardioHistory: localStorage.getItem('cardioHistory'),
+        elitePersonalRecords: localStorage.getItem('elitePersonalRecords'), macroConfigMode: localStorage.getItem('macroConfigMode'),
+        manualMacrosValues: localStorage.getItem('manualMacrosValues'), latestSleepHours: localStorage.getItem('latestSleepHours')
     };
-
-    const todayStr = new Date().toISOString().split('T')[0];
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullBackupObject));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `wallysport_elite_${todayStr}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    const a = document.createElement('a');
+    a.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(obj)));
+    a.setAttribute("download", `wallysport_bento_backup.json`);
+    document.body.appendChild(a); a.click(); a.remove();
 }
-
-function triggerImportField() {
-    document.getElementById('import-file-field').click();
-}
-
+function triggerImportField() { document.getElementById('import-file-field').click(); }
 function importDataData(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
+    const file = event.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
-            const importedJSON = JSON.parse(e.target.result);
-            
-            if (importedJSON.userProfileBaseV2) localStorage.setItem('userProfileBaseV2', importedJSON.userProfileBaseV2);
-            if (importedJSON.weightHistory) localStorage.setItem('weightHistory', importedJSON.weightHistory);
-            if (importedJSON.calendarData) localStorage.setItem('calendarData', importedJSON.calendarData);
-            if (importedJSON.cardioHistory) localStorage.setItem('cardioHistory', importedJSON.cardioHistory);
-            if (importedJSON.elitePersonalRecords) localStorage.setItem('elitePersonalRecords', importedJSON.elitePersonalRecords);
-            if (importedJSON.macroConfigMode) localStorage.setItem('macroConfigMode', importedJSON.macroConfigMode);
-            if (importedJSON.manualMacrosValues) localStorage.setItem('manualMacrosValues', importedJSON.manualMacrosValues);
-            
-            alert("Restauration Elite accomplie. Redémarrage de l'architecture.");
-            window.location.reload();
-        } catch (err) {
-            alert("Restauration refusée : Structure du fichier JSON invalide ou corrompue.");
-        }
+            const json = JSON.parse(e.target.result);
+            if (json.userProfileBaseV2) localStorage.setItem('userProfileBaseV2', json.userProfileBaseV2);
+            if (json.weightHistory) localStorage.setItem('weightHistory', json.weightHistory);
+            if (json.calendarData) localStorage.setItem('calendarData', json.calendarData);
+            if (json.cardioHistory) localStorage.setItem('cardioHistory', json.cardioHistory);
+            if (json.elitePersonalRecords) localStorage.setItem('elitePersonalRecords', json.elitePersonalRecords);
+            if (json.macroConfigMode) localStorage.setItem('macroConfigMode', json.macroConfigMode);
+            if (json.manualMacrosValues) localStorage.setItem('manualMacrosValues', json.manualMacrosValues);
+            if (json.latestSleepHours) localStorage.setItem('latestSleepHours', json.latestSleepHours);
+            alert("Restauration Bento achevée."); window.location.reload();
+        } catch (err) { alert("Format invalide."); }
     };
     reader.readAsText(file);
 }
