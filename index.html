@@ -58,32 +58,26 @@
             </div>
         </section>
 
-        <section class="bento-item bento-food-tracker">
-            <div>
-                <h3>Journal Alimentaire</h3>
-                <p class="bento-item-desc">Ajoutez vos repas pour suivre vos apports réels.</p>
-            </div>
-            <form id="food-form" class="food-mini-form">
-                <div class="food-form-grid">
-                    <input type="text" id="food-name" placeholder="Aliment (ex: Riz)" required>
-                    <div class="food-macro-row">
-                        <input type="number" id="food-p" placeholder="P (100g)" step="0.1" required>
-                        <input type="number" id="food-l" placeholder="L (100g)" step="0.1" required>
-                        <input type="number" id="food-g" placeholder="G (100g)" step="0.1" required>
-                        <input type="number" id="food-qty" placeholder="Qté (g)" required>
-                    </div>
-                    <button type="submit" class="btn-action-sm w-full">Consommer</button>
+        <section class="bento-item bento-recovery">
+            <h3>Sommeil & Récupération</h3>
+            <p class="bento-item-desc">Suivez vos nuits pour évaluer votre potentiel énergétique.</p>
+            <form id="sleep-form" class="sleep-mini-form">
+                <div class="inline-input-group">
+                    <input type="number" id="sleep-hours" min="0" max="24" step="0.5" placeholder="Heures" required>
+                    <button type="submit" class="btn-action-sm">Log</button>
                 </div>
             </form>
-            <div class="quick-food-list" id="quick-food-container">
-                </div>
+            <div class="recovery-score-display">
+                <div class="score-bar-bg"><div class="score-bar-fill" id="sleep-progress-bar" style="width: 0%"></div></div>
+                <span id="sleep-score-text">Sommeil requis : 8h</span>
+            </div>
         </section>
 
         <section class="bento-item bento-macros col-span-12">
             <div class="macros-main-header">
                 <div>
                     <h2>Bilan Énergétique & Macronutriments</h2>
-                    <p class="bento-item-desc">Ajustez manuellement ou laissez l'algorithme Elite calculer vos cibles, puis observez votre jauge de suivi.</p>
+                    <p class="bento-item-desc">Ajustez manuellement ou laissez l'algorithme Elite calculer vos besoins.</p>
                 </div>
                 <div class="macro-mode-selectors">
                     <label class="radio-label">
@@ -107,12 +101,12 @@
                     <small>Maintenance</small>
                 </div>
                 <div class="cal-block deficit-cal">
-                    <span class="cal-val" id="cal-target">--</span>
-                    <small>Cible Choisie (Déficit/Surplus)</small>
+                    <span class="cal-val" id="cal-deficit">--</span>
+                    <small>Objectif Perte (-500 kcal)</small>
                 </div>
-                <div class="cal-block logged-cal">
-                    <span class="cal-val" id="cal-consumed">0 kcal</span>
-                    <small>Consommé Aujourd'hui</small>
+                <div class="cal-block surplus-cal">
+                    <span class="cal-val" id="cal-surplus">--</span>
+                    <small>Objectif Prise (+300 kcal)</small>
                 </div>
             </div>
 
@@ -123,7 +117,6 @@
                         <input type="number" id="input-macro-prot" class="macro-editable-input" value="0" disabled>
                         <span class="macro-unit">g</span>
                     </div>
-                    <div class="macro-tracked-sub" id="track-p">Reçu : 0g</div>
                 </div>
                 <div class="macro-bar-item item-fat">
                     <span class="macro-label">Lipides</span>
@@ -131,7 +124,6 @@
                         <input type="number" id="input-macro-fat" class="macro-editable-input" value="0" disabled>
                         <span class="macro-unit">g</span>
                     </div>
-                    <div class="macro-tracked-sub" id="track-l">Reçu : 0g</div>
                 </div>
                 <div class="macro-bar-item item-carb">
                     <span class="macro-label">Glucides</span>
@@ -139,13 +131,7 @@
                         <input type="number" id="input-macro-carb" class="macro-editable-input" value="0" disabled>
                         <span class="macro-unit">g</span>
                     </div>
-                    <div class="macro-tracked-sub" id="track-g">Reçu : 0g</div>
                 </div>
-            </div>
-
-            <div class="daily-food-log-section">
-                <h4>Aliments consommés aujourd'hui</h4>
-                <div class="food-log-chips-container" id="food-log-chips"></div>
             </div>
         </section>
 
@@ -281,14 +267,6 @@
                             <option value="1.375">Actif Léger (1-3 fois/sem)</option>
                             <option value="1.55">Modérément Actif (3-5 fois/sem)</option>
                             <option value="1.725">Intensif Quotidien</option>
-                        </select>
-                    </div>
-                    <div class="input-group modal-input">
-                        <label>Objectif Énergétique Principal</label>
-                        <select id="energy-goal" required>
-                            <option value="deficit">Perte de poids (-500 kcal)</option>
-                            <option value="maintenance">Maintenance stricte</option>
-                            <option value="surplus">Prise de masse musculaire (+300 kcal)</option>
                         </select>
                     </div>
                     
