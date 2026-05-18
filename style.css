@@ -119,16 +119,17 @@ body {
 
 @media (max-width: 1024px) {
     .col-span-8, .col-span-6, .col-span-4 { grid-column: span 12; }
-    .bento-bmi, .bento-streak, .bento-recovery { grid-column: span 12; }
+    .bento-bmi, .bento-streak, .bento-food-tracker { grid-column: span 12; }
 }
 
-.bento-item h2, .bento-item h3 {
+.bento-item h2, .bento-item h3, .bento-item h4 {
     font-family: 'Playfair Display', serif;
     color: var(--navy);
     font-weight: 700;
 }
 .bento-item h2 { font-size: 1.4rem; margin-bottom: 0.25rem; }
 .bento-item h3 { font-size: 1.15rem; margin-bottom: 0.2rem; }
+.bento-item h4 { font-size: 1rem; margin-bottom: 0.5rem; }
 .bento-item-desc { font-size: 0.8rem; color: var(--text-muted); font-weight: 400; margin-bottom: 1rem; }
 
 /* RE-DESIGN WIDGETS */
@@ -153,15 +154,19 @@ body {
 .streak-counter span { font-size: 2.25rem; font-weight: 800; color: var(--navy); line-height: 1; display: block;}
 .streak-counter small { font-size: 0.7rem; font-weight: 600; color: var(--gold); text-transform: uppercase; }
 
-/* RÉCUPÉRATION SOMMEIL */
-.sleep-mini-form { margin: 0.5rem 0; }
-.inline-input-group { display: flex; gap: 6px; }
-.inline-input-group input { padding: 8px; font-size: 0.8rem; border-radius: 6px; }
-.btn-action-sm { background: var(--navy); color: var(--white); border: none; padding: 0 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
-.recovery-score-display { margin-top: 0.5rem; }
-.score-bar-bg { background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
-.score-bar-fill { background: var(--gold); height: 100%; transition: width 0.4s ease; }
-#sleep-score-text { font-size: 0.7rem; font-weight: 500; color: var(--text-muted); }
+/* DESIGN COMPOSANT NUTRITION & FOOD LOGGER */
+.food-mini-form { margin: 0.5rem 0; width: 100%; }
+.food-form-grid { display: flex; flex-direction: column; gap: 6px; }
+.food-macro-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.food-form-grid input { padding: 6px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 6px; text-align: center; }
+.food-form-grid input[type="text"] { text-align: left; }
+.w-full { width: 100%; }
+.btn-action-sm { background: var(--navy); color: var(--white); border: none; padding: 8px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; text-transform: uppercase; }
+.btn-action-sm:hover { background: var(--gold); color: var(--navy); }
+
+.quick-food-list { display: flex; flex-wrap: wrap; gap: 4px; max-height: 55px; overflow-y: auto; margin-top: 6px; }
+.quick-food-chip { background: #f1f5f9; font-size: 0.65rem; padding: 4px 8px; border-radius: 12px; cursor: pointer; font-weight: 600; color: var(--text-muted); border: 1px solid transparent; transition: all 0.2s; }
+.quick-food-chip:hover { border-color: var(--gold); color: var(--navy); background: var(--white); }
 
 /* HYBRID MACROS BOX */
 .macros-main-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
@@ -175,10 +180,11 @@ body {
 .cal-val { font-size: 1.35rem; font-weight: 700; color: var(--navy); }
 .cal-block small { font-size: 0.7rem; color: var(--text-muted); font-weight: 500; display: block; margin-top: 2px; }
 .highlighted-cal { border-color: var(--gold); background: var(--gold-glow); }
+.logged-cal { border-color: #cbd5e1; background: #f1f5f9; }
 
 .macros-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
 @media (max-width: 600px) { .macros-grid { grid-template-columns: 1fr; } }
-.macro-bar-item { padding: 1rem; border-radius: 10px; background: #f8fafc; border-left: 4px solid var(--border); }
+.macro-bar-item { padding: 1rem; border-radius: 10px; background: #f8fafc; border-left: 4px solid var(--border); display: flex; flex-direction: column; justify-content: space-between; }
 .item-prot { border-left-color: var(--navy); }
 .item-fat { border-left-color: var(--gold); }
 .item-carb { border-left-color: #64748b; }
@@ -187,6 +193,13 @@ body {
 .macro-editable-input { font-size: 1.5rem; font-weight: 700; color: var(--navy); border: none!important; background: transparent!important; width: 80px; padding: 0!important; }
 .macro-editable-input:disabled { color: var(--navy); cursor: not-allowed; }
 .macro-unit { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+.macro-tracked-sub { font-size: 0.7rem; font-weight: 700; margin-top: 6px; color: var(--text-dark); background: rgba(0,0,0,0.03); width: max-content; padding: 2px 6px; border-radius: 4px; }
+
+.daily-food-log-section { margin-top: 1.5rem; border-top: 1px dashed var(--border); padding-top: 1rem; }
+.food-log-chips-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0.5rem; }
+.food-chip { background: var(--navy); color: var(--white); font-size: 0.7rem; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; font-weight: 500; }
+.food-chip button { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.85rem; font-weight: 700; }
+.food-chip button:hover { color: #f87171; }
 
 /* FORMS BENTO & TABLES */
 .bento-inline-form, .bento-inline-form-dense { margin-bottom: 1rem; background: #f8fafc; padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border); }
@@ -242,7 +255,7 @@ td { padding: 8px; font-size: 0.8rem; border-bottom: 1px solid #f1f5f9; }
 .delete-record-btn { position: absolute; top: 4px; right: 8px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.9rem; }
 .delete-record-btn:hover { color: #ef4444; }
 
-/* REPRISE COMPOSANT MODAL STRUCTURE ACCESSIBLE */
+/* MODAL STRUCTURE ACCESSIBLE */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.3); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 9999; }
 .modal-card { background: var(--white); width: 100%; max-width: 440px; border-radius: var(--radius-bento); box-shadow: var(--bento-hover-shadow); overflow: hidden; border-top: 4px solid var(--gold); }
 .modal-header { padding: 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
