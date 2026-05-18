@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wally Sport Elite | Premium Dashboard</title>
+    <title>Wally Sport Elite | Bento Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -16,8 +16,8 @@
             <div class="brand">Wally<span>Sport Elite</span></div>
             <div class="header-right">
                 <div class="header-date" id="current-date-display"></div>
-                <button class="profile-icon-btn" id="open-profile-btn" title="Gérer le Profil & Sauvegardes">
-                    👤
+                <button class="profile-icon-btn" id="open-profile-btn" title="Configuration & Sauvegardes">
+                    ⚙️
                 </button>
             </div>
         </div>
@@ -25,250 +25,213 @@
 
     <div id="chart-tooltip" class="custom-tooltip hidden"></div>
 
-    <main class="dashboard container">
+    <main class="container bento-grid">
         
-        <section class="card stats-summary-grid">
-            <div id="bmi-display" class="bmi-container">
+        <section class="bento-item bento-bmi">
+            <div class="bmi-container">
                 <div class="bmi-value bg-default" id="bmi-color-box">
                     <span id="bmi-num">--</span>
                     <small>IMC</small>
                 </div>
                 <div class="bmi-status">
                     <h3 id="bmi-text">Profil incomplet</h3>
-                    <p id="bmi-advice">Configurez vos données via le bouton profil 👤 en haut à droite.</p>
-                    <div class="delta-trend-box">
-                        <span class="delta-label">Tendance hebdomadaire :</span>
-                        <span class="delta-value" id="weight-delta-display">—</span>
-                    </div>
+                    <p id="bmi-advice">Cliquez sur le rouage ⚙️ pour configurer vos constantes.</p>
+                </div>
+            </div>
+            <div class="delta-trend-box">
+                <span class="delta-label">Tendance hebdomadaire :</span>
+                <span class="delta-value" id="weight-delta-display">—</span>
+            </div>
+        </section>
+
+        <section class="bento-item bento-streak">
+            <div class="streak-header">
+                <div class="streak-icon">🔥</div>
+                <div>
+                    <h3>Série d'Assiduité</h3>
+                    <p>Régularité ce mois-ci</p>
+                </div>
+            </div>
+            <div class="streak-counter">
+                <span id="streak-days-count">0</span>
+                <small>Séance(s) Validée(s)</small>
+            </div>
+        </section>
+
+        <section class="bento-item bento-recovery">
+            <h3>Sommeil & Récupération</h3>
+            <p class="bento-item-desc">Suivez vos nuits pour évaluer votre potentiel énergétique.</p>
+            <form id="sleep-form" class="sleep-mini-form">
+                <div class="inline-input-group">
+                    <input type="number" id="sleep-hours" min="0" max="24" step="0.5" placeholder="Heures" required>
+                    <button type="submit" class="btn-action-sm">Log</button>
+                </div>
+            </form>
+            <div class="recovery-score-display">
+                <div class="score-bar-bg"><div class="score-bar-fill" id="sleep-progress-bar" style="width: 0%"></div></div>
+                <span id="sleep-score-text">Sommeil requis : 8h</span>
+            </div>
+        </section>
+
+        <section class="bento-item bento-macros col-span-12">
+            <div class="macros-main-header">
+                <div>
+                    <h2>Bilan Énergétique & Macronutriments</h2>
+                    <p class="bento-item-desc">Ajustez manuellement ou laissez l'algorithme Elite calculer vos besoins.</p>
+                </div>
+                <div class="macro-mode-selectors">
+                    <label class="radio-label">
+                        <input type="radio" name="macro-mode" value="auto" checked id="macro-mode-auto">
+                        <span>Calcul Automatique</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="macro-mode" value="manual" id="macro-mode-manual">
+                        <span>Saisie Manuelle</span>
+                    </label>
                 </div>
             </div>
 
-            <div id="calories-display" class="calories-container border-left-sep">
-                <h3 class="summary-title">Bilan Énergétique Recommandé</h3>
-                <div class="calories-grid">
-                    <div class="cal-block">
-                        <span class="cal-val" id="cal-base">--</span>
-                        <small>Métabolisme de Base</small>
-                    </div>
-                    <div class="cal-block highlighted-cal">
-                        <span class="cal-val" id="cal-maintenance">--</span>
-                        <small>Maintenance Énergétique</small>
-                    </div>
-                    <div class="cal-block deficit-cal">
-                        <span class="cal-val" id="cal-deficit">--</span>
-                        <small>Objectif Perte (-500 kcal)</small>
-                    </div>
-                    <div class="cal-block surplus-cal">
-                        <span class="cal-val" id="cal-surplus">--</span>
-                        <small>Objectif Prise (+300 kcal)</small>
+            <div class="calories-grid">
+                <div class="cal-block">
+                    <span class="cal-val" id="cal-base">--</span>
+                    <small>Métabolisme de Base</small>
+                </div>
+                <div class="cal-block highlighted-cal">
+                    <span class="cal-val" id="cal-maintenance">--</span>
+                    <small>Maintenance</small>
+                </div>
+                <div class="cal-block deficit-cal">
+                    <span class="cal-val" id="cal-deficit">--</span>
+                    <small>Objectif Perte (-500 kcal)</small>
+                </div>
+                <div class="cal-block surplus-cal">
+                    <span class="cal-val" id="cal-surplus">--</span>
+                    <small>Objectif Prise (+300 kcal)</small>
+                </div>
+            </div>
+
+            <div class="macros-grid">
+                <div class="macro-bar-item item-prot">
+                    <span class="macro-label">Protéines</span>
+                    <div class="macro-input-wrapper">
+                        <input type="number" id="input-macro-prot" class="macro-editable-input" value="0" disabled>
+                        <span class="macro-unit">g</span>
                     </div>
                 </div>
-
-                <div class="macros-wrapper">
-                    <div class="macros-header-control">
-                        <h4>Objectifs de Macronutriments</h4>
-                        <div class="macro-mode-selectors">
-                            <label class="radio-label">
-                                <input type="radio" name="macro-mode" value="auto" checked id="macro-mode-auto">
-                                <span>Calcul Automatique</span>
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="macro-mode" value="manual" id="macro-mode-manual">
-                                <span>Saisie Manuelle</span>
-                            </label>
-                        </div>
+                <div class="macro-bar-item item-fat">
+                    <span class="macro-label">Lipides</span>
+                    <div class="macro-input-wrapper">
+                        <input type="number" id="input-macro-fat" class="macro-editable-input" value="0" disabled>
+                        <span class="macro-unit">g</span>
                     </div>
-                    
-                    <div class="macros-grid">
-                        <div class="macro-bar-item item-prot">
-                            <span class="macro-label">Protéines</span>
-                            <div class="macro-input-wrapper">
-                                <input type="number" id="input-macro-prot" class="macro-editable-input" value="0" disabled>
-                                <span class="macro-unit">g</span>
-                            </div>
-                        </div>
-                        <div class="macro-bar-item item-fat">
-                            <span class="macro-label">Lipides</span>
-                            <div class="macro-input-wrapper">
-                                <input type="number" id="input-macro-fat" class="macro-editable-input" value="0" disabled>
-                                <span class="macro-unit">g</span>
-                            </div>
-                        </div>
-                        <div class="macro-bar-item item-carb">
-                            <span class="macro-label">Glucides</span>
-                            <div class="macro-input-wrapper">
-                                <input type="number" id="input-macro-carb" class="macro-editable-input" value="0" disabled>
-                                <span class="macro-unit">g</span>
-                            </div>
-                        </div>
+                </div>
+                <div class="macro-bar-item item-carb">
+                    <span class="macro-label">Glucides</span>
+                    <div class="macro-input-wrapper">
+                        <input type="number" id="input-macro-carb" class="macro-editable-input" value="0" disabled>
+                        <span class="macro-unit">g</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="card" id="section-records">
+        <section class="bento-item col-span-6 bento-weight-section">
             <div class="section-header">
-                <h2>Le Hall of Fame</h2>
-                <p>Gravez dans le marbre vos records personnels (1RM en force, vitesse ou chronomètres de référence).</p>
+                <h2>Évolution du Poids</h2>
+                <p>Enregistrez vos variations corporelles régulières.</p>
+            </div>
+            
+            <form id="weight-form" class="bento-inline-form">
+                <input type="hidden" id="w-edit-index" value="-1">
+                <div class="form-grid-mini">
+                    <input type="date" id="w-date" required>
+                    <input type="number" id="w-weight" step="0.1" placeholder="Poids (kg)" required>
+                    <button type="submit" class="btn-action" id="weight-submit-btn">Ajouter</button>
+                    <button type="button" class="btn-cancel hidden" id="weight-cancel-btn" onclick="cancelWeightEdit()">X</button>
+                </div>
+            </form>
+
+            <div class="chart-box-wrapper">
+                <div class="chart-container" id="weight-chart"></div>
+            </div>
+
+            <div class="table-container mini-table">
+                <table id="weight-table">
+                    <thead>
+                        <tr><th>Date</th><th>Poids</th><th>Delta</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="weight-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="bento-item col-span-6 bento-cardio-section">
+            <div class="section-header">
+                <h2>Analyse Endurance</h2>
+                <p>Mesurez la distance et la vitesse de vos séances.</p>
+            </div>
+
+            <form id="cardio-form" class="bento-inline-form-dense">
+                <input type="hidden" id="c-edit-index" value="-1">
+                <div class="form-grid-dense">
+                    <input type="date" id="c-date" required>
+                    <input type="number" id="c-speed" step="0.1" placeholder="Vitesse (km/h)" required>
+                    <input type="number" id="c-time" placeholder="Min" required>
+                    <input type="number" id="c-incline" step="0.1" placeholder="Pente (%)">
+                    <input type="number" id="c-dist" step="0.01" placeholder="Distance (km)" required>
+                    <button type="submit" class="btn-action" id="cardio-submit-btn">OK</button>
+                    <button type="button" class="btn-cancel hidden" id="cardio-cancel-btn" onclick="cancelCardioEdit()">X</button>
+                </div>
+            </form>
+
+            <div class="chart-box-wrapper">
+                <div class="chart-container" id="cardio-chart"></div>
+            </div>
+
+            <div class="table-container mini-table">
+                <table id="cardio-table">
+                    <thead>
+                        <tr><th>Date</th><th>Vit.</th><th>Dist.</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="cardio-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="bento-item col-span-8 bento-calendar-section">
+            <div class="calendar-wrapper">
+                <div class="calendar-header">
+                    <button onclick="changeMonth(-1)" class="btn-icon">◀</button>
+                    <h3 id="month-year-display" class="month-year-title">Mois Année</h3>
+                    <button onclick="changeMonth(1)" class="btn-icon">▶</button>
+                </div>
+                <div class="calendar-grid-headers">
+                    <div>Lu</div><div>Ma</div><div>Me</div><div>Je</div><div>Ve</div><div>Sa</div><div>Di</div>
+                </div>
+                <div class="calendar-grid" id="calendar-grid"></div>
+            </div>
+        </section>
+
+        <section class="bento-item col-span-4 bento-stats-section">
+            <h3>Focus Mensuel</h3>
+            <p class="bento-item-desc">Répartition de vos efforts.</p>
+            <ul id="monthly-stats" class="stats-list"></ul>
+        </section>
+
+        <section class="bento-item col-span-12 bento-records-section">
+            <div class="section-header">
+                <h2>Le Hall of Fame Elite</h2>
+                <p>Consignez vos charges maximales historiques et chronomètres de référence.</p>
             </div>
             <div class="records-layout">
                 <form id="record-form" class="record-mini-form">
-                    <div class="form-grid">
-                        <div class="input-group">
-                            <label>Exercice / Défi</label>
-                            <input type="text" id="rec-name" placeholder="Ex: Développé Couché, 5 km" required>
-                        </div>
-                        <div class="input-group">
-                            <label>Performance</label>
-                            <input type="text" id="rec-value" placeholder="Ex: 120 kg, 19:45" required>
-                        </div>
+                    <div class="form-grid-mini">
+                        <input type="text" id="rec-name" placeholder="Mouvement / Exercice (ex: Squat)" required>
+                        <input type="text" id="rec-value" placeholder="Record (ex: 140 kg)" required>
+                        <button type="submit" class="btn-action">Graver</button>
                     </div>
-                    <button type="submit" class="btn-action">Enregistrer le Record</button>
                 </form>
-                <div class="records-display-grid" id="records-container">
-                    </div>
-            </div>
-        </section>
-
-        <section class="card" id="section-poids">
-            <div class="section-header">
-                <h2>Suivi Évolution du Poids</h2>
-                <p>Enregistrez vos pesées régulières pour mettre à jour automatiquement vos analyses et graphiques.</p>
-            </div>
-
-            <div class="two-col-layout">
-                <div>
-                    <form id="weight-form">
-                        <input type="hidden" id="w-edit-index" value="-1">
-                        <div class="form-grid">
-                            <div class="input-group">
-                                <label>Date de la pesée</label>
-                                <input type="date" id="w-date" required>
-                            </div>
-                            <div class="input-group">
-                                <label>Poids observé (kg)</label>
-                                <input type="number" id="w-weight" step="0.1" placeholder="Ex: 78.5" required>
-                            </div>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="btn-action" id="weight-submit-btn">Ajouter la pesée</button>
-                            <button type="button" class="btn-cancel hidden" id="weight-cancel-btn" onclick="cancelWeightEdit()">Annuler</button>
-                        </div>
-                    </form>
-
-                    <div class="table-container">
-                        <table id="weight-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Poids</th>
-                                    <th>Progression</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="weight-body">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="graph-box">
-                    <h3>Courbe d'évolution du poids</h3>
-                    <div class="chart-container" id="weight-chart">
-                        </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="card" id="section-planning">
-            <div class="section-header">
-                <h2>Calendrier Mensuel & Statistiques</h2>
-                <p>Planifiez vos séances de sport. Les badges de couleur distinguent intelligemment vos blocs de travail.</p>
-            </div>
-            
-            <div class="planning-layout">
-                <div class="calendar-wrapper">
-                    <div class="calendar-header">
-                        <button onclick="changeMonth(-1)" class="btn-icon">◀</button>
-                        <h3 id="month-year-display">Mois Année</h3>
-                        <button onclick="changeMonth(1)" class="btn-icon">▶</button>
-                    </div>
-                    <div class="calendar-grid-headers">
-                        <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
-                    </div>
-                    <div class="calendar-grid" id="calendar-grid">
-                        </div>
-                </div>
-                
-                <div class="stats-wrapper">
-                    <h3>Distribution des entraînements</h3>
-                    <ul id="monthly-stats" class="stats-list">
-                        </ul>
-                </div>
-            </div>
-        </section>
-
-        <section class="card" id="section-cardio">
-            <div class="section-header">
-                <h2>Analyse des Séances Cardio</h2>
-                <p>Suivez l'évolution de vos paramètres physiques complexes d'endurance.</p>
-            </div>
-            
-            <div class="two-col-layout">
-                <div>
-                    <form id="cardio-form">
-                        <input type="hidden" id="c-edit-index" value="-1">
-                        <div class="form-grid">
-                            <div class="input-group">
-                                <label>Date du cardio</label>
-                                <input type="date" id="c-date" required>
-                            </div>
-                            <div class="input-group">
-                                <label>Vitesse (km/h)</label>
-                                <input type="number" id="c-speed" step="0.1" required>
-                            </div>
-                            <div class="input-group">
-                                <label>Temps (min)</label>
-                                <input type="number" id="c-time" required>
-                            </div>
-                            <div class="input-group">
-                                <label>Pente (%)</label>
-                                <input type="number" id="c-incline" step="0.1" value="0">
-                            </div>
-                            <div class="input-group">
-                                <label>Distance (km)</label>
-                                <input type="number" id="c-dist" step="0.01" required>
-                            </div>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="btn-action" id="cardio-submit-btn">Ajouter la séance</button>
-                            <button type="button" class="btn-cancel hidden" id="cardio-cancel-btn" onclick="cancelCardioEdit()">Annuler</button>
-                        </div>
-                    </form>
-
-                    <div class="table-container">
-                        <table id="cardio-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Vitesse</th>
-                                    <th>Temps</th>
-                                    <th>Pente</th>
-                                    <th>Distance</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="cardio-body">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="graph-box">
-                    <h3>Volume de Distance Cardio (km)</h3>
-                    <div class="chart-container" id="cardio-chart">
-                        </div>
-                </div>
+                <div class="records-display-grid" id="records-container"></div>
             </div>
         </section>
 
@@ -277,7 +240,7 @@
     <div class="modal-overlay hidden" id="profile-modal">
         <div class="modal-card">
             <div class="modal-header">
-                <h2>Données Morphologiques & Sauvegardes</h2>
+                <h2>Profil & Souveraineté Numérique</h2>
                 <button class="close-modal-btn" id="close-profile-btn">&times;</button>
             </div>
             <form id="profile-form">
@@ -290,31 +253,31 @@
                         </select>
                     </div>
                     <div class="input-group modal-input">
-                        <label>Votre Âge (en années)</label>
-                        <input type="number" id="age" min="1" max="120" placeholder="Ex: 32" required>
+                        <label>Âge</label>
+                        <input type="number" id="age" min="1" max="120" required>
                     </div>
                     <div class="input-group modal-input">
                         <label>Taille fixe (cm)</label>
-                        <input type="number" id="height" placeholder="Ex: 180" required>
+                        <input type="number" id="height" required>
                     </div>
                     <div class="input-group modal-input">
                         <label>Niveau d'activité physique</label>
                         <select id="activity-level" required>
-                            <option value="1.2">Sédentaire (Peu ou pas d'exercice)</option>
-                            <option value="1.375">Légèrement actif (Exercice 1 à 3 fois/semaine)</option>
-                            <option value="1.55">Modérément actif (Exercice 3 à 5 fois/semaine)</option>
-                            <option value="1.725">Très actif (Entraînement quotidien intensif)</option>
+                            <option value="1.2">Sédentaire</option>
+                            <option value="1.375">Actif Léger (1-3 fois/sem)</option>
+                            <option value="1.55">Modérément Actif (3-5 fois/sem)</option>
+                            <option value="1.725">Intensif Quotidien</option>
                         </select>
                     </div>
                     
                     <hr class="modal-sep">
                     
                     <div class="backup-section">
-                        <h3>Administration Globale</h3>
-                        <p class="backup-desc">Téléchargez une sauvegarde locale chiffrée en JSON ou effectuez une restauration complète de vos données historiques.</p>
+                        <h3>Sauvegardes Locales (Chiffrement JSON)</h3>
+                        <p class="backup-desc">Aucun serveur cloud n'héberge vos données physiques.</p>
                         <div class="backup-actions">
-                            <button type="button" class="btn-small btn-edit" onclick="exportDataData()">💾 Exporter les Données</button>
-                            <button type="button" class="btn-small btn-delete" onclick="triggerImportField()">📥 Importer un fichier</button>
+                            <button type="button" class="btn-small btn-edit" onclick="exportDataData()">💾 Exporter</button>
+                            <button type="button" class="btn-small btn-delete" onclick="triggerImportField()">📥 Importer</button>
                             <input type="file" id="import-file-field" class="hidden" accept=".json" onchange="importDataData(event)">
                         </div>
                     </div>
