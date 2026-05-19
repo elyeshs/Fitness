@@ -17,8 +17,8 @@
             <div class="brand">Wally<span>Sport Elite</span></div>
             <div class="header-right">
                 <div class="header-date" id="current-date-display"></div>
-                <button class="profile-icon-btn" onclick="generatePDFReport()" title="Générer un Bilan PDF Mensuel">📄</button>
-                <button class="profile-icon-btn" id="open-profile-btn" title="Configuration & Sauvegardes">⚙️</button>
+                <button class="profile-icon-btn haptic-btn" onclick="generatePDFReport()" title="Générer un Bilan PDF Mensuel">📄</button>
+                <button class="profile-icon-btn haptic-btn" id="open-profile-btn" title="Configuration & Sauvegardes">⚙️</button>
             </div>
         </div>
     </header>
@@ -27,10 +27,10 @@
 
     <main class="container bento-grid">
         
-        <section class="bento-item col-span-6 bento-bmi">
+        <section class="bento-item col-span-6 bento-bmi" style="animation-delay: 0.1s;">
             <div class="bmi-container">
                 <div class="bmi-value bg-default" id="bmi-color-box">
-                    <span id="bmi-num">--</span>
+                    <span id="bmi-num" class="anim-number" data-val="0">0</span>
                     <small>IMC</small>
                 </div>
                 <div class="bmi-status">
@@ -44,27 +44,32 @@
             </div>
         </section>
 
-        <section class="bento-item col-span-6 bento-streak">
+        <section class="bento-item col-span-6 bento-streak" style="animation-delay: 0.2s;">
             <div class="streak-header">
                 <div class="streak-icon">🔥</div>
-                <div>
-                    <h3>Séries d'Assiduité</h3>
-                    <p>Validation mensuelle par discipline</p>
+                <div style="width: 100%;">
+                    <div style="display:flex; justify-content: space-between; align-items:flex-end;">
+                        <h3>Séries & Objectif</h3>
+                        <span id="weekly-goal-text" style="font-size: 0.8rem; font-weight:700; color:var(--navy);">0/3 cette semaine</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="weekly-goal-fill"></div>
+                    </div>
                 </div>
             </div>
             <div class="streak-dual-container">
-                <div class="streak-box box-muscu">
-                    <span id="streak-muscu-count">0 / 0</span>
+                <div class="streak-box box-muscu haptic-btn" id="streak-muscu-card">
+                    <span id="streak-muscu-count">0</span>
                     <small>Musculation</small>
                 </div>
-                <div class="streak-box box-cardio">
-                    <span id="streak-cardio-count">0 / 0</span>
-                    <small>Cardio</small>
+                <div class="streak-box box-cardio haptic-btn" id="streak-cardio-card">
+                    <span id="streak-cardio-count">0</span>
+                    <small>Cardio / Run</small>
                 </div>
             </div>
         </section>
 
-        <section class="bento-item col-span-6 bento-coach">
+        <section class="bento-item col-span-6 bento-coach" style="animation-delay: 0.3s;">
             <div class="section-header">
                 <h2>Coach Virtuel</h2>
                 <p>Analyse de votre dynamique.</p>
@@ -74,7 +79,7 @@
             </div>
         </section>
 
-        <section class="bento-item col-span-6 bento-gamification">
+        <section class="bento-item col-span-6 bento-gamification" style="animation-delay: 0.4s;">
             <div class="section-header">
                 <h2>Succès Élite</h2>
                 <p>Débloquez des hauts faits.</p>
@@ -82,28 +87,28 @@
             <div class="gami-grid" id="gamification-container"></div>
         </section>
 
-        <section class="bento-item bento-macros col-span-12">
+        <section class="bento-item bento-macros col-span-12" style="animation-delay: 0.5s;">
             <div class="macros-main-header">
                 <div>
                     <h2>Bilan Énergétique & Macronutriments</h2>
                     <p class="bento-item-desc">Ajustez manuellement ou laissez l'algorithme Elite calculer vos besoins.</p>
                 </div>
                 <div class="macro-mode-selectors">
-                    <label class="radio-label">
+                    <label class="radio-label haptic-btn">
                         <input type="radio" name="macro-mode" value="auto" checked id="macro-mode-auto">
                         <span>Calcul Auto</span>
                     </label>
-                    <label class="radio-label">
+                    <label class="radio-label haptic-btn">
                         <input type="radio" name="macro-mode" value="manual" id="macro-mode-manual">
                         <span>Manuel</span>
                     </label>
                 </div>
             </div>
             <div class="calories-grid">
-                <div class="cal-block"><span class="cal-val" id="cal-base">--</span><small>Métabolisme Basal</small></div>
-                <div class="cal-block highlighted-cal"><span class="cal-val" id="cal-maintenance">--</span><small>Maintien Actif</small></div>
-                <div class="cal-block"><span class="cal-val" id="cal-deficit">--</span><small>Déficit (Perte)</small></div>
-                <div class="cal-block"><span class="cal-val" id="cal-surplus">--</span><small>Surplus (Masse)</small></div>
+                <div class="cal-block"><span class="cal-val anim-number" id="cal-base" data-val="0">0</span><small>Métabolisme Basal</small></div>
+                <div class="cal-block highlighted-cal"><span class="cal-val anim-number" id="cal-maintenance" data-val="0">0</span><small>Maintien Actif</small></div>
+                <div class="cal-block"><span class="cal-val anim-number" id="cal-deficit" data-val="0">0</span><small>Déficit (Perte)</small></div>
+                <div class="cal-block"><span class="cal-val anim-number" id="cal-surplus" data-val="0">0</span><small>Surplus (Masse)</small></div>
             </div>
             <div class="macros-grid">
                 <div class="macro-bar-item prot-bar">
@@ -121,10 +126,10 @@
             </div>
         </section>
 
-        <section class="bento-item col-span-12">
+        <section class="bento-item col-span-12" style="animation-delay: 0.6s;">
             <div class="section-header">
                 <h2>Data-Viz Suite (Performances)</h2>
-                <p>Analysez votre évolution métrique.</p>
+                <p>Analysez votre évolution métrique avec précision.</p>
             </div>
             
             <form id="cardio-form" class="bento-inline-form-dense">
@@ -135,72 +140,61 @@
                     <input type="number" id="c-time" placeholder="Temps (Min)" required>
                     <input type="number" id="c-speed" step="0.1" placeholder="Vitesse (km/h)" required>
                     <input type="number" id="c-incline" step="0.1" placeholder="Pente (%)">
-                    <button type="submit" class="btn-action" id="cardio-submit-btn">OK</button>
-                    <button type="button" class="btn-cancel hidden" id="cardio-cancel-btn" onclick="cancelCardioEdit()">X</button>
+                    <button type="submit" class="btn-action haptic-btn" id="cardio-submit-btn">Ajouter</button>
+                    <button type="button" class="btn-cancel hidden haptic-btn" id="cardio-cancel-btn" onclick="cancelCardioEdit()">Annuler</button>
                 </div>
             </form>
 
             <div class="chart-box-wrapper">
                 <div class="chart-header-controls">
                     <h3>Courbes Multiparamétriques</h3>
-                    <select id="cardio-metric-select" onchange="renderCardio()">
+                    <select id="cardio-metric-select" class="haptic-btn" onchange="renderCardio()">
                         <option value="all">Comparatif (Tout Afficher)</option>
                         <option value="dist">Distance (km)</option>
                         <option value="speed">Vitesse (km/h)</option>
                         <option value="time">Temps (min)</option>
                     </select>
                 </div>
-                <div id="cardio-chart" style="width: 100%; min-height: 250px; background: #f8fafc; border-radius: 12px; padding: 10px;"></div>
+                <div id="cardio-chart" style="width: 100%; min-height: 250px; background: #f8fafc; border-radius: 12px; padding: 10px; position:relative;"></div>
             </div>
 
             <div class="table-container">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th><th>Dist.</th><th>Temps</th><th>Vit.</th><th>Pente</th><th>Action</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Date</th><th>Dist.</th><th>Temps</th><th>Vit.</th><th>Pente</th><th>Action</th></tr></thead>
                     <tbody id="cardio-body"></tbody>
                 </table>
             </div>
         </section>
 
         <div class="col-span-6" style="display:flex; flex-direction:column; gap:1.5rem;">
-            <section class="bento-item">
-                <div class="section-header">
-                    <h2>Fluctuations Poids</h2>
-                </div>
+            <section class="bento-item" style="animation-delay: 0.7s;">
+                <div class="section-header"><h2>Fluctuations Poids</h2></div>
                 <form id="weight-form" class="bento-inline-form">
-                    <input type="hidden" id="w-edit-index" value="-1">
                     <input type="date" id="w-date" required>
                     <input type="number" id="w-weight" step="0.1" placeholder="Poids (kg)" required>
-                    <button type="submit" class="btn-action" id="weight-submit-btn">+</button>
+                    <button type="submit" class="btn-action haptic-btn">+</button>
                 </form>
                 <div class="table-container" style="max-height: 200px;">
-                    <table>
-                        <tbody id="weight-body"></tbody>
-                    </table>
+                    <table><tbody id="weight-body"></tbody></table>
                 </div>
             </section>
             
-            <section class="bento-item">
-                <div class="section-header">
-                    <h2>Records Historiques</h2>
-                </div>
+            <section class="bento-item" style="animation-delay: 0.8s;">
+                <div class="section-header"><h2>Records Historiques</h2></div>
                 <form id="record-form" class="bento-inline-form">
                     <input type="text" id="rec-name" placeholder="Ex: Développé Couché" required>
                     <input type="text" id="rec-value" placeholder="Ex: 100 kg" required>
-                    <button type="submit" class="btn-action">+</button>
+                    <button type="submit" class="btn-action haptic-btn">+</button>
                 </form>
                 <div class="records-layout" id="records-container"></div>
             </section>
         </div>
 
-        <section class="bento-item col-span-6">
+        <section class="bento-item col-span-6" style="animation-delay: 0.9s;">
             <div class="calendar-header">
-                <button class="btn-icon" onclick="changeMonth(-1)">&#8249;</button>
+                <button class="btn-icon haptic-btn" onclick="changeMonth(-1)">&#8249;</button>
                 <h2 id="month-year-display" class="month-year-title">Mois Année</h2>
-                <button class="btn-icon" onclick="changeMonth(1)">&#8250;</button>
+                <button class="btn-icon haptic-btn" onclick="changeMonth(1)">&#8250;</button>
             </div>
             <div class="calendar-grid" id="calendar-grid"></div>
         </section>
@@ -211,21 +205,27 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Profil & Paramètres</h2>
-                <button class="close-modal-btn" id="close-profile-btn">&times;</button>
+                <button class="close-modal-btn haptic-btn" id="close-profile-btn">&times;</button>
             </div>
             <form id="profile-form">
                 <div class="modal-body">
-                    <div class="modal-input">
-                        <label>Sexe biologique</label>
-                        <select id="gender" required><option value="male">Homme</option><option value="female">Femme</option></select>
-                    </div>
-                    <div class="modal-input">
-                        <label>Âge (Années)</label>
-                        <input type="number" id="age" required>
-                    </div>
-                    <div class="modal-input">
-                        <label>Taille (cm)</label>
-                        <input type="number" id="height" required>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <div class="modal-input" style="flex:1; min-width:45%;">
+                            <label>Sexe</label>
+                            <select id="gender" required><option value="male">Homme</option><option value="female">Femme</option></select>
+                        </div>
+                        <div class="modal-input" style="flex:1; min-width:45%;">
+                            <label>Âge (Ans)</label>
+                            <input type="number" id="age" required>
+                        </div>
+                        <div class="modal-input" style="flex:1; min-width:45%;">
+                            <label>Taille (cm)</label>
+                            <input type="number" id="height" required>
+                        </div>
+                        <div class="modal-input" style="flex:1; min-width:45%;">
+                            <label>Objectif Séances/Semaine</label>
+                            <input type="number" id="weekly-goal-target" value="3" min="1" max="14" required>
+                        </div>
                     </div>
                     <div class="modal-input">
                         <label>Niveau d'activité</label>
@@ -241,15 +241,15 @@
                         <h3>Sauvegardes Locales</h3>
                         <p class="backup-desc">Vos données sont stockées uniquement sur cet appareil.</p>
                         <div class="backup-actions">
-                            <button type="button" class="btn-small btn-edit" onclick="exportDataData()">💾 Exporter JSON</button>
-                            <button type="button" class="btn-small btn-delete" onclick="triggerImportField()">📥 Importer JSON</button>
+                            <button type="button" class="btn-small btn-edit haptic-btn" onclick="exportDataData()">💾 Exporter JSON</button>
+                            <button type="button" class="btn-small btn-delete haptic-btn" onclick="triggerImportField()">📥 Importer JSON</button>
                             <input type="file" id="import-file-field" class="hidden" accept=".json" onchange="importDataData(event)">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn-cancel" id="cancel-profile-btn">Fermer</button>
-                    <button type="submit" class="btn-action">Sauvegarder</button>
+                    <button type="button" class="btn-cancel haptic-btn" id="cancel-profile-btn">Fermer</button>
+                    <button type="submit" class="btn-action haptic-btn">Sauvegarder</button>
                 </div>
             </form>
         </div>
@@ -259,15 +259,18 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modal-day-title">Date</h2>
-                <button class="close-modal-btn" onclick="document.getElementById('calendar-day-modal').classList.add('hidden')">&times;</button>
+                <button class="close-modal-btn haptic-btn" onclick="closeDayModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="session-form" class="bento-inline-form" onsubmit="addSessionToDay(event)">
+                <form id="session-form" class="bento-inline-form" onsubmit="saveSessionToDay(event)">
                     <input type="hidden" id="modal-day-date">
-                    <input type="text" id="session-name" placeholder="Nom de la séance..." required>
-                    <button type="submit" class="btn-action">+</button>
+                    <input type="hidden" id="session-edit-id" value="-1">
+                    <input type="text" id="session-name" placeholder="Ex: Séance Pecs, Run 10km..." required>
+                    <button type="submit" class="btn-action haptic-btn" id="modal-session-btn">+</button>
                 </form>
-                <div id="modal-day-sessions" style="margin-top: 1rem;"></div>
+                
+                <h3 style="font-size:0.85rem; margin-top:15px; color:var(--text-muted);">Séances enregistrées :</h3>
+                <div id="modal-day-sessions" class="modal-session-list"></div>
             </div>
         </div>
     </div>
