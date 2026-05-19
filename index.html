@@ -27,7 +27,7 @@
 
     <main class="container bento-grid">
         
-        <section class="bento-item bento-bmi">
+        <section class="bento-item col-span-6 bento-bmi">
             <div class="bmi-container">
                 <div class="bmi-value bg-default" id="bmi-color-box">
                     <span id="bmi-num">--</span>
@@ -44,32 +44,17 @@
             </div>
         </section>
 
-        <section class="bento-item bento-streak">
+        <section class="bento-item col-span-6 bento-streak">
             <div class="streak-header">
                 <div class="streak-icon">🔥</div>
                 <div>
                     <h3>Série d'Assiduité</h3>
-                    <p>Régularité ce mois-ci</p>
+                    <p>Validation des entraînements prévus</p>
                 </div>
             </div>
             <div class="streak-counter">
-                <span id="streak-days-count">0</span>
-                <small>Séance(s) Validée(s)</small>
-            </div>
-        </section>
-
-        <section class="bento-item bento-recovery">
-            <h3>Sommeil & Récupération</h3>
-            <p class="bento-item-desc">Suivez vos nuits pour évaluer votre potentiel énergétique.</p>
-            <form id="sleep-form" class="sleep-mini-form">
-                <div class="inline-input-group">
-                    <input type="number" id="sleep-hours" min="0" max="24" step="0.5" placeholder="Heures" required>
-                    <button type="submit" class="btn-action-sm">Log</button>
-                </div>
-            </form>
-            <div class="recovery-score-display">
-                <div class="score-bar-bg"><div class="score-bar-fill" id="sleep-progress-bar" style="width: 0%"></div></div>
-                <span id="sleep-score-text">Sommeil requis : 8h</span>
+                <span id="streak-days-count">0 / 0</span>
+                <small>Séance(s) Validée(s) ce mois</small>
             </div>
         </section>
 
@@ -135,7 +120,49 @@
             </div>
         </section>
 
-        <section class="bento-item col-span-6 bento-weight-section">
+        <section class="bento-item col-span-12 bento-cardio-section">
+            <div class="section-header">
+                <h2>Analyse Endurance & Cardio</h2>
+                <p>Mesurez et visualisez l'ensemble de vos paramètres de course.</p>
+            </div>
+
+            <form id="cardio-form" class="bento-inline-form-dense">
+                <input type="hidden" id="c-edit-index" value="-1">
+                <div class="form-grid-dense">
+                    <input type="date" id="c-date" required>
+                    <input type="number" id="c-speed" step="0.1" placeholder="Vitesse (km/h)" required>
+                    <input type="number" id="c-time" placeholder="Temps (Min)" required>
+                    <input type="number" id="c-incline" step="0.1" placeholder="Pente (%)">
+                    <input type="number" id="c-dist" step="0.01" placeholder="Distance (km)" required>
+                    <button type="submit" class="btn-action" id="cardio-submit-btn">OK</button>
+                    <button type="button" class="btn-cancel hidden" id="cardio-cancel-btn" onclick="cancelCardioEdit()">X</button>
+                </div>
+            </form>
+
+            <div class="chart-box-wrapper">
+                <div class="chart-header-controls" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                    <h3 style="margin:0; font-size:1rem;">Courbe de Progression</h3>
+                    <select id="cardio-metric-select" onchange="renderCardio()" style="width:auto; padding:6px 12px; font-weight:700; color:var(--navy); border-color:var(--gold); cursor:pointer;">
+                        <option value="dist">Distance (km)</option>
+                        <option value="speed">Vitesse (km/h)</option>
+                        <option value="time">Temps (min)</option>
+                        <option value="incline">Pente (%)</option>
+                    </select>
+                </div>
+                <div class="chart-container" id="cardio-chart"></div>
+            </div>
+
+            <div class="table-container mini-table">
+                <table id="cardio-table">
+                    <thead>
+                        <tr><th>Date</th><th>Vitesse</th><th>Temps</th><th>Pente</th><th>Distance</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="cardio-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="bento-item col-span-12 bento-weight-section">
             <div class="section-header">
                 <h2>Évolution du Poids</h2>
                 <p>Enregistrez vos variations corporelles régulières.</p>
@@ -161,39 +188,6 @@
                         <tr><th>Date</th><th>Poids</th><th>Delta</th><th>Actions</th></tr>
                     </thead>
                     <tbody id="weight-body"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <section class="bento-item col-span-6 bento-cardio-section">
-            <div class="section-header">
-                <h2>Analyse Endurance</h2>
-                <p>Mesurez la distance et la vitesse de vos séances.</p>
-            </div>
-
-            <form id="cardio-form" class="bento-inline-form-dense">
-                <input type="hidden" id="c-edit-index" value="-1">
-                <div class="form-grid-dense">
-                    <input type="date" id="c-date" required>
-                    <input type="number" id="c-speed" step="0.1" placeholder="Vitesse (km/h)" required>
-                    <input type="number" id="c-time" placeholder="Min" required>
-                    <input type="number" id="c-incline" step="0.1" placeholder="Pente (%)">
-                    <input type="number" id="c-dist" step="0.01" placeholder="Distance (km)" required>
-                    <button type="submit" class="btn-action" id="cardio-submit-btn">OK</button>
-                    <button type="button" class="btn-cancel hidden" id="cardio-cancel-btn" onclick="cancelCardioEdit()">X</button>
-                </div>
-            </form>
-
-            <div class="chart-box-wrapper">
-                <div class="chart-container" id="cardio-chart"></div>
-            </div>
-
-            <div class="table-container mini-table">
-                <table id="cardio-table">
-                    <thead>
-                        <tr><th>Date</th><th>Vit.</th><th>Dist.</th><th>Actions</th></tr>
-                    </thead>
-                    <tbody id="cardio-body"></tbody>
                 </table>
             </div>
         </section>
