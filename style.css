@@ -114,8 +114,6 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body);
 .btn-action:hover { background: var(--gold); color: var(--navy); }
 .btn-cancel { background: var(--text-muted); color: var(--white); border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
 .chart-header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.chart-header-controls select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; font-weight: 600; outline: none; cursor:pointer;}
-
 .table-container { width: 100%; overflow-x: auto; margin-top: 15px; }
 table { width: 100%; border-collapse: collapse; text-align: left; }
 th { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); padding: 8px; border-bottom: 1px solid var(--border); }
@@ -123,6 +121,11 @@ td { padding: 8px; font-size: 0.8rem; border-bottom: 1px solid #f1f5f9; }
 .action-btns { display: flex; gap: 4px; }
 .btn-small { border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; cursor: pointer; font-weight: 600; }
 .btn-edit { background: #e2e8f0; color: var(--navy); } .btn-delete { background: var(--navy); color: var(--white); }
+
+/* NOUVEAU: TOGGLES MULTIPLES POUR GRAPHIQUE */
+.metric-toggles { display: flex; gap: 10px; flex-wrap: wrap; }
+.metric-toggles label { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700; cursor: pointer; color: var(--navy); }
+.metric-toggles input[type="checkbox"] { accent-color: var(--gold); transform: scale(1.1); cursor:pointer;}
 
 /* RECORDS & CALENDAR NOUVEAUX STYLES */
 .records-layout { display: flex; flex-direction: column; gap: 10px; }
