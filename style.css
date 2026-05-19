@@ -1,11 +1,11 @@
 :root {
-    --navy: #0f172a;       /* Navy Sombre Royal - Vitesse */
-    --gold: #c5a059;       /* Or Mat Couture - Distance */
+    --navy: #0f172a;       
+    --gold: #c5a059;       
     --gold-glow: rgba(197, 160, 89, 0.15);
     --bg-body: #f8fafc;
     --card-bg: #ffffff;
     --text-dark: #0f172a;
-    --text-muted: #64748b; /* Ardoise - Temps */
+    --text-muted: #64748b; 
     --white: #ffffff;
     --border: #e2e8f0;
     --radius-bento: 16px;
@@ -56,12 +56,18 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body);
 .bmi-status p { font-size: 0.75rem; color: var(--text-muted); }
 .delta-trend-box { margin-top: 15px; font-size: 0.85rem; display:flex; justify-content:space-between; padding: 10px; background: #f8fafc; border-radius: 8px;}
 
-/* STREAK & COACH */
+/* STREAK (SPLIT CARDIO/MUSCU) & COACH */
 .streak-header { display: flex; gap: 15px; align-items: center; }
 .streak-icon { font-size: 2rem; }
-.streak-counter { margin-top: 15px; text-align: center; background: #f8fafc; padding: 15px; border-radius: 8px;}
-.streak-counter span { display: block; font-size: 1.5rem; font-weight: 700; color: var(--gold); }
-.streak-counter small { font-size: 0.75rem; color: var(--text-muted); }
+.streak-dual-container { display: flex; gap: 10px; margin-top: 15px; }
+.streak-box { flex: 1; text-align: center; padding: 15px; border-radius: 8px; }
+.box-muscu { background: var(--navy); color: var(--white); }
+.box-muscu span { display: block; font-size: 1.5rem; font-weight: 700; color: var(--white); }
+.box-muscu small { font-size: 0.75rem; color: #cbd5e1; }
+.box-cardio { background: var(--gold-glow); border: 1px solid var(--gold); }
+.box-cardio span { display: block; font-size: 1.5rem; font-weight: 700; color: var(--gold); }
+.box-cardio small { font-size: 0.75rem; color: var(--navy); font-weight: 600;}
+
 .coach-text-box { background: var(--gold-glow); border-left: 4px solid var(--gold); padding: 15px; border-radius: 0 8px 8px 0; font-size: 0.9rem; font-weight: 500; line-height: 1.6; color: var(--navy); }
 .gami-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;}
 .badge { background: #f8fafc; border: 1px solid var(--border); padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; color: var(--navy);}
