@@ -57,7 +57,7 @@ document.getElementById('profile-form').addEventListener('submit', (e) => {
     });
     profileModal.classList.add('hidden');
     recalculatePhysiqueAndCalories();
-    renderCalendarInit(); // Recalculate weekly goal
+    renderCalendarInit(); 
 });
 
 function loadProfileData() {
@@ -130,24 +130,24 @@ function recalculatePhysiqueAndCalories() {
     }
 }
 
-// === TOOLTIP & CROSSHAIR (DATA VIZ) ===
-function showTooltipWithCrosshair(e, text, xPos) {
+// === TOOLTIP & CROSSHAIR DYNAMIQUE PAR GRAPHIQUE ===
+function showTooltipWithCrosshair(e, text, xPos, containerId) {
     const tt = document.getElementById('chart-tooltip');
     tt.innerHTML = text; tt.classList.remove('hidden');
     tt.style.left = e.pageX + 'px'; tt.style.top = e.pageY + 'px';
     
-    const crosshair = document.getElementById('crosshair-y');
+    const crosshair = document.getElementById(`crosshair-${containerId}`);
     if (crosshair) { crosshair.style.display = 'block'; crosshair.setAttribute('x1', xPos); crosshair.setAttribute('x2', xPos); }
 }
-function hideTooltipAndCrosshair() { 
+function hideTooltipAndCrosshair(containerId) { 
     document.getElementById('chart-tooltip').classList.add('hidden'); 
-    const crosshair = document.getElementById('crosshair-y'); if(crosshair) crosshair.style.display = 'none';
+    const crosshair = document.getElementById(`crosshair-${containerId}`); if(crosshair) crosshair.style.display = 'none';
 }
 
 function generateDataVizSVG(containerId, datasets, labels) {
     const container = document.getElementById(containerId);
     if (!datasets || datasets.length === 0 || datasets[0].data.length === 0) {
-        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding: 50px;">Aucune donnée métrique enregistrée.</div>`; return;
+        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding: 50px;">Données insuffisantes pour le graphique.</div>`; return;
     }
 
     const width = container.clientWidth || 800; const height = 280;
@@ -163,8 +163,8 @@ function generateDataVizSVG(containerId, datasets, labels) {
         svg += `<line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="var(--border)" stroke-dasharray="4" stroke-width="1" />`;
     }
 
-    // Ligne interactive (Crosshair)
-    svg += `<line id="crosshair-y" x1="0" y1="${paddingY}" x2="0" y2="${height - paddingY}" stroke="var(--navy)" stroke-width="1" stroke-dasharray="4" style="display:none; pointer-events:none;" />`;
+    // Crosshair scopé pour éviter les bugs multi-graphiques
+    svg += `<line id="crosshair-${containerId}" x1="0" y1="${paddingY}" x2="0" y2="${height - paddingY}" stroke="var(--navy)" stroke-width="1" stroke-dasharray="4" style="display:none; pointer-events:none;" />`;
 
     datasets.forEach((ds) => {
         if(!ds.data || ds.data.length === 0) return;
@@ -173,18 +173,17 @@ function generateDataVizSVG(containerId, datasets, labels) {
         
         const points = ds.data.map((val, i) => {
             const x = paddingX + (i * (graphW / Math.max(1, ds.data.length - 1)));
-            const y = paddingY + graphH - ((val - minV) / range) * graphH;
+            const y = paddingY + graphH - ((val - minV) / Math.max(1, range)) * graphH;
             return {x, y, val};
         });
 
         const pathD = points.map((p, i) => `${i===0?'M':'L'} ${p.x} ${p.y}`).join(' ');
-        // Ajout de la classe path-anim pour l'effet de tracé "Live"
         svg += `<path class="path-anim" d="${pathD}" fill="none" stroke="${ds.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
 
         points.forEach((p, i) => {
             svg += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${ds.color}" stroke="#fff" stroke-width="2" 
-                    onmouseenter="showTooltipWithCrosshair(event, '${labels[i]}<br/>${ds.label} : ${p.val}', ${p.x})" 
-                    onmouseleave="hideTooltipAndCrosshair()" style="cursor:crosshair; transition: r 0.2s;" />`;
+                    onmouseenter="showTooltipWithCrosshair(event, '${labels[i]}<br/>${ds.label} : ${p.val}', ${p.x}, '${containerId}')" 
+                    onmouseleave="hideTooltipAndCrosshair('${containerId}')" style="cursor:crosshair; transition: r 0.2s;" />`;
         });
     });
 
@@ -209,7 +208,7 @@ function generateDataVizSVG(containerId, datasets, labels) {
     container.innerHTML = svg;
 }
 
-// === CARDIO CRUD ===
+// === CARDIO CRUD & DATA-VIZ AVEC PENTE ===
 document.getElementById('cardio-form').addEventListener('submit', (e) => {
     e.preventDefault();
     let history = safeGetItem('cardioHistory');
@@ -238,7 +237,7 @@ window.editCardio = function(id) {
     if(idx !== -1) {
         let s = history[idx]; document.getElementById('c-date').value = s.date;
         document.getElementById('c-dist').value = s.dist; document.getElementById('c-time').value = s.time;
-        document.getElementById('c-speed').value = s.speed; document.getElementById('c-incline').value = s.incline;
+        document.getElementById('c-speed').value = s.speed; document.getElementById('c-incline').value = s.incline || 0;
         document.getElementById('c-edit-index').value = idx;
         document.getElementById('cardio-submit-btn').innerText = "MaJ";
         document.getElementById('cardio-cancel-btn').classList.remove('hidden');
@@ -250,22 +249,28 @@ window.deleteCardio = function(id) {
 function renderCardio() {
     let history = safeGetItem('cardioHistory').sort((a,b) => new Date(a.date) - new Date(b.date));
     document.getElementById('cardio-body').innerHTML = [...history].reverse().map(s => `
-        <tr><td>${formatDate(s.date)}</td><td><strong>${s.dist}</strong> km</td><td>${s.time} min</td><td>${s.speed} km/h</td><td>${s.incline}%</td>
+        <tr><td>${formatDate(s.date)}</td><td><strong>${s.dist}</strong> km</td><td>${s.time} min</td><td>${s.speed} km/h</td><td>${s.incline || 0}%</td>
         <td><div class="action-btns"><button class="btn-small btn-edit haptic-btn" onclick="editCardio(${s.id})">Éditer</button><button class="btn-small btn-delete haptic-btn" onclick="deleteCardio(${s.id})">X</button></div></td></tr>
     `).join('');
     const metric = document.getElementById('cardio-metric-select').value;
     const labels = history.map(s => formatDate(s.date));
+    
     const dsDist = { label: 'Distance', data: history.map(s => s.dist), color: 'var(--gold)' };
     const dsSpeed = { label: 'Vitesse', data: history.map(s => s.speed), color: 'var(--navy)' };
     const dsTime = { label: 'Temps', data: history.map(s => s.time), color: '#94a3b8' };
+    const dsIncline = { label: 'Pente', data: history.map(s => s.incline || 0), color: '#10b981' }; // Vert Émeraude pour la pente
 
     let activeDatasets = [];
-    if(metric === 'all') activeDatasets = [dsDist, dsSpeed, dsTime]; else if (metric === 'dist') activeDatasets = [dsDist];
-    else if (metric === 'speed') activeDatasets = [dsSpeed]; else if (metric === 'time') activeDatasets = [dsTime];
+    if(metric === 'all') activeDatasets = [dsDist, dsSpeed, dsTime, dsIncline]; 
+    else if (metric === 'dist') activeDatasets = [dsDist];
+    else if (metric === 'speed') activeDatasets = [dsSpeed]; 
+    else if (metric === 'time') activeDatasets = [dsTime];
+    else if (metric === 'incline') activeDatasets = [dsIncline];
+    
     generateDataVizSVG('cardio-chart', activeDatasets, labels);
 }
 
-// === POIDS & RECORDS ===
+// === POIDS (COURBE AJOUTEE) & RECORDS ===
 document.getElementById('weight-form').addEventListener('submit', (e) => {
     e.preventDefault();
     let history = safeGetItem('weightHistory');
@@ -273,7 +278,15 @@ document.getElementById('weight-form').addEventListener('submit', (e) => {
     history.sort((a,b) => new Date(a.date) - new Date(b.date));
     safeSetItem('weightHistory', history); renderWeight(); recalculatePhysiqueAndCalories(); updateSmartCoach();
 });
-function renderWeight() { document.getElementById('weight-body').innerHTML = [...safeGetItem('weightHistory')].reverse().map(s => `<tr><td>${formatDate(s.date)}</td><td><strong>${s.weight} kg</strong></td></tr>`).join(''); }
+function renderWeight() { 
+    const history = safeGetItem('weightHistory').sort((a,b) => new Date(a.date) - new Date(b.date));
+    document.getElementById('weight-body').innerHTML = [...history].reverse().map(s => `<tr><td>${formatDate(s.date)}</td><td><strong>${s.weight} kg</strong></td></tr>`).join(''); 
+    
+    // Rendu du nouveau Graphique de Poids
+    const labels = history.map(s => formatDate(s.date));
+    const dsWeight = { label: 'Poids (kg)', data: history.map(s => s.weight), color: 'var(--navy)' };
+    generateDataVizSVG('weight-chart', [dsWeight], labels);
+}
 
 document.getElementById('record-form').addEventListener('submit', (e) => {
     e.preventDefault(); let r = safeGetItem('elitePersonalRecords');
@@ -285,7 +298,7 @@ function renderRecords() { document.getElementById('records-container').innerHTM
     <div class="record-elite-title">${escapeHtml(x.name)}</div><div class="record-elite-value">${escapeHtml(x.value)}</div></div>`).join(''); }
 window.deleteRecord = function(id) { safeSetItem('elitePersonalRecords', safeGetItem('elitePersonalRecords').filter(x => x.id !== id)); renderRecords(); }
 
-// === CALENDRIER, THEME DYNAMIQUE & ASSIDUITE ===
+// === CALENDRIER (AVEC JOURS DE LA SEMAINE) ===
 let currentMonth = new Date().getMonth(); let currentYear = new Date().getFullYear();
 function renderCalendarInit() { renderCalendar(currentMonth, currentYear); calculateWeeklyGoal(); }
 window.changeMonth = function(dir) {
@@ -297,10 +310,8 @@ function calculateWeeklyGoal() {
     let monthlyData = safeGetItem('calendarData', '{}');
     const profile = safeGetItem('userProfileBaseV2', 'null');
     const target = profile ? (profile.weeklyGoal || 3) : 3;
-
-    // Calculer la semaine en cours (Lundi -> Dimanche)
     const today = new Date();
-    const day = today.getDay() || 7; // Lundi=1, Dimanche=7
+    const day = today.getDay() || 7; 
     let weekStart = new Date(today); weekStart.setDate(today.getDate() - day + 1);
     
     let weeklySessions = 0;
@@ -332,7 +343,19 @@ function updateConsistencyStreak(monthlyData, daysInMonth, year, month) {
 
 function renderCalendar(month, year) {
     document.getElementById('month-year-display').innerText = new Date(year, month).toLocaleString('fr-FR', {month:'long', year:'numeric'}).toUpperCase();
-    const grid = document.getElementById('calendar-grid'); grid.innerHTML = '';
+    const grid = document.getElementById('calendar-grid'); 
+    
+    // Construction de l'entête des Jours (Lun, Mar, Mer...)
+    const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    let gridHTML = daysOfWeek.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+    
+    // Calcul des cases vides du début du mois
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const emptyCells = (firstDayOfMonth + 6) % 7; // Convertit Dimanche(0) en 6, Lundi(1) en 0...
+    
+    for(let i=0; i<emptyCells; i++) { gridHTML += `<div class="cal-day cal-day-empty"></div>`; }
+    
+    // Génération des jours réels
     const daysInMonth = new Date(year, month+1, 0).getDate();
     let monthlyData = safeGetItem('calendarData', '{}');
 
@@ -340,7 +363,6 @@ function renderCalendar(month, year) {
         let dKey = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
         let sessions = monthlyData[dKey] || [];
         
-        // Thème dynamique pour le jour (basé sur la dernière séance du jour)
         let dayThemeClass = "";
         if (sessions.length > 0) {
             let lastSess = sessions[sessions.length-1].name.toUpperCase();
@@ -355,8 +377,10 @@ function renderCalendar(month, year) {
             dHtml += `<div class="cal-day-content"><span class="cal-badge ${badgeC}">${escapeHtml(s.name)}</span>
             <input type="checkbox" ${s.validated?'checked':''} onclick="event.stopPropagation(); toggleSession('${dKey}',${s.id})"></div>`;
         });
-        dHtml += `</div>`; grid.innerHTML += dHtml;
+        dHtml += `</div>`; gridHTML += dHtml;
     }
+    
+    grid.innerHTML = gridHTML;
     updateConsistencyStreak(monthlyData, daysInMonth, year, month);
 }
 
