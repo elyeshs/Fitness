@@ -50,7 +50,7 @@
                 <div style="width: 100%;">
                     <div style="display:flex; justify-content: space-between; align-items:flex-end;">
                         <h3>Séries & Objectif</h3>
-                        <span id="weekly-goal-text" style="font-size: 0.8rem; font-weight:700; color:var(--navy);">0/3 cette semaine</span>
+                        <span id="weekly-goal-text" style="font-size: 0.8rem; font-weight:700; color:var(--navy);">0/0 cette semaine</span>
                     </div>
                     <div class="progress-bar-bg">
                         <div class="progress-bar-fill" id="weekly-goal-fill"></div>
@@ -146,15 +146,14 @@
             </form>
 
             <div class="chart-box-wrapper">
-                <div class="chart-header-controls">
-                    <h3>Courbes Multiparamétriques</h3>
-                    <select id="cardio-metric-select" class="haptic-btn" onchange="renderCardio()">
-                        <option value="all">Comparatif (Tout Afficher)</option>
-                        <option value="dist">Distance (km)</option>
-                        <option value="speed">Vitesse (km/h)</option>
-                        <option value="time">Temps (min)</option>
-                        <option value="incline">Pente (%)</option>
-                    </select>
+                <div class="chart-header-controls" style="flex-wrap: wrap; gap:10px;">
+                    <h3>Courbes Multiples</h3>
+                    <div class="metric-toggles" id="cardio-metric-toggles">
+                        <label class="haptic-btn"><input type="checkbox" value="dist" onchange="renderCardio()" checked> Distance</label>
+                        <label class="haptic-btn"><input type="checkbox" value="speed" onchange="renderCardio()" checked> Vitesse</label>
+                        <label class="haptic-btn"><input type="checkbox" value="time" onchange="renderCardio()" checked> Temps</label>
+                        <label class="haptic-btn"><input type="checkbox" value="incline" onchange="renderCardio()"> Pente</label>
+                    </div>
                 </div>
                 <div id="cardio-chart" style="width: 100%; min-height: 250px; background: #f8fafc; border-radius: 12px; padding: 10px; position:relative;"></div>
             </div>
@@ -214,30 +213,26 @@
             <form id="profile-form">
                 <div class="modal-body">
                     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        <div class="modal-input" style="flex:1; min-width:45%;">
+                        <div class="modal-input" style="flex:1; min-width:30%;">
                             <label>Sexe</label>
                             <select id="gender" required><option value="male">Homme</option><option value="female">Femme</option></select>
                         </div>
-                        <div class="modal-input" style="flex:1; min-width:45%;">
+                        <div class="modal-input" style="flex:1; min-width:30%;">
                             <label>Âge (Ans)</label>
                             <input type="number" id="age" required>
                         </div>
-                        <div class="modal-input" style="flex:1; min-width:45%;">
+                        <div class="modal-input" style="flex:1; min-width:30%;">
                             <label>Taille (cm)</label>
                             <input type="number" id="height" required>
-                        </div>
-                        <div class="modal-input" style="flex:1; min-width:45%;">
-                            <label>Objectif Séances/Semaine</label>
-                            <input type="number" id="weekly-goal-target" value="3" min="1" max="14" required>
                         </div>
                     </div>
                     <div class="modal-input">
                         <label>Niveau d'activité</label>
                         <select id="activity-level" required>
-                            <option value="1.2">Sédentaire</option>
-                            <option value="1.375">Actif Léger</option>
-                            <option value="1.55">Modérément Actif</option>
-                            <option value="1.725">Intensif Quotidien</option>
+                            <option value="1.2">Sédentaire (Peu ou pas d'exercice)</option>
+                            <option value="1.375">Actif Léger (1-3 fois/sem)</option>
+                            <option value="1.55">Modérément Actif (3-5 fois/sem)</option>
+                            <option value="1.725">Intensif Quotidien (6-7 fois/sem)</option>
                         </select>
                     </div>
                     <hr class="modal-sep">
