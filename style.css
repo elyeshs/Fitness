@@ -119,7 +119,7 @@ body {
 
 @media (max-width: 1024px) {
     .col-span-8, .col-span-6, .col-span-4 { grid-column: span 12; }
-    .bento-bmi, .bento-streak, .bento-recovery { grid-column: span 12; }
+    .bento-bmi, .bento-streak { grid-column: span 12; }
 }
 
 .bento-item h2, .bento-item h3 {
@@ -152,16 +152,6 @@ body {
 .streak-counter { margin-top: 1rem; }
 .streak-counter span { font-size: 2.25rem; font-weight: 800; color: var(--navy); line-height: 1; display: block;}
 .streak-counter small { font-size: 0.7rem; font-weight: 600; color: var(--gold); text-transform: uppercase; }
-
-/* RÉCUPÉRATION SOMMEIL */
-.sleep-mini-form { margin: 0.5rem 0; }
-.inline-input-group { display: flex; gap: 6px; }
-.inline-input-group input { padding: 8px; font-size: 0.8rem; border-radius: 6px; }
-.btn-action-sm { background: var(--navy); color: var(--white); border: none; padding: 0 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
-.recovery-score-display { margin-top: 0.5rem; }
-.score-bar-bg { background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
-.score-bar-fill { background: var(--gold); height: 100%; transition: width 0.4s ease; }
-#sleep-score-text { font-size: 0.7rem; font-weight: 500; color: var(--text-muted); }
 
 /* HYBRID MACROS BOX */
 .macros-main-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
@@ -201,10 +191,10 @@ body {
 
 /* CHARTS MODE AREA ARRONDI PREMIUM */
 .chart-box-wrapper { background: #fafbfc; border-radius: 12px; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid rgba(0,0,0,0.01); }
-.chart-container { width: 100%; height: 140px; display: flex; align-items: center; justify-content: center; }
+.chart-container { width: 100%; height: 180px; display: flex; align-items: center; justify-content: center; }
 
 /* TABLES MINIMALISTES */
-.mini-table { max-height: 150px; overflow-y: auto; margin-top: 0.5rem; }
+.mini-table { max-height: 200px; overflow-y: auto; margin-top: 0.5rem; }
 table { width: 100%; border-collapse: collapse; text-align: left; }
 th { font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); padding: 8px; border-bottom: 1px solid var(--border); letter-spacing: 0.5px; }
 td { padding: 8px; font-size: 0.8rem; border-bottom: 1px solid #f1f5f9; }
@@ -213,21 +203,51 @@ td { padding: 8px; font-size: 0.8rem; border-bottom: 1px solid #f1f5f9; }
 .btn-edit { background: #e2e8f0; color: var(--navy); }
 .btn-delete { background: var(--navy); color: var(--white); }
 
-/* CALENDRIER BENTO DESIGN */
+/* CALENDRIER BENTO DESIGN & CHECKBOXES */
 .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .month-year-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--navy); }
 .btn-icon { background: none; border: 1px solid var(--border); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; color: var(--navy); font-size: 0.7rem; }
 .btn-icon:hover { background: var(--navy); color: var(--white); }
 .calendar-grid-headers { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.7rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; }
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.cal-day { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; min-height: 60px; padding: 6px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; }
+.cal-day { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; min-height: 70px; padding: 6px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.15s ease; }
 .cal-day:hover { border-color: var(--gold); background: var(--white); }
 .cal-day.empty { background: transparent; border: none; cursor: default; }
 .cal-date { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); align-self: flex-end; }
-.cal-badge { font-size: 0.58rem; font-weight: 700; padding: 2px 4px; border-radius: 3px; color: var(--white); text-align: center; text-transform: uppercase; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-day-content { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; gap: 4px; overflow: hidden; }
+.cal-badge { font-size: 0.58rem; font-weight: 700; padding: 2px 4px; border-radius: 3px; color: var(--white); text-align: center; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 .badge-cardio { background: #64748b; }
 .badge-muscu { background: var(--gold); color: var(--navy); }
 .badge-default { background: var(--navy); }
+
+/* CUSTOM CHECKBOX STYLING */
+.cal-checkbox {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    flex-shrink: 0;
+    background: var(--white);
+}
+.cal-checkbox:checked {
+    background-color: var(--gold);
+    border-color: var(--gold);
+}
+.cal-checkbox:checked::after {
+    content: "✔";
+    color: var(--navy);
+    font-size: 11px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: 800;
+}
 
 /* STATS LIST & HALL OF FAME */
 .stats-list { list-style: none; }
