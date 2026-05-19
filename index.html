@@ -17,12 +17,8 @@
             <div class="brand">Wally<span>Sport Elite</span></div>
             <div class="header-right">
                 <div class="header-date" id="current-date-display"></div>
-                <button class="profile-icon-btn" onclick="generatePDFReport()" title="Générer un Bilan PDF Mensuel">
-                    📄
-                </button>
-                <button class="profile-icon-btn" id="open-profile-btn" title="Configuration & Sauvegardes">
-                    ⚙️
-                </button>
+                <button class="profile-icon-btn" onclick="generatePDFReport()" title="Générer un Bilan PDF Mensuel">📄</button>
+                <button class="profile-icon-btn" id="open-profile-btn" title="Configuration & Sauvegardes">⚙️</button>
             </div>
         </div>
     </header>
@@ -63,24 +59,21 @@
         </section>
 
         <section class="bento-item col-span-6 bento-coach">
-            <div class="section-header" style="margin-bottom: 10px;">
+            <div class="section-header">
                 <h2>Coach Virtuel</h2>
                 <p>Analyse de votre dynamique.</p>
             </div>
             <div class="coach-text-box">
-                <p id="smart-coach-text" style="font-weight: 500; font-size: 0.9rem; color: var(--navy); line-height: 1.6;">
-                    Entraînez-vous régulièrement pour générer des analyses prédictives.
-                </p>
+                <p id="smart-coach-text">Entraînez-vous régulièrement pour générer des analyses prédictives.</p>
             </div>
         </section>
 
         <section class="bento-item col-span-6 bento-gamification">
-            <div class="section-header" style="margin-bottom: 10px;">
+            <div class="section-header">
                 <h2>Succès Élite</h2>
                 <p>Débloquez des hauts faits.</p>
             </div>
-            <div class="gami-grid" id="gamification-container">
-                </div>
+            <div class="gami-grid" id="gamification-container"></div>
         </section>
 
         <section class="bento-item bento-macros col-span-12">
@@ -92,231 +85,162 @@
                 <div class="macro-mode-selectors">
                     <label class="radio-label">
                         <input type="radio" name="macro-mode" value="auto" checked id="macro-mode-auto">
-                        <span>Calcul Automatique</span>
+                        <span>Calcul Auto</span>
                     </label>
                     <label class="radio-label">
                         <input type="radio" name="macro-mode" value="manual" id="macro-mode-manual">
-                        <span>Saisie Manuelle</span>
+                        <span>Manuel</span>
                     </label>
                 </div>
             </div>
-
             <div class="calories-grid">
-                <div class="cal-block">
-                    <span class="cal-val" id="cal-base">--</span>
-                    <small>Métabolisme de Base</small>
-                </div>
-                <div class="cal-block highlighted-cal">
-                    <span class="cal-val" id="cal-maintenance">--</span>
-                    <small>Maintenance</small>
-                </div>
-                <div class="cal-block deficit-cal">
-                    <span class="cal-val" id="cal-deficit">--</span>
-                    <small>Objectif Perte (-500 kcal)</small>
-                </div>
-                <div class="cal-block surplus-cal">
-                    <span class="cal-val" id="cal-surplus">--</span>
-                    <small>Objectif Prise (+300 kcal)</small>
-                </div>
+                <div class="cal-block"><span class="cal-val" id="cal-base">--</span><small>Métabolisme Basal</small></div>
+                <div class="cal-block highlighted-cal"><span class="cal-val" id="cal-maintenance">--</span><small>Maintien Actif</small></div>
+                <div class="cal-block"><span class="cal-val" id="cal-deficit">--</span><small>Déficit (Perte)</small></div>
+                <div class="cal-block"><span class="cal-val" id="cal-surplus">--</span><small>Surplus (Masse)</small></div>
             </div>
-
             <div class="macros-grid">
-                <div class="macro-bar-item item-prot">
-                    <span class="macro-label">Protéines</span>
-                    <div class="macro-input-wrapper">
-                        <input type="number" id="input-macro-prot" class="macro-editable-input" value="0" disabled>
-                        <span class="macro-unit">g</span>
-                    </div>
+                <div class="macro-bar-item prot-bar">
+                    <label>Protéines (g)</label>
+                    <input type="number" id="input-macro-prot" disabled>
                 </div>
-                <div class="macro-bar-item item-fat">
-                    <span class="macro-label">Lipides</span>
-                    <div class="macro-input-wrapper">
-                        <input type="number" id="input-macro-fat" class="macro-editable-input" value="0" disabled>
-                        <span class="macro-unit">g</span>
-                    </div>
+                <div class="macro-bar-item fat-bar">
+                    <label>Lipides (g)</label>
+                    <input type="number" id="input-macro-fat" disabled>
                 </div>
-                <div class="macro-bar-item item-carb">
-                    <span class="macro-label">Glucides</span>
-                    <div class="macro-input-wrapper">
-                        <input type="number" id="input-macro-carb" class="macro-editable-input" value="0" disabled>
-                        <span class="macro-unit">g</span>
-                    </div>
+                <div class="macro-bar-item carb-bar">
+                    <label>Glucides (g)</label>
+                    <input type="number" id="input-macro-carb" disabled>
                 </div>
             </div>
         </section>
 
-        <section class="bento-item col-span-12 bento-cardio-section">
+        <section class="bento-item col-span-12">
             <div class="section-header">
-                <h2>Analyse Endurance & Cardio</h2>
-                <p>Mesurez et visualisez l'ensemble de vos paramètres de course.</p>
+                <h2>Data-Viz Suite (Performances)</h2>
+                <p>Analysez votre évolution métrique.</p>
             </div>
-
+            
             <form id="cardio-form" class="bento-inline-form-dense">
                 <input type="hidden" id="c-edit-index" value="-1">
                 <div class="form-grid-dense">
                     <input type="date" id="c-date" required>
-                    <input type="number" id="c-speed" step="0.1" placeholder="Vitesse (km/h)" required>
-                    <input type="number" id="c-time" placeholder="Temps (Min)" required>
-                    <input type="number" id="c-incline" step="0.1" placeholder="Pente (%)">
                     <input type="number" id="c-dist" step="0.01" placeholder="Distance (km)" required>
+                    <input type="number" id="c-time" placeholder="Temps (Min)" required>
+                    <input type="number" id="c-speed" step="0.1" placeholder="Vitesse (km/h)" required>
+                    <input type="number" id="c-incline" step="0.1" placeholder="Pente (%)">
                     <button type="submit" class="btn-action" id="cardio-submit-btn">OK</button>
                     <button type="button" class="btn-cancel hidden" id="cardio-cancel-btn" onclick="cancelCardioEdit()">X</button>
                 </div>
             </form>
 
             <div class="chart-box-wrapper">
-                <div class="chart-header-controls" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-                    <h3 style="margin:0; font-size:1rem;">Courbe de Progression</h3>
-                    <select id="cardio-metric-select" onchange="renderCardio()" style="width:auto; padding:6px 12px; font-weight:700; color:var(--navy); border-color:var(--gold); cursor:pointer;">
+                <div class="chart-header-controls">
+                    <h3>Courbes Multiparamétriques</h3>
+                    <select id="cardio-metric-select" onchange="renderCardio()">
+                        <option value="all">Comparatif (Tout Afficher)</option>
                         <option value="dist">Distance (km)</option>
                         <option value="speed">Vitesse (km/h)</option>
                         <option value="time">Temps (min)</option>
-                        <option value="incline">Pente (%)</option>
                     </select>
                 </div>
-                <div class="chart-container" id="cardio-chart"></div>
+                <div id="cardio-chart" style="width: 100%; min-height: 250px; background: #f8fafc; border-radius: 12px; padding: 10px;"></div>
             </div>
 
-            <div class="table-container mini-table">
-                <table id="cardio-table">
+            <div class="table-container">
+                <table>
                     <thead>
-                        <tr><th>Date</th><th>Vitesse</th><th>Temps</th><th>Pente</th><th>Distance</th><th>Actions</th></tr>
+                        <tr>
+                            <th>Date</th><th>Dist.</th><th>Temps</th><th>Vit.</th><th>Pente</th><th>Action</th>
+                        </tr>
                     </thead>
                     <tbody id="cardio-body"></tbody>
                 </table>
             </div>
         </section>
 
-        <section class="bento-item col-span-12 bento-weight-section">
-            <div class="section-header">
-                <h2>Évolution du Poids</h2>
-                <p>Enregistrez vos variations corporelles régulières.</p>
-            </div>
-            
-            <form id="weight-form" class="bento-inline-form">
-                <input type="hidden" id="w-edit-index" value="-1">
-                <div class="form-grid-mini">
+        <div class="col-span-6" style="display:flex; flex-direction:column; gap:1.5rem;">
+            <section class="bento-item">
+                <div class="section-header">
+                    <h2>Fluctuations Poids</h2>
+                </div>
+                <form id="weight-form" class="bento-inline-form">
+                    <input type="hidden" id="w-edit-index" value="-1">
                     <input type="date" id="w-date" required>
                     <input type="number" id="w-weight" step="0.1" placeholder="Poids (kg)" required>
-                    <button type="submit" class="btn-action" id="weight-submit-btn">Ajouter</button>
-                    <button type="button" class="btn-cancel hidden" id="weight-cancel-btn" onclick="cancelWeightEdit()">X</button>
-                </div>
-            </form>
-
-            <div class="chart-box-wrapper">
-                <div class="chart-container" id="weight-chart"></div>
-            </div>
-
-            <div class="table-container mini-table">
-                <table id="weight-table">
-                    <thead>
-                        <tr><th>Date</th><th>Poids</th><th>Delta</th><th>Actions</th></tr>
-                    </thead>
-                    <tbody id="weight-body"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <section class="bento-item col-span-8 bento-calendar-section">
-            <div class="calendar-wrapper">
-                <div class="calendar-header">
-                    <button onclick="changeMonth(-1)" class="btn-icon">◀</button>
-                    <h3 id="month-year-display" class="month-year-title">Mois Année</h3>
-                    <button onclick="changeMonth(1)" class="btn-icon">▶</button>
-                </div>
-                <div class="calendar-grid-headers">
-                    <div>Lu</div><div>Ma</div><div>Me</div><div>Je</div><div>Ve</div><div>Sa</div><div>Di</div>
-                </div>
-                <div class="calendar-grid" id="calendar-grid"></div>
-            </div>
-        </section>
-
-        <section class="bento-item col-span-4 bento-stats-section">
-            <h3>Focus Mensuel</h3>
-            <p class="bento-item-desc">Répartition de vos efforts.</p>
-            <ul id="monthly-stats" class="stats-list"></ul>
-        </section>
-
-        <section class="bento-item col-span-12 bento-records-section">
-            <div class="section-header">
-                <h2>Le Hall of Fame Elite</h2>
-                <p>Consignez vos charges maximales historiques et chronomètres de référence.</p>
-            </div>
-            <div class="records-layout">
-                <form id="record-form" class="record-mini-form">
-                    <div class="form-grid-mini">
-                        <input type="text" id="rec-name" placeholder="Mouvement / Exercice (ex: Squat)" required>
-                        <input type="text" id="rec-value" placeholder="Record (ex: 140 kg)" required>
-                        <button type="submit" class="btn-action">Graver</button>
-                    </div>
+                    <button type="submit" class="btn-action" id="weight-submit-btn">+</button>
                 </form>
-                <div class="records-display-grid" id="records-container"></div>
+                <div class="table-container" style="max-height: 200px;">
+                    <table>
+                        <tbody id="weight-body"></tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <section class="bento-item">
+                <div class="section-header">
+                    <h2>Records Historiques</h2>
+                </div>
+                <form id="record-form" class="bento-inline-form">
+                    <input type="text" id="rec-name" placeholder="Ex: Développé Couché" required>
+                    <input type="text" id="rec-value" placeholder="Ex: 100 kg" required>
+                    <button type="submit" class="btn-action">+</button>
+                </form>
+                <div class="records-layout" id="records-container"></div>
+            </section>
+        </div>
+
+        <section class="bento-item col-span-6">
+            <div class="calendar-header">
+                <button class="btn-icon" onclick="changeMonth(-1)">&#8249;</button>
+                <h2 id="month-year-display" class="month-year-title">Mois Année</h2>
+                <button class="btn-icon" onclick="changeMonth(1)">&#8250;</button>
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+            <div style="margin-top: 1rem;">
+                <h3 style="font-size:0.9rem; color:var(--text-muted);">Répartition Mensuelle</h3>
+                <ul class="stats-list" id="monthly-stats"></ul>
             </div>
         </section>
 
     </main>
 
-    <div class="modal-overlay hidden" id="calendar-day-modal">
-        <div class="modal-card">
+    <div id="profile-modal" class="modal-overlay hidden">
+        <div class="modal-content">
             <div class="modal-header">
-                <h2 id="calendar-day-title">Séances du ...</h2>
-                <button class="close-modal-btn" onclick="closeCalendarDayModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div id="calendar-day-sessions-list" style="margin-bottom: 20px; display:flex; flex-direction:column; gap:8px;">
-                    </div>
-                <hr class="modal-sep" style="margin: 15px 0;">
-                <label style="display:block; font-size:0.75rem; font-weight:700; color:var(--navy); margin-bottom:8px; text-transform:uppercase;">Ajouter une nouvelle séance</label>
-                <div class="form-grid-mini">
-                    <input type="text" id="new-session-input" placeholder="Ex: Push, Abs, Cardio..." required>
-                    <button type="button" class="btn-action" onclick="addSessionToDay()">Ajouter</button>
-                </div>
-                <input type="hidden" id="current-selected-date">
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay hidden" id="profile-modal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h2>Profil & Souveraineté Numérique</h2>
+                <h2>Profil & Paramètres</h2>
                 <button class="close-modal-btn" id="close-profile-btn">&times;</button>
             </div>
             <form id="profile-form">
                 <div class="modal-body">
-                    <div class="input-group modal-input">
+                    <div class="modal-input">
                         <label>Sexe biologique</label>
-                        <select id="gender" required>
-                            <option value="male">Homme</option>
-                            <option value="female">Femme</option>
-                        </select>
+                        <select id="gender" required><option value="male">Homme</option><option value="female">Femme</option></select>
                     </div>
-                    <div class="input-group modal-input">
-                        <label>Âge</label>
-                        <input type="number" id="age" min="1" max="120" required>
+                    <div class="modal-input">
+                        <label>Âge (Années)</label>
+                        <input type="number" id="age" required>
                     </div>
-                    <div class="input-group modal-input">
-                        <label>Taille fixe (cm)</label>
+                    <div class="modal-input">
+                        <label>Taille (cm)</label>
                         <input type="number" id="height" required>
                     </div>
-                    <div class="input-group modal-input">
-                        <label>Niveau d'activité physique</label>
+                    <div class="modal-input">
+                        <label>Niveau d'activité</label>
                         <select id="activity-level" required>
                             <option value="1.2">Sédentaire</option>
-                            <option value="1.375">Actif Léger (1-3 fois/sem)</option>
-                            <option value="1.55">Modérément Actif (3-5 fois/sem)</option>
+                            <option value="1.375">Actif Léger</option>
+                            <option value="1.55">Modérément Actif</option>
                             <option value="1.725">Intensif Quotidien</option>
                         </select>
                     </div>
-                    
                     <hr class="modal-sep">
-                    
                     <div class="backup-section">
-                        <h3>Sauvegardes Locales (Chiffrement JSON)</h3>
-                        <p class="backup-desc">Aucun serveur cloud n'héberge vos données physiques.</p>
+                        <h3>Sauvegardes Locales</h3>
+                        <p class="backup-desc">Vos données sont stockées uniquement sur cet appareil.</p>
                         <div class="backup-actions">
-                            <button type="button" class="btn-small btn-edit" onclick="exportDataData()">💾 Exporter</button>
-                            <button type="button" class="btn-small btn-delete" onclick="triggerImportField()">📥 Importer</button>
+                            <button type="button" class="btn-small btn-edit" onclick="exportDataData()">💾 Exporter JSON</button>
+                            <button type="button" class="btn-small btn-delete" onclick="triggerImportField()">📥 Importer JSON</button>
                             <input type="file" id="import-file-field" class="hidden" accept=".json" onchange="importDataData(event)">
                         </div>
                     </div>
@@ -326,6 +250,23 @@
                     <button type="submit" class="btn-action">Sauvegarder</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="calendar-day-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-day-title">Date</h2>
+                <button class="close-modal-btn" onclick="document.getElementById('calendar-day-modal').classList.add('hidden')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="session-form" class="bento-inline-form" onsubmit="addSessionToDay(event)">
+                    <input type="hidden" id="modal-day-date">
+                    <input type="text" id="session-name" placeholder="Nom de la séance..." required>
+                    <button type="submit" class="btn-action">+</button>
+                </form>
+                <div id="modal-day-sessions" style="margin-top: 1rem;"></div>
+            </div>
         </div>
     </div>
 
