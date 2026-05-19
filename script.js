@@ -10,14 +10,23 @@ function formatDate(dateString) {
     const d = new Date(dateString); return isNaN(d) ? '' : d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
 }
 
+// === NOUVEAU : HAPTIC FEEDBACK (Vibrations Mobile) ===
+function triggerHaptic() {
+    if (navigator.vibrate) {
+        navigator.vibrate(40); // Vibration courte et premium
+    }
+}
+
 // === ICONES SVG POUR JS ===
 const iconEdit = `<svg class="icon-sm" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
 const iconTrash = `<svg class="icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
 const iconCheck = `<svg class="icon-sm" viewBox="0 0 24 24" stroke="#10b981"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
 const iconTrophy = `<svg class="icon-sm" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10M5 4h14v4a7 7 0 0 1-14 0V4z"></path></svg>`;
+const iconDrag = `<svg class="icon-sm" viewBox="0 0 24 24"><line x1="4" y1="8" x2="20" y2="8"></line><line x1="4" y1="16" x2="20" y2="16"></line></svg>`;
 
-// === POP-UP DE CONFIRMATION HARMONISE (Remplace window.confirm) ===
+// === POP-UP DE CONFIRMATION HARMONISE ===
 function showConfirm(message, callback) {
+    triggerHaptic();
     const modal = document.getElementById('confirm-modal');
     document.getElementById('confirm-message').innerText = message;
     modal.classList.remove('hidden');
@@ -25,14 +34,13 @@ function showConfirm(message, callback) {
     const okBtn = document.getElementById('confirm-ok-btn');
     const cancelBtn = document.getElementById('confirm-cancel-btn');
 
-    // On clone pour retirer les anciens écouteurs d'événements
     const newOkBtn = okBtn.cloneNode(true);
     const newCancelBtn = cancelBtn.cloneNode(true);
     okBtn.parentNode.replaceChild(newOkBtn, okBtn);
     cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
 
-    newOkBtn.addEventListener('click', () => { modal.classList.add('hidden'); callback(); });
-    newCancelBtn.addEventListener('click', () => { modal.classList.add('hidden'); });
+    newOkBtn.addEventListener('click', () => { triggerHaptic(); modal.classList.add('hidden'); callback(); });
+    newCancelBtn.addEventListener('click', () => { triggerHaptic(); modal.classList.add('hidden'); });
 }
 
 // === MOTEUR D'ANIMATION INCREMENTALE ===
@@ -49,6 +57,51 @@ function animateValue(obj, start, end, duration, isFloat = false) {
     window.requestAnimationFrame(step);
 }
 
+// === NOUVEAU : OBSERVATEUR DE SCROLL FLUIDE ===
+function initScrollObserver() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
+            if(entry.isIntersecting) {
+                setTimeout(() => {
+                    entry.target.classList.add('reveal-visible');
+                    entry.target.classList.remove('reveal-hidden');
+                }, index * 80); // Effet cascade
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.05 });
+
+    document.querySelectorAll('.bento-item').forEach(el => {
+        el.classList.add('reveal-hidden');
+        observer.observe(el);
+    });
+}
+
+// === NOUVEAU : EFFET PARALLAXE CARD TILT ===
+function initTiltEffect() {
+    document.querySelectorAll('.bento-item').forEach(item => {
+        item.addEventListener('mousemove', e => {
+            const rect = item.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            // Calcul de l'inclinaison opposée
+            const rotateX = ((y - centerY) / centerY) * -4; 
+            const rotateY = ((x - centerX) / centerX) * 4;
+            
+            item.style.transition = 'none'; // Désactive la transition pendant le mvt pour la fluidité
+            item.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+        });
+        
+        item.addEventListener('mouseleave', () => {
+            item.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease';
+            item.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+        });
+    });
+}
+
 // === INITIALISATION ===
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -63,16 +116,20 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCalendarInit();
     updateSmartCoach();
     updateGamification();
+    
+    // Lancement des interactions App-like
+    initScrollObserver();
+    initTiltEffect();
 });
 
 // === MODALS & PROFIL ===
 const profileModal = document.getElementById('profile-modal');
-document.getElementById('open-profile-btn').addEventListener('click', () => profileModal.classList.remove('hidden'));
-document.getElementById('close-profile-btn').addEventListener('click', () => profileModal.classList.add('hidden'));
-document.getElementById('cancel-profile-btn').addEventListener('click', () => profileModal.classList.add('hidden'));
+document.getElementById('open-profile-btn').addEventListener('click', () => { triggerHaptic(); profileModal.classList.remove('hidden'); });
+document.getElementById('close-profile-btn').addEventListener('click', () => { triggerHaptic(); profileModal.classList.add('hidden'); });
+document.getElementById('cancel-profile-btn').addEventListener('click', () => { triggerHaptic(); profileModal.classList.add('hidden'); });
 
 document.getElementById('profile-form').addEventListener('submit', (e) => {
-    e.preventDefault();
+    e.preventDefault(); triggerHaptic();
     safeSetItem('userProfileBaseV2', {
         gender: document.getElementById('gender').value,
         age: parseInt(document.getElementById('age').value),
@@ -122,7 +179,6 @@ function recalculatePhysiqueAndCalories() {
     const weights = safeGetItem('weightHistory', '[]');
     const mode = safeGetItem('macroConfigMode', '"auto"');
     
-    // Tendance de pesée
     if (weights.length >= 2) {
         const diff = (weights[weights.length-1].weight - weights[weights.length-2].weight).toFixed(1);
         document.getElementById('weight-delta-display').innerText = diff > 0 ? `+${diff} kg` : `${diff} kg`;
@@ -132,7 +188,6 @@ function recalculatePhysiqueAndCalories() {
     const bmiText = document.getElementById('bmi-text');
     const bmiAdvice = document.getElementById('bmi-advice');
     
-    // Reset classes
     bmiBox.className = 'bmi-value';
 
     if (!profile || !profile.height || weights.length === 0) {
@@ -150,7 +205,6 @@ function recalculatePhysiqueAndCalories() {
     animateValue(bmiEl, parseFloat(bmiEl.dataset.val) || 0, bmi, 1000, true);
     bmiEl.dataset.val = bmi;
     
-    // NOUVELLE LOGIQUE D'IMC INTELLIGENT
     if (bmi < 18.5) {
         bmiBox.classList.add('bmi-under');
         bmiText.innerText = "Insuffisance pondérale";
@@ -169,7 +223,6 @@ function recalculatePhysiqueAndCalories() {
         bmiAdvice.innerText = "Visez un déficit maîtrisé et consultez un professionnel.";
     }
     
-    // Base Métabolique
     let bmr = profile.gender === "male" ? (10*w + 6.25*profile.height - 5*profile.age + 5) : (10*w + 6.25*profile.height - 5*profile.age - 161);
     const maint = bmr * profile.activityLevel;
     
@@ -203,7 +256,7 @@ function hideTooltipAndCrosshair(containerId) {
 function generateDataVizSVG(containerId, datasets, labels) {
     const container = document.getElementById(containerId);
     if (!datasets || datasets.length === 0 || datasets[0].data.length === 0) {
-        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding: 50px;">Sélectionnez au moins un paramètre pour afficher le graphique.</div>`; return;
+        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding: 50px;">Sélectionnez au moins un paramètre.</div>`; return;
     }
 
     const width = container.clientWidth || 800; const height = 280;
@@ -263,7 +316,7 @@ function generateDataVizSVG(containerId, datasets, labels) {
 
 // === CARDIO CRUD & DATA-VIZ ===
 document.getElementById('cardio-form').addEventListener('submit', (e) => {
-    e.preventDefault();
+    e.preventDefault(); triggerHaptic();
     let history = safeGetItem('cardioHistory');
     const editId = document.getElementById('c-edit-id').value;
     const obj = {
@@ -273,10 +326,8 @@ document.getElementById('cardio-form').addEventListener('submit', (e) => {
         speed: parseFloat(document.getElementById('c-speed').value), incline: parseFloat(document.getElementById('c-incline').value) || 0
     };
     
-    // SECURISATION DU SYSTEME DE SAUVEGARDE (Mise à jour via l'ID exact)
-    if (editId === "-1") {
-        history.push(obj); 
-    } else { 
+    if (editId === "-1") { history.push(obj); } 
+    else { 
         const index = history.findIndex(x => x.id === parseInt(editId));
         if (index !== -1) history[index] = obj;
         cancelCardioEdit(); 
@@ -289,6 +340,7 @@ document.getElementById('cardio-form').addEventListener('submit', (e) => {
 });
 
 function cancelCardioEdit() {
+    triggerHaptic();
     document.getElementById('cardio-form').reset();
     document.getElementById('c-date').valueAsDate = new Date();
     document.getElementById('c-edit-id').value = "-1";
@@ -297,6 +349,7 @@ function cancelCardioEdit() {
 }
 
 window.editCardio = function(id) {
+    triggerHaptic();
     let history = safeGetItem('cardioHistory'); 
     let session = history.find(x => x.id === id);
     if(session) {
@@ -345,7 +398,7 @@ window.renderCardio = function() {
 
 // === POIDS & RECORDS ===
 document.getElementById('weight-form').addEventListener('submit', (e) => {
-    e.preventDefault();
+    e.preventDefault(); triggerHaptic();
     let history = safeGetItem('weightHistory');
     history.push({ id: Date.now(), date: document.getElementById('w-date').value, weight: parseFloat(document.getElementById('w-weight').value) });
     history.sort((a,b) => new Date(a.date) - new Date(b.date));
@@ -361,7 +414,7 @@ function renderWeight() {
 }
 
 document.getElementById('record-form').addEventListener('submit', (e) => {
-    e.preventDefault(); let r = safeGetItem('elitePersonalRecords');
+    e.preventDefault(); triggerHaptic(); let r = safeGetItem('elitePersonalRecords');
     r.push({ id: Date.now(), name: document.getElementById('rec-name').value, value: document.getElementById('rec-value').value });
     safeSetItem('elitePersonalRecords', r); document.getElementById('record-form').reset(); renderRecords(); updateGamification();
 });
@@ -376,10 +429,11 @@ window.deleteRecord = function(id) {
     });
 }
 
-// === CALENDRIER & OBJECTIF DYNAMIQUE ===
+// === CALENDRIER & OBJECTIF (COULEUR DYNAMIQUE) ===
 let currentMonth = new Date().getMonth(); let currentYear = new Date().getFullYear();
 function renderCalendarInit() { renderCalendar(currentMonth, currentYear); calculateWeeklyGoal(); }
 window.changeMonth = function(dir) {
+    triggerHaptic();
     currentMonth += dir; if(currentMonth>11){currentMonth=0; currentYear++;} else if(currentMonth<0){currentMonth=11; currentYear--;}
     renderCalendar(currentMonth, currentYear);
 }
@@ -387,8 +441,10 @@ window.changeMonth = function(dir) {
 function calculateWeeklyGoal() {
     let monthlyData = safeGetItem('calendarData', '{}');
     const today = new Date();
-    const day = today.getDay() || 7; 
-    let weekStart = new Date(today); weekStart.setDate(today.getDate() - day + 1);
+    let dayOfWeek = today.getDay(); // Dimanche = 0, Lundi = 1
+    if (dayOfWeek === 0) dayOfWeek = 7; // Ajustement Lundi -> Dimanche
+
+    let weekStart = new Date(today); weekStart.setDate(today.getDate() - dayOfWeek + 1);
     
     let weeklyValidatedSessions = 0; let totalWeeklyTarget = 0;
     
@@ -402,7 +458,23 @@ function calculateWeeklyGoal() {
     
     document.getElementById('weekly-goal-text').innerText = `${weeklyValidatedSessions}/${totalWeeklyTarget} cette semaine`;
     const percent = totalWeeklyTarget > 0 ? Math.min((weeklyValidatedSessions / totalWeeklyTarget) * 100, 100) : 0;
-    document.getElementById('weekly-goal-fill').style.width = `${percent}%`;
+    
+    const fillEl = document.getElementById('weekly-goal-fill');
+    fillEl.style.width = `${percent}%`;
+
+    // NOUVEAU : Logique de couleur dynamique (Rouge si en retard, Gold si OK/Avance)
+    let expectedMinimum = Math.floor((totalWeeklyTarget / 7) * dayOfWeek);
+    if (weeklyValidatedSessions < expectedMinimum && totalWeeklyTarget > 0) {
+        fillEl.style.backgroundColor = '#ef4444'; // Rouge vif (Retard)
+        fillEl.style.boxShadow = '0 0 10px rgba(239,68,68,0.5)';
+    } else {
+        fillEl.style.backgroundColor = 'var(--gold)'; // Gold (Dans les temps ou Avance)
+        if (weeklyValidatedSessions >= totalWeeklyTarget && totalWeeklyTarget > 0) {
+            fillEl.style.boxShadow = '0 0 12px var(--gold-glow)'; // Récompense visuelle brillante
+        } else {
+            fillEl.style.boxShadow = 'none';
+        }
+    }
 }
 
 function updateConsistencyStreak(monthlyData, daysInMonth, year, month) {
@@ -459,8 +531,9 @@ function renderCalendar(month, year) {
     updateConsistencyStreak(monthlyData, daysInMonth, year, month);
 }
 
-// === GESTION MODAL CALENDRIER ===
+// === GESTION MODAL CALENDRIER ET DRAG & DROP ===
 window.openDayModal = function(dKey) {
+    triggerHaptic();
     document.getElementById('modal-day-title').innerText = formatDate(dKey);
     document.getElementById('modal-day-date').value = dKey;
     document.getElementById('session-edit-id').value = "-1";
@@ -470,7 +543,48 @@ window.openDayModal = function(dKey) {
     document.getElementById('calendar-day-modal').classList.remove('hidden');
 }
 
-window.closeDayModal = function() { document.getElementById('calendar-day-modal').classList.add('hidden'); }
+window.closeDayModal = function() { triggerHaptic(); document.getElementById('calendar-day-modal').classList.add('hidden'); }
+
+// NOUVEAU : Fonctions de Drag and Drop
+let draggedSessionId = null;
+
+window.handleDragStart = function(e) {
+    draggedSessionId = parseInt(e.currentTarget.dataset.id);
+    e.currentTarget.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    triggerHaptic(); // Petit feedback au moment de prendre la carte
+}
+
+window.handleDragOver = function(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+window.handleDragEnter = function(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+window.handleDragLeave = function(e) { e.currentTarget.classList.remove('drag-over'); }
+
+window.handleDrop = function(e, dKey) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    const targetId = parseInt(e.currentTarget.dataset.id);
+    
+    if (draggedSessionId === targetId) return;
+
+    let data = safeGetItem('calendarData', '{}');
+    let sessions = data[dKey];
+    
+    const draggedIdx = sessions.findIndex(s => s.id === draggedSessionId);
+    const targetIdx = sessions.findIndex(s => s.id === targetId);
+
+    // Déplacement dans l'array
+    const [draggedItem] = sessions.splice(draggedIdx, 1);
+    sessions.splice(targetIdx, 0, draggedItem);
+
+    safeSetItem('calendarData', data);
+    triggerHaptic(); // Feedback au laché
+    renderDaySessions(dKey);
+    renderCalendarInit();
+}
+
+document.addEventListener('dragend', (e) => {
+    if(e.target.classList.contains('modal-list-item')) e.target.classList.remove('dragging');
+});
 
 function renderDaySessions(dKey) {
     let data = safeGetItem('calendarData', '{}');
@@ -479,19 +593,25 @@ function renderDaySessions(dKey) {
     
     if (sessions.length === 0) { listContainer.innerHTML = "<small style='color:var(--text-muted);'>Aucune séance ce jour.</small>"; return; }
     
-    listContainer.innerHTML = sessions.map(s => `
-        <div class="modal-list-item">
-            <span style="display:flex; align-items:center; gap:6px;">${s.validated ? iconCheck : ''}${escapeHtml(s.name)}</span>
+    // Intégration du Drag and Drop HTML5 sur chaque élément de la liste
+    listContainer.innerHTML = sessions.map((s, index) => `
+        <div class="modal-list-item" draggable="true" data-id="${s.id}" data-index="${index}" 
+             ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" 
+             ondrop="handleDrop(event, '${dKey}')" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)">
+            <span style="display:flex; align-items:center; gap:8px;">
+                <span class="drag-handle" title="Maintenir pour déplacer">${iconDrag}</span>
+                ${s.validated ? iconCheck : ''} ${escapeHtml(s.name)}
+            </span>
             <div class="action-btns">
-                <button class="btn-small btn-edit haptic-btn" onclick="prepareEditSession('${dKey}', ${s.id})" title="Éditer">${iconEdit}</button>
-                <button class="btn-small btn-delete haptic-btn" onclick="deleteSession('${dKey}', ${s.id})" title="Supprimer">${iconTrash}</button>
+                <button type="button" class="btn-small btn-edit haptic-btn" onclick="prepareEditSession('${dKey}', ${s.id})" title="Éditer">${iconEdit}</button>
+                <button type="button" class="btn-small btn-delete haptic-btn" onclick="deleteSession('${dKey}', ${s.id})" title="Supprimer">${iconTrash}</button>
             </div>
         </div>
     `).join('');
 }
 
 window.saveSessionToDay = function(e) {
-    e.preventDefault();
+    e.preventDefault(); triggerHaptic();
     let dKey = document.getElementById('modal-day-date').value;
     let sName = document.getElementById('session-name').value;
     let editId = document.getElementById('session-edit-id').value;
@@ -514,6 +634,7 @@ window.saveSessionToDay = function(e) {
 }
 
 window.prepareEditSession = function(dKey, id) {
+    triggerHaptic();
     let data = safeGetItem('calendarData', '{}');
     let session = data[dKey].find(x => x.id === id);
     if(session) {
@@ -534,6 +655,7 @@ window.deleteSession = function(dKey, id) {
 }
 
 window.toggleSession = function(dKey, id) {
+    triggerHaptic();
     let data = safeGetItem('calendarData', '{}');
     let session = data[dKey].find(x => x.id === id);
     if(session) { session.validated = !session.validated; safeSetItem('calendarData', data); renderCalendarInit(); updateGamification(); }
@@ -576,6 +698,7 @@ window.importDataData = function(e) {
 
 // === PDF GENERATOR ===
 window.generatePDFReport = function() {
+    triggerHaptic();
     try {
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
         doc.setFontSize(22); doc.text("WALLY SPORT ELITE - BILAN DE PERFORMANCE", 20, 20);
