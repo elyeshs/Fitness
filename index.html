@@ -39,7 +39,7 @@
                 </div>
             </div>
             <div class="delta-trend-box">
-                <span class="delta-label">Tendance hebdomadaire :</span>
+                <span class="delta-label">Tendance des pesées :</span>
                 <span class="delta-value" id="weight-delta-display">—</span>
             </div>
         </section>
@@ -48,13 +48,19 @@
             <div class="streak-header">
                 <div class="streak-icon">🔥</div>
                 <div>
-                    <h3>Série d'Assiduité</h3>
-                    <p>Validation des entraînements prévus</p>
+                    <h3>Séries d'Assiduité</h3>
+                    <p>Validation mensuelle par discipline</p>
                 </div>
             </div>
-            <div class="streak-counter">
-                <span id="streak-days-count">0 / 0</span>
-                <small>Séance(s) Validée(s) ce mois</small>
+            <div class="streak-dual-container">
+                <div class="streak-box box-muscu">
+                    <span id="streak-muscu-count">0 / 0</span>
+                    <small>Musculation</small>
+                </div>
+                <div class="streak-box box-cardio">
+                    <span id="streak-cardio-count">0 / 0</span>
+                    <small>Cardio</small>
+                </div>
             </div>
         </section>
 
@@ -197,10 +203,6 @@
                 <button class="btn-icon" onclick="changeMonth(1)">&#8250;</button>
             </div>
             <div class="calendar-grid" id="calendar-grid"></div>
-            <div style="margin-top: 1rem;">
-                <h3 style="font-size:0.9rem; color:var(--text-muted);">Répartition Mensuelle</h3>
-                <ul class="stats-list" id="monthly-stats"></ul>
-            </div>
         </section>
 
     </main>
