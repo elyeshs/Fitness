@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -16,6 +17,9 @@
             <div class="brand">Wally<span>Sport Elite</span></div>
             <div class="header-right">
                 <div class="header-date" id="current-date-display"></div>
+                <button class="profile-icon-btn" onclick="generatePDFReport()" title="Générer un Bilan PDF Mensuel">
+                    📄
+                </button>
                 <button class="profile-icon-btn" id="open-profile-btn" title="Configuration & Sauvegardes">
                     ⚙️
                 </button>
@@ -56,6 +60,27 @@
                 <span id="streak-days-count">0 / 0</span>
                 <small>Séance(s) Validée(s) ce mois</small>
             </div>
+        </section>
+
+        <section class="bento-item col-span-6 bento-coach">
+            <div class="section-header" style="margin-bottom: 10px;">
+                <h2>Coach Virtuel</h2>
+                <p>Analyse de votre dynamique.</p>
+            </div>
+            <div class="coach-text-box">
+                <p id="smart-coach-text" style="font-weight: 500; font-size: 0.9rem; color: var(--navy); line-height: 1.6;">
+                    Entraînez-vous régulièrement pour générer des analyses prédictives.
+                </p>
+            </div>
+        </section>
+
+        <section class="bento-item col-span-6 bento-gamification">
+            <div class="section-header" style="margin-bottom: 10px;">
+                <h2>Succès Élite</h2>
+                <p>Débloquez des hauts faits.</p>
+            </div>
+            <div class="gami-grid" id="gamification-container">
+                </div>
         </section>
 
         <section class="bento-item bento-macros col-span-12">
@@ -230,6 +255,26 @@
         </section>
 
     </main>
+
+    <div class="modal-overlay hidden" id="calendar-day-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="calendar-day-title">Séances du ...</h2>
+                <button class="close-modal-btn" onclick="closeCalendarDayModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="calendar-day-sessions-list" style="margin-bottom: 20px; display:flex; flex-direction:column; gap:8px;">
+                    </div>
+                <hr class="modal-sep" style="margin: 15px 0;">
+                <label style="display:block; font-size:0.75rem; font-weight:700; color:var(--navy); margin-bottom:8px; text-transform:uppercase;">Ajouter une nouvelle séance</label>
+                <div class="form-grid-mini">
+                    <input type="text" id="new-session-input" placeholder="Ex: Push, Abs, Cardio..." required>
+                    <button type="button" class="btn-action" onclick="addSessionToDay()">Ajouter</button>
+                </div>
+                <input type="hidden" id="current-selected-date">
+            </div>
+        </div>
+    </div>
 
     <div class="modal-overlay hidden" id="profile-modal">
         <div class="modal-card">
