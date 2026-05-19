@@ -125,7 +125,7 @@ function showTooltip(e, text) {
 }
 function hideTooltip() { document.getElementById('chart-tooltip').classList.add('hidden'); }
 
-// === MOTEUR DATA-VIZ MULTI-AXES (Remplacement) ===
+// === MOTEUR DATA-VIZ MULTI-AXES ===
 function generateDataVizSVG(containerId, datasets, labels) {
     const container = document.getElementById(containerId);
     if (!datasets || datasets.length === 0 || datasets[0].data.length === 0) {
@@ -142,32 +142,27 @@ function generateDataVizSVG(containerId, datasets, labels) {
 
     let svg = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; overflow:visible;">`;
 
-    // 1. Grille de lecture Y (Lignes horizontales)
     const gridLines = 4;
     for(let i=0; i<=gridLines; i++) {
         let y = paddingY + (graphH / gridLines) * i;
         svg += `<line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="var(--border)" stroke-dasharray="4" stroke-width="1" />`;
     }
 
-    // 2. Traitement et tracé des Datasets
     datasets.forEach((ds) => {
         if(!ds.data || ds.data.length === 0) return;
         const minV = Math.min(...ds.data) * 0.9;
         const maxV = Math.max(...ds.data) * 1.1 || 1;
         const range = maxV - minV;
         
-        // Coordonnées des points
         const points = ds.data.map((val, i) => {
             const x = paddingX + (i * (graphW / Math.max(1, ds.data.length - 1)));
             const y = paddingY + graphH - ((val - minV) / range) * graphH;
             return {x, y, val};
         });
 
-        // Chemin de la ligne
         const pathD = points.map((p, i) => `${i===0?'M':'L'} ${p.x} ${p.y}`).join(' ');
         svg += `<path d="${pathD}" fill="none" stroke="${ds.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
 
-        // Points interactifs
         points.forEach((p, i) => {
             svg += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${ds.color}" stroke="#fff" stroke-width="2" 
                     onmouseenter="showTooltip(event, '${labels[i]}<br/>${ds.label} : ${p.val}')" 
@@ -175,8 +170,7 @@ function generateDataVizSVG(containerId, datasets, labels) {
         });
     });
 
-    // 3. Axe X (Dates)
-    const step = Math.max(1, Math.floor(labels.length / 6)); // Affiche max 6 dates pour lisibilité
+    const step = Math.max(1, Math.floor(labels.length / 6)); 
     labels.forEach((label, i) => {
         if(i % step === 0 || i === labels.length - 1) {
             const x = paddingX + (i * (graphW / Math.max(1, labels.length - 1)));
@@ -184,7 +178,6 @@ function generateDataVizSVG(containerId, datasets, labels) {
         }
     });
 
-    // 4. Légende dynamique (En haut)
     if (datasets.length > 0) {
         let lx = paddingX;
         datasets.forEach((ds) => {
@@ -252,7 +245,6 @@ window.deleteCardio = function(id) {
 function renderCardio() {
     let history = safeGetItem('cardioHistory').sort((a,b) => new Date(a.date) - new Date(b.date));
     
-    // Rendu Tableau
     document.getElementById('cardio-body').innerHTML = [...history].reverse().map(s => `
         <tr>
             <td>${formatDate(s.date)}</td>
@@ -269,11 +261,9 @@ function renderCardio() {
         </tr>
     `).join('');
 
-    // Rendu Graphique (Data-Viz Suite)
     const metric = document.getElementById('cardio-metric-select').value;
     const labels = history.map(s => formatDate(s.date));
     
-    // Définition stricte des couleurs (Or, Navy, Gris)
     const dsDist = { label: 'Distance', data: history.map(s => s.dist), color: 'var(--gold)' };
     const dsSpeed = { label: 'Vitesse', data: history.map(s => s.speed), color: 'var(--navy)' };
     const dsTime = { label: 'Temps', data: history.map(s => s.time), color: '#94a3b8' };
@@ -321,19 +311,50 @@ function renderRecords() {
 }
 window.deleteRecord = function(id) { safeSetItem('elitePersonalRecords', safeGetItem('elitePersonalRecords').filter(x => x.id !== id)); renderRecords(); }
 
-// Calendrier Simplifié pour le code complet
+
+// === CALENDRIER & ASSIDUITÉ (SPLIT MUSCU/CARDIO) ===
 let currentMonth = new Date().getMonth(); let currentYear = new Date().getFullYear();
 function renderCalendarInit() { renderCalendar(currentMonth, currentYear); }
 window.changeMonth = function(dir) {
     currentMonth += dir; if(currentMonth>11){currentMonth=0; currentYear++;} else if(currentMonth<0){currentMonth=11; currentYear--;}
     renderCalendar(currentMonth, currentYear);
 }
+
+function updateConsistencyStreak(monthlyData, daysInMonth, year, month) {
+    let muscuValidated = 0, muscuTotal = 0;
+    let cardioValidated = 0, cardioTotal = 0;
+
+    for(let i = 1; i <= daysInMonth; i++) {
+        let dKey = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+        let sessions = monthlyData[dKey] || [];
+        
+        sessions.forEach(s => {
+            const nameUpper = s.name.toUpperCase();
+            // Identification des mots clés
+            const isCardio = nameUpper.includes('CARDIO') || nameUpper.includes('RUN') || nameUpper.includes('VELO');
+            
+            if (isCardio) {
+                cardioTotal++;
+                if (s.validated) cardioValidated++;
+            } else {
+                muscuTotal++;
+                if (s.validated) muscuValidated++;
+            }
+        });
+    }
+    
+    // Mise à jour dynamique des deux indicateurs
+    const mCount = document.getElementById('streak-muscu-count');
+    const cCount = document.getElementById('streak-cardio-count');
+    if(mCount) mCount.innerText = `${muscuValidated} / ${muscuTotal}`;
+    if(cCount) cCount.innerText = `${cardioValidated} / ${cardioTotal}`;
+}
+
 function renderCalendar(month, year) {
     document.getElementById('month-year-display').innerText = new Date(year, month).toLocaleString('fr-FR', {month:'long', year:'numeric'}).toUpperCase();
     const grid = document.getElementById('calendar-grid'); grid.innerHTML = '';
     const daysInMonth = new Date(year, month+1, 0).getDate();
     let monthlyData = safeGetItem('calendarData', '{}');
-    let streak = 0; let total = 0;
 
     for(let i=1; i<=daysInMonth; i++) {
         let dKey = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
@@ -341,15 +362,20 @@ function renderCalendar(month, year) {
         
         let dHtml = `<div class="cal-day" onclick="openDayModal('${dKey}')"><span class="cal-day-num">${i}</span>`;
         sessions.forEach(s => {
-            total++; if(s.validated) streak++;
-            let badgeC = s.name.toUpperCase().includes('CARDIO') ? 'badge-cardio' : 'badge-muscu';
+            // Attribution automatique des badges selon le nom
+            const nameUp = s.name.toUpperCase();
+            let badgeC = (nameUp.includes('CARDIO') || nameUp.includes('RUN') || nameUp.includes('VELO')) ? 'badge-cardio' : 'badge-muscu';
+            
             dHtml += `<div class="cal-day-content"><span class="cal-badge ${badgeC}">${escapeHtml(s.name)}</span>
             <input type="checkbox" ${s.validated?'checked':''} onclick="event.stopPropagation(); toggleSession('${dKey}',${s.id})"></div>`;
         });
         dHtml += `</div>`; grid.innerHTML += dHtml;
     }
-    document.getElementById('streak-days-count').innerText = `${streak} / ${total}`;
+
+    // Lancement de l'algorithme de calcul séparé
+    updateConsistencyStreak(monthlyData, daysInMonth, year, month);
 }
+
 window.openDayModal = function(dKey) {
     document.getElementById('modal-day-title').innerText = formatDate(dKey);
     document.getElementById('modal-day-date').value = dKey;
