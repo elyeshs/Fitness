@@ -35,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadProfileData();
     initMacroControls();
-    initSleepControl();
     renderWeight();
     renderRecords();
     renderCalendar();
@@ -62,51 +61,6 @@ function loadProfileData() {
         document.getElementById('age').value = saved.age;
         document.getElementById('height').value = saved.height;
         document.getElementById('activity-level').value = saved.activityLevel;
-    }
-}
-
-// === NOUVELLE FONCTIONNALITÉ : SÉRIE D'ASSIDUITÉ (STREAK) ===
-function updateConsistencyStreak() {
-    const monthlyData = safeGetItem('calendarData', '{}');
-    const countDisplay = document.getElementById('streak-days-count');
-    
-    let totalSessionsThisMonth = Object.keys(monthlyData).length;
-    countDisplay.innerText = totalSessionsThisMonth;
-}
-
-// === NOUVELLE FONCTIONNALITÉ : LOG SOMMEIL & RÉCUPÉRATION ===
-function initSleepControl() {
-    const sleepForm = document.getElementById('sleep-form');
-    sleepForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const hours = parseFloat(document.getElementById('sleep-hours').value);
-        safeSetItem('latestSleepHours', hours);
-        sleepForm.reset();
-        renderSleepScore();
-    });
-    renderSleepScore();
-}
-
-function renderSleepScore() {
-    const hours = safeGetItem('latestSleepHours', '0');
-    const progressBar = document.getElementById('sleep-progress-bar');
-    const scoreText = document.getElementById('sleep-score-text');
-    
-    if (hours === 0) {
-        progressBar.style.width = "0%";
-        scoreText.innerText = "Aucun log aujourd'hui (Objectif : 8h)";
-        return;
-    }
-
-    let percentage = Math.min(100, (hours / 8) * 100);
-    progressBar.style.width = `${percentage}%`;
-    
-    if(percentage >= 100) {
-        scoreText.innerText = `Nuit complète : ${hours}h (Récupération Optimale)`;
-    } else if (percentage >= 75) {
-        scoreText.innerText = `Nuit moyenne : ${hours}h (Récupération Correcte)`;
-    } else {
-        scoreText.innerText = `Déficit de sommeil : ${hours}h (Entraînement Prudent)`;
     }
 }
 
@@ -290,7 +244,7 @@ function cancelWeightEdit() {
     document.getElementById('weight-submit-btn').innerText = "Ajouter"; document.getElementById('weight-cancel-btn').classList.add('hidden');
 }
 
-// === CALENDRIER MENSUEL & ANALYSES ===
+// === CALENDRIER MENSUEL & VALIDATION (CHECKBOX) ===
 let currentCalDate = new Date();
 function changeMonth(offset) { currentCalDate.setMonth(currentCalDate.getMonth() + offset); renderCalendar(); }
 
@@ -304,6 +258,7 @@ function renderCalendar() {
     const grid = document.getElementById('calendar-grid'); grid.innerHTML = "";
 
     const monthlyData = safeGetItem('calendarData', '{}');
+    const validatedData = safeGetItem('calendarValidated', '{}');
     const statsCounter = {}; let totalCount = 0;
 
     for (let i = 0; i < startOffset; i++) grid.innerHTML += `<div class="cal-day empty"></div>`;
@@ -312,18 +267,34 @@ function renderCalendar() {
         const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const activity = monthlyData[dateKey] || "";
         let badgeHtml = "";
+        
         if (activity) {
             const norm = activity.trim().toUpperCase();
             statsCounter[norm] = (statsCounter[norm] || 0) + 1; totalCount++;
             let badgeClass = norm.includes("CARDIO") || norm.includes("RUN") ? "badge-cardio" : (norm.includes("MUSCU") || norm.includes("BODY") ? "badge-muscu" : "badge-default");
-            badgeHtml = `<span class="cal-badge ${badgeClass}">${activity}</span>`;
+            
+            const isChecked = validatedData[dateKey] ? 'checked' : '';
+            badgeHtml = `
+                <div class="cal-day-content">
+                    <span class="cal-badge ${badgeClass}">${activity}</span>
+                    <input type="checkbox" class="cal-checkbox" ${isChecked} onclick="toggleSessionValidation(event, '${dateKey}')" title="Valider la séance">
+                </div>
+            `;
         }
+
         const dayDiv = document.createElement('div'); dayDiv.className = 'cal-day';
         dayDiv.innerHTML = `<span class="cal-date">${day}</span>${badgeHtml}`;
         dayDiv.onclick = () => {
             const act = prompt(`Activité du ${day} ${monthNames[month]} :`, activity);
             if (act !== null) {
-                if (act.trim() === "") delete monthlyData[dateKey]; else monthlyData[dateKey] = act.trim();
+                if (act.trim() === "") {
+                    delete monthlyData[dateKey];
+                    let valData = safeGetItem('calendarValidated', '{}');
+                    delete valData[dateKey];
+                    safeSetItem('calendarValidated', valData);
+                } else {
+                    monthlyData[dateKey] = act.trim();
+                }
                 safeSetItem('calendarData', monthlyData); renderCalendar();
             }
         };
@@ -333,6 +304,42 @@ function renderCalendar() {
     updateConsistencyStreak();
 }
 
+window.toggleSessionValidation = function(e, dateKey) {
+    e.stopPropagation(); // Évite d'ouvrir le prompt quand on clique sur la case
+    let validatedData = safeGetItem('calendarValidated', '{}');
+    if (e.target.checked) {
+        validatedData[dateKey] = true;
+    } else {
+        delete validatedData[dateKey];
+    }
+    safeSetItem('calendarValidated', validatedData);
+    updateConsistencyStreak();
+};
+
+function updateConsistencyStreak() {
+    const monthlyData = safeGetItem('calendarData', '{}');
+    const validatedData = safeGetItem('calendarValidated', '{}');
+    const countDisplay = document.getElementById('streak-days-count');
+    
+    const currentYear = currentCalDate.getFullYear();
+    const currentMonth = currentCalDate.getMonth() + 1;
+    const prefix = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+
+    let totalSessionsThisMonth = 0;
+    let validatedSessionsThisMonth = 0;
+
+    for (let key in monthlyData) {
+        if (key.startsWith(prefix)) {
+            totalSessionsThisMonth++;
+            if (validatedData[key]) {
+                validatedSessionsThisMonth++;
+            }
+        }
+    }
+    
+    countDisplay.innerText = `${validatedSessionsThisMonth} / ${totalSessionsThisMonth}`;
+}
+
 function renderStats(stats, total) {
     const list = document.getElementById('monthly-stats'); list.innerHTML = "";
     const keys = Object.keys(stats);
@@ -340,15 +347,17 @@ function renderStats(stats, total) {
     keys.forEach(k => { list.innerHTML += `<li>${k} <span>${((stats[k]/total)*100).toFixed(0)}%</span></li>`; });
 }
 
-// === MODULE : SUIVI CARDIO ===
+// === MODULE : SUIVI CARDIO (AVEC SELECTEUR COURBE) ===
 const cardioForm = document.getElementById('cardio-form');
 cardioForm.addEventListener('submit', (e) => {
     e.preventDefault();
     let history = safeGetItem('cardioHistory');
     const editIndex = document.getElementById('c-edit-index').value;
     const session = {
-        date: document.getElementById('c-date').value, speed: document.getElementById('c-speed').value,
-        time: document.getElementById('c-time').value, incline: parseFloat(document.getElementById('c-incline').value || 0).toFixed(1),
+        date: document.getElementById('c-date').value, 
+        speed: parseFloat(document.getElementById('c-speed').value),
+        time: parseFloat(document.getElementById('c-time').value), 
+        incline: parseFloat(document.getElementById('c-incline').value || 0),
         dist: parseFloat(document.getElementById('c-dist').value)
     };
     if (editIndex === "-1") history.push(session); else { history[parseInt(editIndex)] = session; cancelCardioEdit(); }
@@ -361,19 +370,31 @@ cardioForm.addEventListener('submit', (e) => {
 
 function renderCardio() {
     const history = safeGetItem('cardioHistory');
+    const metricSelect = document.getElementById('cardio-metric-select');
+    const metric = metricSelect ? metricSelect.value : 'dist';
+
     document.getElementById('cardio-body').innerHTML = [...history].reverse().map((s) => {
         const realIndex = history.findIndex(x => x.date === s.date && x.dist === s.dist && x.time === s.time);
         return `<tr>
             <td>${formatDate(s.date)}</td>
-            <td>${s.speed}km/h</td>
-            <td><strong>${s.dist}km</strong></td>
+            <td>${s.speed}</td>
+            <td>${s.time}</td>
+            <td>${s.incline}%</td>
+            <td><strong>${s.dist}</strong></td>
             <td class="action-btns">
                 <button onclick="editCardio(${realIndex})" class="btn-small btn-edit">Mod</button>
                 <button onclick="deleteCardio(${realIndex})" class="btn-small btn-delete">Sup</button>
             </td>
         </tr>`;
     }).join('');
-    generateBentoAreaChart('cardio-chart', history.map(item => item.dist), history.map(item => formatDate(item.date)), "km", true);
+
+    let unitStr = "km";
+    if(metric === "speed") unitStr = "km/h";
+    if(metric === "time") unitStr = "min";
+    if(metric === "incline") unitStr = "%";
+
+    // Trace la courbe selon l'option choisie
+    generateBentoAreaChart('cardio-chart', history.map(item => parseFloat(item[metric])), history.map(item => formatDate(item.date)), unitStr, metric !== "time" && metric !== "incline");
 }
 function editCardio(i) {
     const s = safeGetItem('cardioHistory')[i];
@@ -388,7 +409,7 @@ function cancelCardioEdit() {
     document.getElementById('cardio-submit-btn').innerText = "OK"; document.getElementById('cardio-cancel-btn').classList.add('hidden');
 }
 
-// === NOUVELLE FONCTION DES COURBES SMOOTH RECTILIGNES AVEC DEGRADES ET GRIDLINES ===
+// === COURBES INTERACTIVES AREA (STYLE BENTO PREMIUM) ===
 function generateBentoAreaChart(containerId, dataPoints, labels, unitStr = "", isCardio = false) {
     const container = document.getElementById(containerId);
     if (dataPoints.length === 0) {
@@ -396,11 +417,11 @@ function generateBentoAreaChart(containerId, dataPoints, labels, unitStr = "", i
         return;
     }
 
-    const maxVal = Math.max(...dataPoints) * 1.02 || 10;
-    const minVal = isCardio ? 0 : Math.min(...dataPoints) * 0.98;
+    const maxVal = Math.max(...dataPoints) * 1.05 || 10;
+    const minVal = isCardio ? 0 : Math.min(...dataPoints) * 0.95;
     const range = maxVal - minVal;
 
-    const width = 400; const height = 140; const paddingX = 25; const paddingY = 15;
+    const width = 400; const height = 180; const paddingX = 25; const paddingY = 15;
     const graphWidth = width - paddingX * 2;
     const graphHeight = height - paddingY * 2;
     
@@ -431,7 +452,7 @@ function generateBentoAreaChart(containerId, dataPoints, labels, unitStr = "", i
     // Remplissage sous la courbe
     svg += `<polygon points="${fillCoords}" fill="url(#gradient-${containerId})"/>`;
     // Ligne principale de courbe
-    svg += `<polyline points="${pointsCoords}" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    svg += `<polyline points="${pointsCoords}" fill="none" stroke="var(--navy)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
     
     // Points interactifs
     dataPoints.forEach((val, i) => {
@@ -463,7 +484,7 @@ function exportDataData() {
         userProfileBaseV2: localStorage.getItem('userProfileBaseV2'), weightHistory: localStorage.getItem('weightHistory'),
         calendarData: localStorage.getItem('calendarData'), cardioHistory: localStorage.getItem('cardioHistory'),
         elitePersonalRecords: localStorage.getItem('elitePersonalRecords'), macroConfigMode: localStorage.getItem('macroConfigMode'),
-        manualMacrosValues: localStorage.getItem('manualMacrosValues'), latestSleepHours: localStorage.getItem('latestSleepHours')
+        manualMacrosValues: localStorage.getItem('manualMacrosValues'), calendarValidated: localStorage.getItem('calendarValidated')
     };
     const a = document.createElement('a');
     a.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(obj)));
@@ -480,11 +501,11 @@ function importDataData(event) {
             if (json.userProfileBaseV2) localStorage.setItem('userProfileBaseV2', json.userProfileBaseV2);
             if (json.weightHistory) localStorage.setItem('weightHistory', json.weightHistory);
             if (json.calendarData) localStorage.setItem('calendarData', json.calendarData);
+            if (json.calendarValidated) localStorage.setItem('calendarValidated', json.calendarValidated);
             if (json.cardioHistory) localStorage.setItem('cardioHistory', json.cardioHistory);
             if (json.elitePersonalRecords) localStorage.setItem('elitePersonalRecords', json.elitePersonalRecords);
             if (json.macroConfigMode) localStorage.setItem('macroConfigMode', json.macroConfigMode);
             if (json.manualMacrosValues) localStorage.setItem('manualMacrosValues', json.manualMacrosValues);
-            if (json.latestSleepHours) localStorage.setItem('latestSleepHours', json.latestSleepHours);
             alert("Restauration Bento achevée."); window.location.reload();
         } catch (err) { alert("Format invalide."); }
     };
