@@ -124,7 +124,7 @@ td { padding: 8px; font-size: 0.8rem; border-bottom: 1px solid #f1f5f9; }
 .btn-small { border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; cursor: pointer; font-weight: 600; }
 .btn-edit { background: #e2e8f0; color: var(--navy); } .btn-delete { background: var(--navy); color: var(--white); }
 
-/* RECORDS & CALENDAR */
+/* RECORDS & CALENDAR NOUVEAUX STYLES */
 .records-layout { display: flex; flex-direction: column; gap: 10px; }
 .record-elite-card { display: flex; justify-content: space-between; padding: 10px 15px; background: #f8fafc; border-radius: 8px; border-left: 3px solid var(--gold); position: relative; }
 .record-elite-title { font-weight: 600; font-size: 0.85rem; color: var(--navy); }
@@ -135,6 +135,11 @@ td { padding: 8px; font-size: 0.8rem; border-bottom: 1px solid #f1f5f9; }
 .month-year-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--navy); }
 .btn-icon { background: none; border: 1px solid var(--border); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; color: var(--navy); font-weight: bold; }
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+
+/* Styles spécifiques Jours/Semaine */
+.cal-day-header { font-size: 0.7rem; font-weight: 800; text-align: center; color: var(--navy); text-transform: uppercase; padding-bottom: 5px;}
+.cal-day-empty { border: none !important; background: transparent !important; pointer-events: none; box-shadow: none !important;}
+
 .cal-day { border: 1px solid #f1f5f9; min-height: 80px; border-radius: 6px; padding: 5px; cursor: pointer; transition: 0.2s; display:flex; flex-direction:column; gap:4px; }
 .cal-day:hover { background: #f8fafc; border-color: var(--gold); }
 .cal-day-num { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); align-self: flex-end; }
