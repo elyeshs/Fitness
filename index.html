@@ -153,6 +153,7 @@
                         <option value="dist">Distance (km)</option>
                         <option value="speed">Vitesse (km/h)</option>
                         <option value="time">Temps (min)</option>
+                        <option value="incline">Pente (%)</option>
                     </select>
                 </div>
                 <div id="cardio-chart" style="width: 100%; min-height: 250px; background: #f8fafc; border-radius: 12px; padding: 10px; position:relative;"></div>
@@ -174,7 +175,10 @@
                     <input type="number" id="w-weight" step="0.1" placeholder="Poids (kg)" required>
                     <button type="submit" class="btn-action haptic-btn">+</button>
                 </form>
-                <div class="table-container" style="max-height: 200px;">
+                
+                <div id="weight-chart" style="width: 100%; min-height: 180px; background: #f8fafc; border-radius: 12px; padding: 10px; margin-bottom:15px; position:relative;"></div>
+
+                <div class="table-container" style="max-height: 150px;">
                     <table><tbody id="weight-body"></tbody></table>
                 </div>
             </section>
