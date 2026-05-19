@@ -10,7 +10,6 @@
     --border: #e2e8f0;
     --radius-bento: 16px;  /* Bords très arrondis typiques Bento */
     
-    /* Ombre multicouche haut de gamme */
     --bento-shadow: 0 1px 3px rgba(15,23,42,0.03), 
                     0 10px 30px -5px rgba(15,23,42,0.05), 
                     0 20px 40px -10px rgba(15,23,42,0.03);
@@ -20,113 +19,34 @@
                           0 30px 60px -10px rgba(15,23,42,0.05);
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    background: var(--bg-body);
-    color: var(--text-dark);
-    -webkit-font-smoothing: antialiased;
-}
-
-.container {
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body); color: var(--text-dark); -webkit-font-smoothing: antialiased; }
+.container { max-width: 1300px; margin: 0 auto; padding: 0 1.5rem; }
 
 /* TOP HEADER DESIGN COUTURE */
-.top-header {
-    background: var(--navy);
-    padding: 1.25rem 0;
-    margin-bottom: 2rem;
-}
-.header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.brand {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--white);
-}
+.top-header { background: var(--navy); padding: 1.25rem 0; margin-bottom: 2rem; }
+.header-container { display: flex; justify-content: space-between; align-items: center; }
+.brand { font-family: 'Playfair Display', serif; font-size: 1.75rem; font-weight: 700; color: var(--white); }
 .brand span { color: var(--gold); font-weight: 400; margin-left: 6px; font-style: italic; }
 .header-date { color: #94a3b8; font-size: 0.85rem; font-weight: 500; }
-.profile-icon-btn {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(197, 160, 89, 0.3);
-    color: var(--gold);
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
+.profile-icon-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(197, 160, 89, 0.3); color: var(--gold); width: 40px; height: 40px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; margin-left: 8px;}
 .profile-icon-btn:hover { background: var(--gold); color: var(--navy); transform: scale(1.05); }
 
 /* FLOATING COUTURE TOOLTIP */
-.custom-tooltip {
-    position: absolute;
-    background: var(--navy);
-    color: var(--white);
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    pointer-events: none;
-    z-index: 9999;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    border-left: 3px solid var(--gold);
-    transform: translate(-50%, -130%);
-}
+.custom-tooltip { position: absolute; background: var(--navy); color: var(--white); padding: 8px 12px; border-radius: 6px; font-size: 0.75rem; pointer-events: none; z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border-left: 3px solid var(--gold); transform: translate(-50%, -130%); }
 
 /* SYSTEM BENTO GRID */
-.bento-grid {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 1.5rem;
-}
-
-.bento-item {
-    background: var(--card-bg);
-    border-radius: var(--radius-bento);
-    padding: 1.75rem;
-    box-shadow: var(--bento-shadow);
-    border: 1px solid rgba(15,23,42,0.02);
-    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-.bento-item:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--bento-hover-shadow);
-}
-
-/* CONFIGURATION COLUMNS */
-.col-span-12 { grid-column: span 12; }
-.col-span-8 { grid-column: span 8; }
-.col-span-6 { grid-column: span 6; }
-.col-span-4 { grid-column: span 4; }
+.bento-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; }
+.bento-item { background: var(--card-bg); border-radius: var(--radius-bento); padding: 1.75rem; box-shadow: var(--bento-shadow); border: 1px solid rgba(15,23,42,0.02); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease; display: flex; flex-direction: column; justify-content: space-between; }
+.bento-item:hover { transform: translateY(-3px); box-shadow: var(--bento-hover-shadow); }
+.col-span-12 { grid-column: span 12; } .col-span-8 { grid-column: span 8; } .col-span-6 { grid-column: span 6; } .col-span-4 { grid-column: span 4; }
 
 @media (max-width: 1024px) {
     .col-span-8, .col-span-6, .col-span-4 { grid-column: span 12; }
-    .bento-bmi, .bento-streak { grid-column: span 12; }
+    .bento-bmi, .bento-streak, .bento-coach, .bento-gamification { grid-column: span 12; }
 }
 
-.bento-item h2, .bento-item h3 {
-    font-family: 'Playfair Display', serif;
-    color: var(--navy);
-    font-weight: 700;
-}
+.bento-item h2, .bento-item h3 { font-family: 'Playfair Display', serif; color: var(--navy); font-weight: 700; }
 .bento-item h2 { font-size: 1.4rem; margin-bottom: 0.25rem; }
 .bento-item h3 { font-size: 1.15rem; margin-bottom: 0.2rem; }
 .bento-item-desc { font-size: 0.8rem; color: var(--text-muted); font-weight: 400; margin-bottom: 1rem; }
@@ -136,15 +56,10 @@ body {
 .bmi-value { width: 64px; height: 64px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--white); font-family: 'Playfair Display', serif; }
 .bmi-value span { font-size: 1.5rem; font-weight: 700; }
 .bmi-value small { font-size: 0.55rem; font-family: 'Plus Jakarta Sans'; font-weight: 700; }
-.bg-default { background: var(--navy); }
-.bg-normal { background: var(--navy); border: 2px solid var(--gold); }
-.bg-warning { background: var(--text-muted); }
-.bg-danger { background: #000; }
-.bmi-status h3 { font-size: 1rem; color: var(--navy); }
-.bmi-status p { font-size: 0.75rem; color: var(--text-muted); }
+.bg-default { background: var(--navy); } .bg-normal { background: var(--navy); border: 2px solid var(--gold); } .bg-warning { background: var(--text-muted); } .bg-danger { background: #000; }
+.bmi-status h3 { font-size: 1rem; color: var(--navy); } .bmi-status p { font-size: 0.75rem; color: var(--text-muted); }
 .delta-trend-box { margin-top: 1rem; font-size: 0.78rem; display: flex; gap: 6px; background: #f1f5f9; padding: 6px 10px; border-radius: 6px; width: max-content; }
-.delta-label { color: var(--text-muted); }
-.delta-value { font-weight: 700; color: var(--navy); }
+.delta-label { color: var(--text-muted); } .delta-value { font-weight: 700; color: var(--navy); }
 
 /* STREAK & COMPTEURS */
 .streak-header { display: flex; align-items: center; gap: 0.75rem; }
@@ -152,6 +67,12 @@ body {
 .streak-counter { margin-top: 1rem; }
 .streak-counter span { font-size: 2.25rem; font-weight: 800; color: var(--navy); line-height: 1; display: block;}
 .streak-counter small { font-size: 0.7rem; font-weight: 600; color: var(--gold); text-transform: uppercase; }
+
+/* COACH & GAMIFICATION */
+.coach-text-box { background: #f8fafc; border-left: 4px solid var(--gold); padding: 15px; border-radius: 0 8px 8px 0; }
+.gami-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.gami-badge { background: #f1f5f9; padding: 12px; border: 1px solid var(--border); border-radius: 8px; text-align: center; opacity: 0.4; filter: grayscale(100%); transition: all 0.3s ease; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); }
+.gami-badge.active { opacity: 1; filter: none; border-color: var(--gold); background: var(--gold-glow); color: var(--navy); box-shadow: 0 4px 10px rgba(197, 160, 89, 0.1); }
 
 /* HYBRID MACROS BOX */
 .macros-main-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
@@ -180,7 +101,7 @@ body {
 
 /* FORMS BENTO & TABLES */
 .bento-inline-form, .bento-inline-form-dense { margin-bottom: 1rem; background: #f8fafc; padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border); }
-.form-grid-mini { display: flex; gap: 8px; flex-wrap: wrap; }
+.form-grid-mini { display: flex; gap: 8px; flex-wrap: wrap; align-items:center; }
 .form-grid-mini input { flex: 1; min-width: 100px; padding: 8px 12px; font-size: 0.85rem; border: 1px solid var(--border); border-radius: 6px; }
 .form-grid-dense { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 6px; }
 .form-grid-dense input { padding: 6px 10px; font-size: 0.8rem; border: 1px solid var(--border); border-radius: 6px; width: 100%; }
@@ -203,51 +124,29 @@ td { padding: 8px; font-size: 0.8rem; border-bottom: 1px solid #f1f5f9; }
 .btn-edit { background: #e2e8f0; color: var(--navy); }
 .btn-delete { background: var(--navy); color: var(--white); }
 
-/* CALENDRIER BENTO DESIGN & CHECKBOXES */
+/* CALENDRIER BENTO DESIGN & MULTI SESSIONS */
 .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .month-year-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--navy); }
 .btn-icon { background: none; border: 1px solid var(--border); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; color: var(--navy); font-size: 0.7rem; }
 .btn-icon:hover { background: var(--navy); color: var(--white); }
 .calendar-grid-headers { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.7rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; }
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.cal-day { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; min-height: 70px; padding: 6px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.15s ease; }
+.cal-day { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; min-height: 80px; padding: 6px; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-start; transition: all 0.15s ease; }
 .cal-day:hover { border-color: var(--gold); background: var(--white); }
 .cal-day.empty { background: transparent; border: none; cursor: default; }
-.cal-date { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); align-self: flex-end; }
-.cal-day-content { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; gap: 4px; overflow: hidden; }
-.cal-badge { font-size: 0.58rem; font-weight: 700; padding: 2px 4px; border-radius: 3px; color: var(--white); text-align: center; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
-.badge-cardio { background: #64748b; }
-.badge-muscu { background: var(--gold); color: var(--navy); }
-.badge-default { background: var(--navy); }
+.cal-date { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); align-self: flex-end; margin-bottom: 4px;}
+.cal-sessions-wrapper { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.cal-day-content { display: flex; align-items: center; justify-content: space-between; gap: 4px; overflow: hidden; }
+.cal-badge { font-size: 0.55rem; font-weight: 700; padding: 3px 4px; border-radius: 3px; color: var(--white); text-align: center; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.badge-cardio { background: #64748b; } .badge-muscu { background: var(--gold); color: var(--navy); } .badge-default { background: var(--navy); }
 
 /* CUSTOM CHECKBOX STYLING */
-.cal-checkbox {
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border: 2px solid var(--border);
-    border-radius: 4px;
-    outline: none;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    flex-shrink: 0;
-    background: var(--white);
-}
-.cal-checkbox:checked {
-    background-color: var(--gold);
-    border-color: var(--gold);
-}
-.cal-checkbox:checked::after {
-    content: "✔";
-    color: var(--navy);
-    font-size: 11px;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-weight: 800;
-}
+.cal-checkbox { appearance: none; width: 16px; height: 16px; border: 2px solid var(--border); border-radius: 3px; outline: none; cursor: pointer; transition: all 0.2s; position: relative; flex-shrink: 0; background: var(--white); }
+.cal-checkbox:checked { background-color: var(--gold); border-color: var(--gold); }
+.cal-checkbox:checked::after { content: "✔"; color: var(--navy); font-size: 10px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: 800; }
+
+/* CALENDAR MODAL SESSION LIST */
+.session-list-item { display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.85rem; font-weight: 600; color: var(--navy); }
 
 /* STATS LIST & HALL OF FAME */
 .stats-list { list-style: none; }
@@ -262,9 +161,10 @@ td { padding: 8px; font-size: 0.8rem; border-bottom: 1px solid #f1f5f9; }
 .delete-record-btn { position: absolute; top: 4px; right: 8px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.9rem; }
 .delete-record-btn:hover { color: #ef4444; }
 
-/* REPRISE COMPOSANT MODAL STRUCTURE ACCESSIBLE */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.3); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.modal-card { background: var(--white); width: 100%; max-width: 440px; border-radius: var(--radius-bento); box-shadow: var(--bento-hover-shadow); overflow: hidden; border-top: 4px solid var(--gold); }
+/* MODAL STRUCTURE ACCESSIBLE */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.modal-card { background: var(--white); width: 100%; max-width: 440px; border-radius: var(--radius-bento); box-shadow: var(--bento-hover-shadow); overflow: hidden; border-top: 4px solid var(--gold); animation: slideUp 0.2s ease-out;}
+@keyframes slideUp { from { transform: translateY(15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .modal-header { padding: 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
 .modal-header h2 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--navy); }
 .close-modal-btn { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-muted); }
