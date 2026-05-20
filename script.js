@@ -19,21 +19,6 @@ function triggerHaptic() {
 const iconEdit = `<svg class="icon-sm" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
 const iconTrash = `<svg class="icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
 
-// === THEME DYNAMIQUE (Time-of-day) ===
-function applyTimeOfDayTheme() {
-    const hour = new Date().getHours();
-    const body = document.body;
-    body.classList.remove('theme-morning', 'theme-afternoon', 'theme-night');
-    
-    if (hour >= 5 && hour < 12) {
-        body.classList.add('theme-morning'); // Matin: tons chauds et énergisants
-    } else if (hour >= 12 && hour < 18) {
-        body.classList.add('theme-afternoon'); // Après-midi: tons clairs et frais
-    } else {
-        body.classList.add('theme-night'); // Soir/Nuit: tons sombres élégants
-    }
-}
-
 // === POP-UP DE CONFIRMATION ===
 function showConfirm(message, callback) {
     triggerHaptic();
@@ -66,19 +51,8 @@ function animateValue(obj, start, end, duration, isFloat = false) {
     window.requestAnimationFrame(step);
 }
 
-// === MICRO-ANIMATIONS: STAGGERED FADE ===
-function applyStaggeredFade() {
-    const items = document.querySelectorAll('.bento-item');
-    items.forEach((item, index) => {
-        // Applique un délai incrémental pour un effet "déploiement" fluide
-        item.style.animation = `staggerFade 0.6s cubic-bezier(0.22, 1, 0.36, 1) ${index * 0.08}s forwards`;
-    });
-}
-
 // === INITIALISATION ===
 document.addEventListener('DOMContentLoaded', () => {
-    applyTimeOfDayTheme(); // Thème selon l'heure
-    
     document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     
     // Initialisation des dates par défaut
@@ -89,13 +63,12 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProfileData();
     initMacroControls();
     renderWeight();
+    renderCardioChart(); // Ajout du tracé de la courbe cardio
     renderRecords();
-    renderCardio();
+    renderCardio();      // Affichage du tableau (liste) cardio
     renderCalendarInit();
     updateSmartCoach();
     updateGamification();
-    
-    applyStaggeredFade(); // Lancement des animations séquentielles
 });
 
 // === MODALS & PROFIL ===
@@ -263,7 +236,6 @@ function renderWeight() {
     
     let svg = `<svg viewBox="0 0 ${w} ${h}" style="width:100%; height:100%; overflow:visible;">`;
     
-    // Lignes de repère (Grille Y)
     for(let i=0; i<=4; i++) {
         let y = paddingY + (i * ((h - 2*paddingY)/4));
         let val = (maxW - (i * (range/4))).toFixed(1);
@@ -271,7 +243,6 @@ function renderWeight() {
         svg += `<text x="${paddingX - 10}" y="${y+4}" fill="var(--text-muted)" font-size="10" text-anchor="end">${val}</text>`;
     }
     
-    // Calcul des coordonnées
     const points = history.map((entry, i) => {
         const stepX = (w - paddingX) / Math.max(1, history.length - 1);
         const x = paddingX + (i * stepX);
@@ -279,7 +250,7 @@ function renderWeight() {
         return { x, y, val: entry.weight, date: entry.date };
     });
     
-    // TRACÉ CONTINU DE LA COURBE
+    // Tracé de la courbe lié
     if (points.length > 1) {
         let pathD = `M ${points[0].x} ${points[0].y}`;
         for (let i = 1; i < points.length; i++) {
@@ -288,7 +259,6 @@ function renderWeight() {
         svg += `<path d="${pathD}" fill="none" stroke="var(--gold)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />`;
     }
     
-    // TRACÉ DES POINTS
     points.forEach(p => {
         svg += `<circle cx="${p.x}" cy="${p.y}" r="5" fill="var(--navy)" stroke="var(--gold)" stroke-width="2" />`;
     });
@@ -297,7 +267,64 @@ function renderWeight() {
     container.innerHTML = svg;
 }
 
-// === CARDIO ===
+// === COURBE CARDIO ===
+function renderCardioChart() {
+    const history = safeGetItem('cardioHistory');
+    const container = document.getElementById('cardio-chart-container');
+    if (!container) return;
+    
+    if (history.length === 0) {
+        container.innerHTML = '<p class="bento-item-desc" style="text-align:center; padding: 1rem;">Aucune donnée cardio pour tracer la courbe.</p>';
+        return;
+    }
+    
+    // Trier par date croissante pour l'axe chronologique de la courbe
+    let sorted = [...history].sort((a,b) => new Date(a.date) - new Date(b.date));
+    
+    const w = container.clientWidth || 800;
+    const h = 250;
+    const paddingX = 40;
+    const paddingY = 20;
+    
+    const distances = sorted.map(x => x.dist);
+    const minD = Math.max(0, Math.min(...distances) - 2);
+    const maxD = Math.max(...distances) + 2;
+    const range = maxD - minD || 1;
+    
+    let svg = `<svg viewBox="0 0 ${w} ${h}" style="width:100%; height:100%; overflow:visible;">`;
+    
+    for(let i=0; i<=4; i++) {
+        let y = paddingY + (i * ((h - 2*paddingY)/4));
+        let val = (maxD - (i * (range/4))).toFixed(1);
+        svg += `<line x1="${paddingX}" y1="${y}" x2="${w}" y2="${y}" stroke="var(--border)" stroke-dasharray="4" stroke-width="1" />`;
+        svg += `<text x="${paddingX - 10}" y="${y+4}" fill="var(--text-muted)" font-size="10" text-anchor="end">${val} km</text>`;
+    }
+    
+    const points = sorted.map((entry, i) => {
+        const stepX = (w - paddingX) / Math.max(1, sorted.length - 1);
+        const x = paddingX + (i * stepX);
+        const y = paddingY + (h - 2*paddingY) - ((entry.dist - minD) / range * (h - 2*paddingY));
+        return { x, y };
+    });
+    
+    // Tracé de la courbe lié en bleu
+    if (points.length > 1) {
+        let pathD = `M ${points[0].x} ${points[0].y}`;
+        for (let i = 1; i < points.length; i++) {
+            pathD += ` L ${points[i].x} ${points[i].y}`;
+        }
+        svg += `<path d="${pathD}" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />`;
+    }
+    
+    points.forEach(p => {
+        svg += `<circle cx="${p.x}" cy="${p.y}" r="5" fill="var(--navy)" stroke="#3b82f6" stroke-width="2" />`;
+    });
+    
+    svg += `</svg>`;
+    container.innerHTML = svg;
+}
+
+// === CARDIO (FORMULAIRE ET LISTE) ===
 document.getElementById('cardio-form').addEventListener('submit', (e) => {
     e.preventDefault(); triggerHaptic();
     let history = safeGetItem('cardioHistory');
@@ -321,7 +348,10 @@ document.getElementById('cardio-form').addEventListener('submit', (e) => {
     safeSetItem('cardioHistory', history);
     document.getElementById('cardio-form').reset();
     document.getElementById('c-date').valueAsDate = new Date();
+    
+    // Mettre à jour Liste et Courbe
     renderCardio();
+    renderCardioChart();
 });
 
 window.cancelCardioEdit = function() {
@@ -352,6 +382,7 @@ window.deleteCardio = function(id) {
     showConfirm("Supprimer cette session cardio ?", () => {
         safeSetItem('cardioHistory', safeGetItem('cardioHistory').filter(x => x.id !== id));
         renderCardio();
+        renderCardioChart();
         updateGamification();
     });
 }
@@ -362,7 +393,7 @@ function renderCardio() {
     if (history.length === 0) { list.innerHTML = '<p class="bento-item-desc">Aucune session enregistrée.</p>'; return; }
     
     list.innerHTML = history.slice(0, 5).map(x => `
-        <div class="cardio-item glass-panel">
+        <div class="cardio-item">
             <div class="cardio-item-info">
                 <strong>${formatDate(x.date)}</strong>
                 <span>${x.dist} km | ${x.time} min | ${x.speed > 0 ? x.speed + ' km/h' : '-'}</span>
@@ -398,7 +429,7 @@ function renderRecords() {
     if (records.length === 0) { container.innerHTML = '<p class="bento-item-desc">Aucun record enregistré.</p>'; return; }
     
     container.innerHTML = records.map(x => `
-        <div class="record-elite-card glass-panel">
+        <div class="record-elite-card">
             <button class="delete-record-btn haptic-btn" onclick="deleteRecord(${x.id})" title="Supprimer">${iconTrash}</button>
             <div class="record-elite-title">${escapeHtml(x.name)}</div>
             <div class="record-elite-value">${escapeHtml(x.value)}</div>
@@ -460,7 +491,6 @@ function renderCalendar(month, year) {
         sessions.forEach(s => {
             const nameUp = s.name.toUpperCase();
             let badgeC = (nameUp.includes('CARDIO') || nameUp.includes('RUN') || nameUp.includes('VELO')) ? 'badge-cardio' : 'badge-muscu';
-            // Le correctif du badge est assuré par la structure CSS améliorée
             dHtml += `<div class="cal-day-content"><span class="cal-badge ${badgeC}">${escapeHtml(s.name)}</span> <input type="checkbox" ${s.validated?'checked':''} onclick="event.stopPropagation(); toggleSession('${dKey}',${s.id})"></div>`;
         });
         dHtml += `</div>`;
@@ -597,7 +627,7 @@ function renderDaySessions(dKey) {
     if(sessions.length === 0) { list.innerHTML = "<p class='bento-item-desc'>Aucune séance prévue ce jour.</p>"; return; }
     
     list.innerHTML = sessions.map(s => `
-        <div class="glass-panel" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f8fafc; border:1px solid var(--border); border-radius:6px; margin-bottom:8px;">
             <div style="display:flex; align-items:center; gap:10px;">
                 <input type="checkbox" ${s.validated?'checked':''} onclick="toggleSession('${dKey}',${s.id})">
                 <span style="font-weight:600; font-size:0.9rem; color:var(--navy); text-decoration:${s.validated?'line-through':'none'}">${escapeHtml(s.name)}</span>
@@ -733,7 +763,7 @@ function updateGamification() {
     }
     
     container.innerHTML = badges.map(b => `
-        <div class="glass-panel" style="display:flex; align-items:center; gap:12px; width: 100%;">
+        <div style="display:flex; align-items:center; gap:12px; background:#f8fafc; padding:10px 15px; border-radius:8px; border:1px solid var(--border); width: 100%;">
             <span style="font-size:1.6rem;">${b.icon}</span>
             <div>
                 <div style="font-weight:700; font-size:0.9rem; color:var(--navy);">${b.name}</div>
