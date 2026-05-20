@@ -91,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateGamification();
     
     initScrollObserver();
+    // (Note : L'effet 3D Parallaxe "Tilt Effect" a été supprimé comme demandé)
 });
 
 // === MODALS & PROFIL ===
@@ -237,8 +238,6 @@ function generateDataVizSVG(containerId, datasets, labels) {
 
     svg += `<line id="crosshair-${containerId}" x1="0" y1="${paddingY}" x2="0" y2="${height - paddingY}" stroke="var(--navy)" stroke-width="1" stroke-dasharray="4" style="display:none; pointer-events:none;" />`;
 
-    // (CORRECTION DES LIAISONS DE COURBE) 
-    // Utilisation explicite des commandes M et L dans l'attribut d=""
     datasets.forEach((ds) => {
         if(!ds.data || ds.data.length === 0) return;
         const minV = Math.min(...ds.data) * 0.9; const maxV = Math.max(...ds.data) * 1.1 || 1;
@@ -287,8 +286,8 @@ document.getElementById('cardio-form').addEventListener('submit', (e) => {
     const obj = {
         id: editId === "-1" ? Date.now() : parseInt(editId), 
         date: document.getElementById('c-date').value,
-        dist: parseFloat(document.getElementById('c-dist').value) || 0, time: parseFloat(document.getElementById('c-time').value) || 0,
-        speed: parseFloat(document.getElementById('c-speed').value) || 0, incline: parseFloat(document.getElementById('c-incline').value) || 0
+        dist: parseFloat(document.getElementById('c-dist').value), time: parseFloat(document.getElementById('c-time').value),
+        speed: parseFloat(document.getElementById('c-speed').value), incline: parseFloat(document.getElementById('c-incline').value) || 0
     };
     
     if (editId === "-1") { history.push(obj); } 
@@ -345,10 +344,10 @@ window.renderCardio = function() {
     `).join('');
     
     const labels = history.map(s => formatDate(s.date));
-    const dsDist = { label: 'Distance', data: history.map(s => parseFloat(s.dist)||0), color: 'var(--gold)' };
-    const dsSpeed = { label: 'Vitesse', data: history.map(s => parseFloat(s.speed)||0), color: 'var(--navy)' };
-    const dsTime = { label: 'Temps', data: history.map(s => parseFloat(s.time)||0), color: '#94a3b8' };
-    const dsIncline = { label: 'Pente', data: history.map(s => parseFloat(s.incline)||0), color: '#10b981' }; 
+    const dsDist = { label: 'Distance', data: history.map(s => s.dist), color: 'var(--gold)' };
+    const dsSpeed = { label: 'Vitesse', data: history.map(s => s.speed), color: 'var(--navy)' };
+    const dsTime = { label: 'Temps', data: history.map(s => s.time), color: '#94a3b8' };
+    const dsIncline = { label: 'Pente', data: history.map(s => s.incline || 0), color: '#10b981' }; 
 
     const checkedBoxes = Array.from(document.querySelectorAll('#cardio-metric-toggles input:checked')).map(cb => cb.value);
 
@@ -639,7 +638,7 @@ window.generatePDFReport = function() {
     } catch(e) { alert("Erreur PDF. Vérifiez votre connexion internet pour l'accès CDN."); }
 }
 
-// === MENU FAB (BOUTON D'ACTION FLOTTANT) & QUICK ACTIONS ===
+// === MENU FAB (BOUTON D'ACTION FLOTTANT EN ÉVENTAIL) & QUICK ACTIONS ===
 const fabMainBtn = document.getElementById('fab-main-btn');
 const fabMenu = document.getElementById('fab-menu');
 
@@ -650,6 +649,7 @@ if (fabMainBtn && fabMenu) {
         fabMenu.classList.toggle('hidden');
     });
 
+    // Fermer le menu lors d'un clic extérieur
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.fab-container')) {
             fabMainBtn.classList.remove('active');
@@ -665,34 +665,16 @@ function closeFabMenu() {
     }
 }
 
-// 1. Quick Add : Séance (Modal Date + Nom)
+// 1. Quick Add : Séance (Ouvre le modal au jour actuel)
 window.quickAddSession = function() {
     triggerHaptic();
-    document.getElementById('quick-session-modal').classList.remove('hidden');
-    document.getElementById('quick-s-date').valueAsDate = new Date();
-    setTimeout(() => document.getElementById('quick-s-name').focus(), 100);
+    const today = new Date();
+    const dKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    openDayModal(dKey);
     closeFabMenu();
 }
-window.closeQuickSession = function() {
-    triggerHaptic();
-    document.getElementById('quick-session-modal').classList.add('hidden');
-    document.getElementById('quick-session-form').reset();
-}
-document.getElementById('quick-session-form').addEventListener('submit', (e) => {
-    e.preventDefault(); triggerHaptic();
-    let data = safeGetItem('calendarData', '{}');
-    const dKey = document.getElementById('quick-s-date').value;
-    const sName = document.getElementById('quick-s-name').value;
-    
-    if(!data[dKey]) data[dKey] = [];
-    data[dKey].push({ id: Date.now(), name: sName, validated: false });
-    
-    safeSetItem('calendarData', data);
-    renderCalendarInit(); updateSmartCoach();
-    closeQuickSession();
-});
 
-// 2. Quick Add : Poids
+// 2. Quick Add : Poids (Modal ultra rapide)
 window.quickAddWeight = function() {
     triggerHaptic();
     document.getElementById('quick-weight-modal').classList.remove('hidden');
@@ -717,7 +699,7 @@ document.getElementById('quick-weight-form').addEventListener('submit', (e) => {
     closeQuickWeight();
 });
 
-// 3. Quick Add : Record
+// 3. Quick Add : Record (Modal ultra rapide)
 window.quickAddRecord = function() {
     triggerHaptic();
     document.getElementById('quick-record-modal').classList.remove('hidden');
