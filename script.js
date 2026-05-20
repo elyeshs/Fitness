@@ -10,11 +10,9 @@ function formatDate(dateString) {
     const d = new Date(dateString); return isNaN(d) ? '' : d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
 }
 
-// === NOUVEAU : HAPTIC FEEDBACK (Vibrations Mobile) ===
+// === HAPTIC FEEDBACK (Vibrations Mobile) ===
 function triggerHaptic() {
-    if (navigator.vibrate) {
-        navigator.vibrate(40); // Vibration courte et premium
-    }
+    if (navigator.vibrate) { navigator.vibrate(40); }
 }
 
 // === ICONES SVG POUR JS ===
@@ -57,7 +55,7 @@ function animateValue(obj, start, end, duration, isFloat = false) {
     window.requestAnimationFrame(step);
 }
 
-// === NOUVEAU : OBSERVATEUR DE SCROLL FLUIDE ===
+// === OBSERVATEUR DE SCROLL FLUIDE ===
 function initScrollObserver() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach((entry, index) => {
@@ -65,7 +63,7 @@ function initScrollObserver() {
                 setTimeout(() => {
                     entry.target.classList.add('reveal-visible');
                     entry.target.classList.remove('reveal-hidden');
-                }, index * 80); // Effet cascade
+                }, index * 80);
                 observer.unobserve(entry.target);
             }
         });
@@ -74,31 +72,6 @@ function initScrollObserver() {
     document.querySelectorAll('.bento-item').forEach(el => {
         el.classList.add('reveal-hidden');
         observer.observe(el);
-    });
-}
-
-// === NOUVEAU : EFFET PARALLAXE CARD TILT ===
-function initTiltEffect() {
-    document.querySelectorAll('.bento-item').forEach(item => {
-        item.addEventListener('mousemove', e => {
-            const rect = item.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            
-            // Calcul de l'inclinaison opposée
-            const rotateX = ((y - centerY) / centerY) * -4; 
-            const rotateY = ((x - centerX) / centerX) * 4;
-            
-            item.style.transition = 'none'; // Désactive la transition pendant le mvt pour la fluidité
-            item.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-        });
-        
-        item.addEventListener('mouseleave', () => {
-            item.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease';
-            item.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
-        });
     });
 }
 
@@ -117,9 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSmartCoach();
     updateGamification();
     
-    // Lancement des interactions App-like
     initScrollObserver();
-    initTiltEffect();
+    // (Note : L'effet 3D Parallaxe "Tilt Effect" a été supprimé comme demandé)
 });
 
 // === MODALS & PROFIL ===
@@ -192,7 +164,7 @@ function recalculatePhysiqueAndCalories() {
 
     if (!profile || !profile.height || weights.length === 0) {
         bmiText.innerText = (profile && profile.height && weights.length === 0) ? "En attente de pesée" : "Profil incomplet";
-        bmiAdvice.innerText = weights.length === 0 ? "Veuillez ajouter une pesée dans l'encart Fluctuation Poids." : "Cliquez sur le rouage pour configurer vos constantes.";
+        bmiAdvice.innerText = weights.length === 0 ? "Veuillez ajouter une pesée." : "Configurez vos constantes.";
         bmiBox.classList.add('bg-default');
         return;
     }
@@ -205,23 +177,10 @@ function recalculatePhysiqueAndCalories() {
     animateValue(bmiEl, parseFloat(bmiEl.dataset.val) || 0, bmi, 1000, true);
     bmiEl.dataset.val = bmi;
     
-    if (bmi < 18.5) {
-        bmiBox.classList.add('bmi-under');
-        bmiText.innerText = "Insuffisance pondérale";
-        bmiAdvice.innerText = "Un léger surplus calorique et musculaire est recommandé.";
-    } else if (bmi < 25) {
-        bmiBox.classList.add('bmi-normal');
-        bmiText.innerText = "Poids Normal (Idéal)";
-        bmiAdvice.innerText = "Excellent ! Maintenez cet équilibre et vos performances.";
-    } else if (bmi < 30) {
-        bmiBox.classList.add('bmi-over');
-        bmiText.innerText = "Léger Surpoids";
-        bmiAdvice.innerText = "Un léger déficit calorique est conseillé pour affiner.";
-    } else {
-        bmiBox.classList.add('bmi-obese');
-        bmiText.innerText = "Obésité";
-        bmiAdvice.innerText = "Visez un déficit maîtrisé et consultez un professionnel.";
-    }
+    if (bmi < 18.5) { bmiBox.classList.add('bmi-under'); bmiText.innerText = "Insuffisance pondérale"; bmiAdvice.innerText = "Surplus calorique recommandé."; } 
+    else if (bmi < 25) { bmiBox.classList.add('bmi-normal'); bmiText.innerText = "Poids Normal (Idéal)"; bmiAdvice.innerText = "Excellent ! Maintenez cet équilibre."; } 
+    else if (bmi < 30) { bmiBox.classList.add('bmi-over'); bmiText.innerText = "Léger Surpoids"; bmiAdvice.innerText = "Léger déficit calorique conseillé."; } 
+    else { bmiBox.classList.add('bmi-obese'); bmiText.innerText = "Obésité"; bmiAdvice.innerText = "Visez un déficit maîtrisé."; }
     
     let bmr = profile.gender === "male" ? (10*w + 6.25*profile.height - 5*profile.age + 5) : (10*w + 6.25*profile.height - 5*profile.age - 161);
     const maint = bmr * profile.activityLevel;
@@ -240,7 +199,7 @@ function recalculatePhysiqueAndCalories() {
     }
 }
 
-// === TOOLTIP & CROSSHAIR DYNAMIQUE ===
+// === TOOLTIP & DATA VIZ MULTI-COURBES GRADUÉ ===
 function showTooltipWithCrosshair(e, text, xPos, containerId) {
     const tt = document.getElementById('chart-tooltip');
     tt.innerHTML = text; tt.classList.remove('hidden');
@@ -256,7 +215,7 @@ function hideTooltipAndCrosshair(containerId) {
 function generateDataVizSVG(containerId, datasets, labels) {
     const container = document.getElementById(containerId);
     if (!datasets || datasets.length === 0 || datasets[0].data.length === 0) {
-        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding: 50px;">Sélectionnez au moins un paramètre.</div>`; return;
+        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding: 50px;">Aucune donnée à afficher.</div>`; return;
     }
 
     const width = container.clientWidth || 800; const height = 280;
@@ -266,10 +225,15 @@ function generateDataVizSVG(containerId, datasets, labels) {
     let svg = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; overflow:visible;">
                <style>.path-anim { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: drawLine 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }</style>`;
 
-    const gridLines = 4;
-    for(let i=0; i<=gridLines; i++) {
-        let y = paddingY + (graphH / gridLines) * i;
+    // Axe Y - Graduation
+    let maxVGlobal = 1;
+    datasets.forEach(ds => maxVGlobal = Math.max(maxVGlobal, Math.max(...ds.data)*1.1));
+    
+    for(let i=0; i<=4; i++) {
+        let y = paddingY + (graphH / 4) * i;
+        let val = (maxVGlobal - (i * (maxVGlobal / 4))).toFixed(1);
         svg += `<line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="var(--border)" stroke-dasharray="4" stroke-width="1" />`;
+        svg += `<text x="${paddingX - 5}" y="${y + 3}" fill="var(--text-muted)" font-size="9" text-anchor="end">${val}</text>`;
     }
 
     svg += `<line id="crosshair-${containerId}" x1="0" y1="${paddingY}" x2="0" y2="${height - paddingY}" stroke="var(--navy)" stroke-width="1" stroke-dasharray="4" style="display:none; pointer-events:none;" />`;
@@ -308,7 +272,7 @@ function generateDataVizSVG(containerId, datasets, labels) {
         datasets.forEach((ds) => {
             svg += `<rect x="${lx}" y="5" width="12" height="12" fill="${ds.color}" rx="3"/>`;
             svg += `<text x="${lx + 18}" y="15" fill="var(--navy)" font-size="11" font-weight="700">${ds.label}</text>`;
-            lx += 110;
+            lx += 90;
         });
     }
     svg += `</svg>`; container.innerHTML = svg;
@@ -339,7 +303,7 @@ document.getElementById('cardio-form').addEventListener('submit', (e) => {
     renderCardio();
 });
 
-function cancelCardioEdit() {
+window.cancelCardioEdit = function() {
     triggerHaptic();
     document.getElementById('cardio-form').reset();
     document.getElementById('c-date').valueAsDate = new Date();
@@ -419,17 +383,17 @@ document.getElementById('record-form').addEventListener('submit', (e) => {
     safeSetItem('elitePersonalRecords', r); document.getElementById('record-form').reset(); renderRecords(); updateGamification();
 });
 function renderRecords() { document.getElementById('records-container').innerHTML = safeGetItem('elitePersonalRecords').map(x => `
-    <div class="record-elite-card"><button class="delete-record-btn" onclick="deleteRecord(${x.id})" title="Supprimer">${iconTrash}</button>
+    <div class="record-elite-card"><button class="delete-record-btn haptic-btn" onclick="deleteRecord(${x.id})" title="Supprimer">${iconTrash}</button>
     <div class="record-elite-title">${escapeHtml(x.name)}</div><div class="record-elite-value">${escapeHtml(x.value)}</div></div>`).join(''); }
 
 window.deleteRecord = function(id) { 
     showConfirm("Voulez-vous supprimer ce record ?", () => {
         safeSetItem('elitePersonalRecords', safeGetItem('elitePersonalRecords').filter(x => x.id !== id)); 
-        renderRecords(); 
+        renderRecords(); updateGamification();
     });
 }
 
-// === CALENDRIER & OBJECTIF (COULEUR DYNAMIQUE) ===
+// === CALENDRIER & OBJECTIF DYNAMIQUE ===
 let currentMonth = new Date().getMonth(); let currentYear = new Date().getFullYear();
 function renderCalendarInit() { renderCalendar(currentMonth, currentYear); calculateWeeklyGoal(); }
 window.changeMonth = function(dir) {
@@ -441,8 +405,8 @@ window.changeMonth = function(dir) {
 function calculateWeeklyGoal() {
     let monthlyData = safeGetItem('calendarData', '{}');
     const today = new Date();
-    let dayOfWeek = today.getDay(); // Dimanche = 0, Lundi = 1
-    if (dayOfWeek === 0) dayOfWeek = 7; // Ajustement Lundi -> Dimanche
+    let dayOfWeek = today.getDay(); 
+    if (dayOfWeek === 0) dayOfWeek = 7; 
 
     let weekStart = new Date(today); weekStart.setDate(today.getDate() - dayOfWeek + 1);
     
@@ -462,33 +426,36 @@ function calculateWeeklyGoal() {
     const fillEl = document.getElementById('weekly-goal-fill');
     fillEl.style.width = `${percent}%`;
 
-    // NOUVEAU : Logique de couleur dynamique (Rouge si en retard, Gold si OK/Avance)
     let expectedMinimum = Math.floor((totalWeeklyTarget / 7) * dayOfWeek);
     if (weeklyValidatedSessions < expectedMinimum && totalWeeklyTarget > 0) {
-        fillEl.style.backgroundColor = '#ef4444'; // Rouge vif (Retard)
+        fillEl.style.backgroundColor = '#ef4444';
         fillEl.style.boxShadow = '0 0 10px rgba(239,68,68,0.5)';
     } else {
-        fillEl.style.backgroundColor = 'var(--gold)'; // Gold (Dans les temps ou Avance)
+        fillEl.style.backgroundColor = 'var(--gold)';
         if (weeklyValidatedSessions >= totalWeeklyTarget && totalWeeklyTarget > 0) {
-            fillEl.style.boxShadow = '0 0 12px var(--gold-glow)'; // Récompense visuelle brillante
+            fillEl.style.boxShadow = '0 0 12px var(--gold-glow)';
         } else {
             fillEl.style.boxShadow = 'none';
         }
     }
 }
 
-function updateConsistencyStreak(monthlyData, daysInMonth, year, month) {
-    let muscuValidated = 0, cardioValidated = 0;
-    for(let i = 1; i <= daysInMonth; i++) {
-        let dKey = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-        let sessions = monthlyData[dKey] || [];
+// SÉPARATION DES STREAKS (MUSCU VS CARDIO)
+function updateConsistencyStreak() {
+    const monthlyData = safeGetItem('calendarData', '{}');
+    let muscuCount = 0, cardioCount = 0;
+    
+    Object.values(monthlyData).forEach(sessions => {
         sessions.forEach(s => {
-            const isCardio = (s.name.toUpperCase().includes('CARDIO') || s.name.toUpperCase().includes('RUN') || s.name.toUpperCase().includes('VELO'));
-            if (s.validated) { if(isCardio) cardioValidated++; else muscuValidated++; }
+            if (s.validated) {
+                const isCardio = (s.name.toUpperCase().includes('CARDIO') || s.name.toUpperCase().includes('RUN') || s.name.toUpperCase().includes('VELO'));
+                if (isCardio) cardioCount++; else muscuCount++;
+            }
         });
-    }
-    animateValue(document.getElementById('streak-muscu-count'), 0, muscuValidated, 800);
-    animateValue(document.getElementById('streak-cardio-count'), 0, cardioValidated, 800);
+    });
+    
+    animateValue(document.getElementById('streak-muscu-count'), 0, muscuCount, 800);
+    animateValue(document.getElementById('streak-cardio-count'), 0, cardioCount, 800);
 }
 
 function renderCalendar(month, year) {
@@ -528,7 +495,7 @@ function renderCalendar(month, year) {
     }
     
     grid.innerHTML = gridHTML;
-    updateConsistencyStreak(monthlyData, daysInMonth, year, month);
+    updateConsistencyStreak();
 }
 
 // === GESTION MODAL CALENDRIER ET DRAG & DROP ===
@@ -542,49 +509,25 @@ window.openDayModal = function(dKey) {
     renderDaySessions(dKey);
     document.getElementById('calendar-day-modal').classList.remove('hidden');
 }
-
 window.closeDayModal = function() { triggerHaptic(); document.getElementById('calendar-day-modal').classList.add('hidden'); }
 
-// NOUVEAU : Fonctions de Drag and Drop
 let draggedSessionId = null;
-
-window.handleDragStart = function(e) {
-    draggedSessionId = parseInt(e.currentTarget.dataset.id);
-    e.currentTarget.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    triggerHaptic(); // Petit feedback au moment de prendre la carte
-}
-
+window.handleDragStart = function(e) { draggedSessionId = parseInt(e.currentTarget.dataset.id); e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; triggerHaptic(); }
 window.handleDragOver = function(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
 window.handleDragEnter = function(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
 window.handleDragLeave = function(e) { e.currentTarget.classList.remove('drag-over'); }
-
 window.handleDrop = function(e, dKey) {
-    e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
+    e.preventDefault(); e.currentTarget.classList.remove('drag-over');
     const targetId = parseInt(e.currentTarget.dataset.id);
-    
     if (draggedSessionId === targetId) return;
-
-    let data = safeGetItem('calendarData', '{}');
-    let sessions = data[dKey];
-    
+    let data = safeGetItem('calendarData', '{}'); let sessions = data[dKey];
     const draggedIdx = sessions.findIndex(s => s.id === draggedSessionId);
     const targetIdx = sessions.findIndex(s => s.id === targetId);
-
-    // Déplacement dans l'array
     const [draggedItem] = sessions.splice(draggedIdx, 1);
     sessions.splice(targetIdx, 0, draggedItem);
-
-    safeSetItem('calendarData', data);
-    triggerHaptic(); // Feedback au laché
-    renderDaySessions(dKey);
-    renderCalendarInit();
+    safeSetItem('calendarData', data); triggerHaptic(); renderDaySessions(dKey); renderCalendarInit();
 }
-
-document.addEventListener('dragend', (e) => {
-    if(e.target.classList.contains('modal-list-item')) e.target.classList.remove('dragging');
-});
+document.addEventListener('dragend', (e) => { if(e.target.classList.contains('modal-list-item')) e.target.classList.remove('dragging'); });
 
 function renderDaySessions(dKey) {
     let data = safeGetItem('calendarData', '{}');
@@ -593,7 +536,6 @@ function renderDaySessions(dKey) {
     
     if (sessions.length === 0) { listContainer.innerHTML = "<small style='color:var(--text-muted);'>Aucune séance ce jour.</small>"; return; }
     
-    // Intégration du Drag and Drop HTML5 sur chaque élément de la liste
     listContainer.innerHTML = sessions.map((s, index) => `
         <div class="modal-list-item" draggable="true" data-id="${s.id}" data-index="${index}" 
              ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" 
@@ -618,25 +560,17 @@ window.saveSessionToDay = function(e) {
     let data = safeGetItem('calendarData', '{}');
     if(!data[dKey]) data[dKey] = [];
     
-    if (editId === "-1") {
-        data[dKey].push({ id: Date.now(), name: sName, validated: false });
-    } else {
-        let session = data[dKey].find(x => x.id === parseInt(editId));
-        if (session) session.name = sName;
-    }
+    if (editId === "-1") { data[dKey].push({ id: Date.now(), name: sName, validated: false }); } 
+    else { let session = data[dKey].find(x => x.id === parseInt(editId)); if (session) session.name = sName; }
     
     safeSetItem('calendarData', data);
-    document.getElementById('session-name').value = "";
-    document.getElementById('session-edit-id').value = "-1";
+    document.getElementById('session-name').value = ""; document.getElementById('session-edit-id').value = "-1";
     document.getElementById('modal-session-btn').innerHTML = `<svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
-    renderDaySessions(dKey);
-    renderCalendarInit();
+    renderDaySessions(dKey); renderCalendarInit();
 }
 
 window.prepareEditSession = function(dKey, id) {
-    triggerHaptic();
-    let data = safeGetItem('calendarData', '{}');
-    let session = data[dKey].find(x => x.id === id);
+    triggerHaptic(); let data = safeGetItem('calendarData', '{}'); let session = data[dKey].find(x => x.id === id);
     if(session) {
         document.getElementById('session-name').value = session.name;
         document.getElementById('session-edit-id').value = session.id;
@@ -649,15 +583,12 @@ window.deleteSession = function(dKey, id) {
         let data = safeGetItem('calendarData', '{}');
         data[dKey] = data[dKey].filter(x => x.id !== id);
         safeSetItem('calendarData', data);
-        renderDaySessions(dKey);
-        renderCalendarInit();
+        renderDaySessions(dKey); renderCalendarInit();
     });
 }
 
 window.toggleSession = function(dKey, id) {
-    triggerHaptic();
-    let data = safeGetItem('calendarData', '{}');
-    let session = data[dKey].find(x => x.id === id);
+    triggerHaptic(); let data = safeGetItem('calendarData', '{}'); let session = data[dKey].find(x => x.id === id);
     if(session) { session.validated = !session.validated; safeSetItem('calendarData', data); renderCalendarInit(); updateGamification(); }
 }
 
@@ -706,3 +637,89 @@ window.generatePDFReport = function() {
         doc.save("Bilan_Mensuel_WallySport.pdf");
     } catch(e) { alert("Erreur PDF. Vérifiez votre connexion internet pour l'accès CDN."); }
 }
+
+// === MENU FAB (BOUTON D'ACTION FLOTTANT EN ÉVENTAIL) & QUICK ACTIONS ===
+const fabMainBtn = document.getElementById('fab-main-btn');
+const fabMenu = document.getElementById('fab-menu');
+
+if (fabMainBtn && fabMenu) {
+    fabMainBtn.addEventListener('click', () => {
+        triggerHaptic();
+        fabMainBtn.classList.toggle('active');
+        fabMenu.classList.toggle('hidden');
+    });
+
+    // Fermer le menu lors d'un clic extérieur
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.fab-container')) {
+            fabMainBtn.classList.remove('active');
+            fabMenu.classList.add('hidden');
+        }
+    });
+}
+
+function closeFabMenu() {
+    if (fabMainBtn && fabMenu) {
+        fabMainBtn.classList.remove('active');
+        fabMenu.classList.add('hidden');
+    }
+}
+
+// 1. Quick Add : Séance (Ouvre le modal au jour actuel)
+window.quickAddSession = function() {
+    triggerHaptic();
+    const today = new Date();
+    const dKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    openDayModal(dKey);
+    closeFabMenu();
+}
+
+// 2. Quick Add : Poids (Modal ultra rapide)
+window.quickAddWeight = function() {
+    triggerHaptic();
+    document.getElementById('quick-weight-modal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('quick-w-weight').focus(), 100);
+    closeFabMenu();
+}
+window.closeQuickWeight = function() {
+    triggerHaptic();
+    document.getElementById('quick-weight-modal').classList.add('hidden');
+    document.getElementById('quick-weight-form').reset();
+}
+document.getElementById('quick-weight-form').addEventListener('submit', (e) => {
+    e.preventDefault(); triggerHaptic();
+    let history = safeGetItem('weightHistory');
+    const today = new Date();
+    const dKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    
+    history.push({ id: Date.now(), date: dKey, weight: parseFloat(document.getElementById('quick-w-weight').value) });
+    history.sort((a,b) => new Date(a.date) - new Date(b.date));
+    safeSetItem('weightHistory', history); 
+    renderWeight(); recalculatePhysiqueAndCalories(); updateSmartCoach();
+    closeQuickWeight();
+});
+
+// 3. Quick Add : Record (Modal ultra rapide)
+window.quickAddRecord = function() {
+    triggerHaptic();
+    document.getElementById('quick-record-modal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('quick-rec-name').focus(), 100);
+    closeFabMenu();
+}
+window.closeQuickRecord = function() {
+    triggerHaptic();
+    document.getElementById('quick-record-modal').classList.add('hidden');
+    document.getElementById('quick-record-form').reset();
+}
+document.getElementById('quick-record-form').addEventListener('submit', (e) => {
+    e.preventDefault(); triggerHaptic();
+    let r = safeGetItem('elitePersonalRecords');
+    r.push({ 
+        id: Date.now(), 
+        name: document.getElementById('quick-rec-name').value, 
+        value: document.getElementById('quick-rec-value').value 
+    });
+    safeSetItem('elitePersonalRecords', r); 
+    renderRecords(); updateGamification();
+    closeQuickRecord();
+});
