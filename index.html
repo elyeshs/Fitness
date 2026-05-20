@@ -40,6 +40,145 @@
         </div>
     </div>
 
+    <div id="quick-weight-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Ajouter un Poids</h2>
+                <button type="button" class="close-modal-btn haptic-btn" onclick="closeQuickWeight()">&times;</button>
+            </div>
+            <form id="quick-weight-form">
+                <div class="modal-body">
+                    <div class="input-group modal-input">
+                        <label>Date</label>
+                        <input type="date" id="quick-w-date" required>
+                    </div>
+                    <div class="input-group modal-input">
+                        <label>Poids (kg)</label>
+                        <input type="number" step="0.1" id="quick-w-weight" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-action haptic-btn" style="width: 100%;">Valider</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="quick-record-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Enregistrer un Record</h2>
+                <button type="button" class="close-modal-btn haptic-btn" onclick="closeQuickRecord()">&times;</button>
+            </div>
+            <form id="quick-record-form">
+                <div class="modal-body">
+                    <div class="input-group modal-input">
+                        <label>Date</label>
+                        <input type="date" id="quick-rec-date" required>
+                    </div>
+                    <div class="input-group modal-input">
+                        <label>Mouvement</label>
+                        <input type="text" id="quick-rec-name" placeholder="ex: Soulevé de terre" required>
+                    </div>
+                    <div class="input-group modal-input">
+                        <label>Performance</label>
+                        <input type="text" id="quick-rec-value" placeholder="ex: 150 kg" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-action haptic-btn" style="width: 100%;">Valider</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="quick-session-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Ajouter une Séance</h2>
+                <button type="button" class="close-modal-btn haptic-btn" onclick="closeQuickSession()">&times;</button>
+            </div>
+            <form id="quick-session-form">
+                <div class="modal-body">
+                    <div class="input-group modal-input">
+                        <label>Date</label>
+                        <input type="date" id="quick-s-date" required>
+                    </div>
+                    <div class="input-group modal-input">
+                        <label>Nom de la séance</label>
+                        <input type="text" id="quick-s-name" placeholder="ex: Musculation Haut du corps" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-action haptic-btn" style="width: 100%;">Valider</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="profile-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Profil & Sauvegarde</h2>
+                <button class="close-modal-btn haptic-btn" id="close-profile-btn">&times;</button>
+            </div>
+            <form id="profile-form">
+                <div class="modal-body">
+                    <div class="input-group modal-input">
+                        <label>Sexe biologique</label>
+                        <select id="gender"><option value="male">Homme</option><option value="female">Femme</option></select>
+                    </div>
+                    <div class="input-group modal-input">
+                        <label>Âge</label>
+                        <input type="number" id="age" placeholder="Années">
+                    </div>
+                    <div class="input-group modal-input">
+                        <label>Taille (cm)</label>
+                        <input type="number" id="height" placeholder="Ex: 180">
+                    </div>
+                    <div class="input-group modal-input">
+                        <label>Niveau d'activité</label>
+                        <select id="activity-level">
+                            <option value="1.2">Sédentaire</option>
+                            <option value="1.375">Léger (1-3 fois/semaine)</option>
+                            <option value="1.55">Modéré (3-5 fois/semaine)</option>
+                            <option value="1.725">Intense (6-7 fois/semaine)</option>
+                        </select>
+                    </div>
+                    <hr style="margin: 15px 0; border: 0; border-top: 1px solid var(--border);">
+                    <div style="display: flex; gap: 10px; justify-content: space-between;">
+                        <button type="button" class="btn-action haptic-btn" onclick="exportData()" style="flex: 1; background: #3b82f6;">Exporter Données</button>
+                        <label class="btn-action haptic-btn" style="flex: 1; background: #10b981; text-align: center; cursor: pointer;">
+                            Importer
+                            <input type="file" id="import-file-field" class="hidden" accept=".json" onchange="importData(event)">
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel haptic-btn" id="cancel-profile-btn">Fermer</button>
+                    <button type="submit" class="btn-action haptic-btn">Sauvegarder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="day-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="modal-day-title"></h2>
+                <button type="button" class="close-modal-btn haptic-btn" onclick="closeDayModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="day-session-form" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="hidden" id="session-edit-id" value="-1">
+                    <input type="text" id="session-name" placeholder="Nom de la séance..." style="flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 6px;" required>
+                    <button type="submit" id="modal-session-btn" class="btn-action haptic-btn">Ajouter</button>
+                </form>
+                <div id="day-sessions-list"></div>
+            </div>
+        </div>
+    </div>
+
     <main class="container bento-grid">
         
         <section class="bento-item col-span-6 bento-bmi">
@@ -96,8 +235,8 @@
                 <h2>Succès Élite</h2>
                 <p>Débloquez des hauts faits.</p>
             </div>
-            <div class="gami-grid" id="gamification-container" style="display: flex; flex-wrap: wrap; gap: 10px;">
-                </div>
+            <div class="gami-grid" id="gamification-container" style="display: flex; flex-direction: column; gap: 10px;">
+            </div>
         </section>
 
         <section class="bento-item bento-macros col-span-12">
@@ -108,16 +247,13 @@
                 </div>
                 <div class="macro-mode-selectors">
                     <label class="radio-label">
-                        <input type="radio" name="macro-mode" value="auto" checked id="macro-mode-auto">
-                        <span>Calcul Automatique</span>
+                        <input type="radio" name="macro-mode" value="auto" checked id="macro-mode-auto"> Automatique
                     </label>
                     <label class="radio-label">
-                        <input type="radio" name="macro-mode" value="manual" id="macro-mode-manual">
-                        <span>Saisie Manuelle</span>
+                        <input type="radio" name="macro-mode" value="manual" id="macro-mode-manual"> Manuel
                     </label>
                 </div>
             </div>
-
             <div class="calories-grid">
                 <div class="cal-block">
                     <span class="cal-val" id="cal-base" data-val="0">0</span>
@@ -136,7 +272,6 @@
                     <small>Objectif Prise (+300 kcal)</small>
                 </div>
             </div>
-
             <div class="macros-grid">
                 <div class="macro-bar-item item-prot">
                     <span class="macro-label">Protéines</span>
@@ -162,90 +297,46 @@
             </div>
         </section>
 
-        <section class="bento-item col-span-12 bento-cardio-section">
-            <div class="section-header">
-                <h2>Analyse Endurance & Cardio</h2>
-                <p>Mesurez et visualisez l'ensemble de vos paramètres de course.</p>
-            </div>
-
-            <form id="cardio-form" class="bento-inline-form-dense">
-                <input type="hidden" id="c-edit-id" value="-1">
-                <div class="form-grid-dense">
-                    <input type="date" id="c-date" required>
-                    <input type="number" id="c-speed" step="0.1" placeholder="Vitesse (km/h)" required>
-                    <input type="number" id="c-time" placeholder="Temps (Min)" required>
-                    <input type="number" id="c-incline" step="0.1" placeholder="Pente (%)">
-                    <input type="number" id="c-dist" step="0.01" placeholder="Distance (km)" required>
-                    <button type="submit" class="btn-action haptic-btn" id="cardio-submit-btn">
-                        <svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Ajouter
-                    </button>
-                    <button type="button" class="btn-cancel hidden haptic-btn" id="cardio-cancel-btn" onclick="cancelCardioEdit()">X</button>
-                </div>
-            </form>
-
-            <div class="chart-box-wrapper">
-                <div class="chart-header-controls" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                    <h3 style="margin:0; font-size:1rem;">Courbe de Progression</h3>
-                    <div id="cardio-metric-toggles" style="display:flex; gap:10px; font-size: 0.8rem; font-weight: 600; color: var(--navy);">
-                        <label style="cursor:pointer;"><input type="checkbox" value="dist" onchange="renderCardio()" checked> Distance</label>
-                        <label style="cursor:pointer;"><input type="checkbox" value="speed" onchange="renderCardio()"> Vitesse</label>
-                        <label style="cursor:pointer;"><input type="checkbox" value="time" onchange="renderCardio()"> Temps</label>
-                        <label style="cursor:pointer;"><input type="checkbox" value="incline" onchange="renderCardio()"> Pente</label>
-                    </div>
-                </div>
-                <div class="chart-container" id="cardio-chart"></div>
-            </div>
-
-            <div class="table-container mini-table">
-                <table id="cardio-table">
-                    <thead><tr><th>Date</th><th>Distance</th><th>Temps</th><th>Vitesse</th><th>Pente</th><th>Actions</th></tr></thead>
-                    <tbody id="cardio-body"></tbody>
-                </table>
-            </div>
-        </section>
-
         <section class="bento-item col-span-12 bento-weight-section">
             <div class="section-header">
-                <h2>Évolution du Poids</h2>
-                <p>Enregistrez vos variations corporelles régulières.</p>
+                <h2>Courbe de Poids</h2>
+                <p>Évolution corporelle.</p>
             </div>
-            
-            <form id="weight-form" class="bento-inline-form">
+            <div id="weight-chart-container" style="height: 250px; width: 100%; margin-top: 1rem;"></div>
+        </section>
+
+        <section class="bento-item col-span-12 bento-cardio-section">
+            <div class="section-header">
+                <h2>Sessions Cardio</h2>
+                <p>Suivez votre endurance.</p>
+            </div>
+            <form id="cardio-form" class="cardio-mini-form">
+                <input type="hidden" id="c-edit-id" value="-1">
                 <div class="form-grid-mini">
-                    <input type="date" id="w-date" required>
-                    <input type="number" id="w-weight" step="0.1" placeholder="Poids (kg)" required>
-                    <button type="submit" class="btn-action haptic-btn" id="weight-submit-btn">Ajouter</button>
+                    <input type="date" id="c-date" required>
+                    <input type="number" step="0.1" id="c-dist" placeholder="Distance (km)" required>
+                    <input type="number" id="c-time" placeholder="Temps (min)" required>
+                    <input type="number" step="0.1" id="c-speed" placeholder="Vitesse moy. (km/h)">
+                    <button type="submit" id="cardio-submit-btn" class="btn-action haptic-btn">Ajouter</button>
+                    <button type="button" id="cardio-cancel-btn" class="btn-cancel haptic-btn hidden" onclick="cancelCardioEdit()">Annuler</button>
                 </div>
             </form>
-
-            <div class="chart-box-wrapper">
-                <div class="chart-container" id="weight-chart"></div>
-            </div>
-
-            <div class="table-container mini-table">
-                <table id="weight-table">
-                    <thead><tr><th>Date</th><th>Poids</th></tr></thead>
-                    <tbody id="weight-body"></tbody>
-                </table>
-            </div>
+            <div id="cardio-list" style="margin-top: 15px; display: grid; gap: 10px;"></div>
         </section>
 
-        <section class="bento-item col-span-8 bento-calendar-section">
-            <div class="calendar-wrapper">
-                <div class="calendar-header">
-                    <button onclick="changeMonth(-1)" class="btn-icon haptic-btn">◀</button>
-                    <h3 id="month-year-display" class="month-year-title">Mois Année</h3>
-                    <button onclick="changeMonth(1)" class="btn-icon haptic-btn">▶</button>
-                </div>
-                <div class="calendar-grid" id="calendar-grid"></div>
+        <section class="bento-item col-span-12 bento-calendar-section">
+            <div class="calendar-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <button class="btn-action haptic-btn" onclick="changeMonth(-1)">&lt;</button>
+                <h2 id="month-year-display" style="margin: 0;"></h2>
+                <button class="btn-action haptic-btn" onclick="changeMonth(1)">&gt;</button>
             </div>
-        </section>
-
-        <section class="bento-item col-span-4 bento-weekly-goal">
-            <h3>Objectif Hebdomadaire</h3>
-            <p class="bento-item-desc">Séances validées sur 7 jours.</p>
-            <div class="weekly-goal-container" style="margin-top: 15px;">
-                <span id="weekly-goal-text" style="font-weight: 700; font-size: 0.9rem; color: var(--navy);">0/0 cette semaine</span>
+            <div class="calendar-days-header" style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: bold; font-size: 0.8rem; margin-bottom: 5px;">
+                <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+            </div>
+            <div id="calendar-grid" class="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;"></div>
+            
+            <div class="weekly-goal-box" style="margin-top: 15px; padding: 10px; background: #f1f5f9; border-radius: 8px;">
+                <span style="font-weight: 700; font-size: 0.9rem; color: var(--navy);" id="weekly-goal-text">0/0 cette semaine</span>
                 <div style="background: var(--border); height: 10px; border-radius: 5px; margin-top: 8px; overflow: hidden;">
                     <div id="weekly-goal-fill" style="height: 100%; width: 0%; background: var(--gold); transition: width 0.5s ease, background 0.5s ease;"></div>
                 </div>
@@ -259,8 +350,9 @@
             </div>
             <div class="records-layout">
                 <form id="record-form" class="record-mini-form">
-                    <div class="form-grid-mini">
-                        <input type="text" id="rec-name" placeholder="Mouvement / Exercice (ex: Squat)" required>
+                    <div class="form-grid-mini" style="grid-template-columns: 1fr 2fr 2fr auto;">
+                        <input type="date" id="rec-date" required>
+                        <input type="text" id="rec-name" placeholder="Mouvement (ex: Squat)" required>
                         <input type="text" id="rec-value" placeholder="Record (ex: 140 kg)" required>
                         <button type="submit" class="btn-action haptic-btn">Graver</button>
                     </div>
@@ -268,123 +360,8 @@
                 <div class="records-display-grid" id="records-container"></div>
             </div>
         </section>
+
     </main>
-
-    <div class="modal-overlay hidden" id="calendar-day-modal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h2 id="modal-day-title">Séances du ...</h2>
-                <button class="close-modal-btn haptic-btn" onclick="closeDayModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div id="modal-day-sessions" style="display:flex; flex-direction:column; gap:8px; margin-bottom: 20px;">
-                    </div>
-                <hr class="modal-sep" style="margin: 15px 0;">
-                <label style="display:block; font-size:0.75rem; font-weight:700; color:var(--navy); margin-bottom:8px; text-transform:uppercase;">Ajouter / Modifier séance</label>
-                <form onsubmit="saveSessionToDay(event)" style="display: flex; gap: 8px;">
-                    <input type="hidden" id="modal-day-date">
-                    <input type="hidden" id="session-edit-id" value="-1">
-                    <input type="text" id="session-name" placeholder="Ex: Push, Cardio..." required style="flex:1;">
-                    <button type="submit" class="btn-action haptic-btn" id="modal-session-btn">
-                        <svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay hidden" id="quick-weight-modal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h2>⚖️ Ajouter un Poids</h2>
-                <button class="close-modal-btn haptic-btn" onclick="closeQuickWeight()">&times;</button>
-            </div>
-            <form id="quick-weight-form">
-                <div class="modal-body">
-                    <div class="input-group modal-input">
-                        <label>Poids (kg)</label>
-                        <input type="number" id="quick-w-weight" step="0.1" placeholder="Ex: 75.5" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-cancel haptic-btn" onclick="closeQuickWeight()">Annuler</button>
-                    <button type="submit" class="btn-action haptic-btn">Ajouter</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal-overlay hidden" id="quick-record-modal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h2>🏆 Enregistrer un Record</h2>
-                <button class="close-modal-btn haptic-btn" onclick="closeQuickRecord()">&times;</button>
-            </div>
-            <form id="quick-record-form">
-                <div class="modal-body">
-                    <div class="input-group modal-input">
-                        <label>Mouvement / Exercice</label>
-                        <input type="text" id="quick-rec-name" placeholder="Ex: Squat" required>
-                    </div>
-                    <div class="input-group modal-input">
-                        <label>Valeur (ex: 140 kg)</label>
-                        <input type="text" id="quick-rec-value" placeholder="Ex: 140 kg" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-cancel haptic-btn" onclick="closeQuickRecord()">Annuler</button>
-                    <button type="submit" class="btn-action haptic-btn">Graver</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal-overlay hidden" id="profile-modal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h2>Profil & Souveraineté Numérique</h2>
-                <button class="close-modal-btn haptic-btn" id="close-profile-btn">&times;</button>
-            </div>
-            <form id="profile-form">
-                <div class="modal-body">
-                    <div class="input-group modal-input">
-                        <label>Sexe biologique</label>
-                        <select id="gender" required><option value="male">Homme</option><option value="female">Femme</option></select>
-                    </div>
-                    <div class="input-group modal-input">
-                        <label>Âge</label>
-                        <input type="number" id="age" min="1" max="120" required>
-                    </div>
-                    <div class="input-group modal-input">
-                        <label>Taille fixe (cm)</label>
-                        <input type="number" id="height" required>
-                    </div>
-                    <div class="input-group modal-input">
-                        <label>Niveau d'activité physique</label>
-                        <select id="activity-level" required>
-                            <option value="1.2">Sédentaire</option>
-                            <option value="1.375">Actif Léger (1-3 fois/sem)</option>
-                            <option value="1.55">Modérément Actif (3-5 fois/sem)</option>
-                            <option value="1.725">Intensif Quotidien</option>
-                        </select>
-                    </div>
-                    <hr class="modal-sep">
-                    <div class="backup-section">
-                        <h3>Sauvegardes Locales (JSON)</h3>
-                        <div class="backup-actions">
-                            <button type="button" class="btn-small btn-edit haptic-btn" onclick="exportDataData()">💾 Exporter</button>
-                            <button type="button" class="btn-small btn-delete haptic-btn" onclick="triggerImportField()">📥 Importer</button>
-                            <input type="file" id="import-file-field" class="hidden" accept=".json" onchange="importDataData(event)">
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-cancel haptic-btn" id="cancel-profile-btn">Fermer</button>
-                    <button type="submit" class="btn-action haptic-btn">Sauvegarder</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <div class="fab-container">
         <div class="fab-menu hidden" id="fab-menu">
