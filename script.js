@@ -16,616 +16,513 @@ function triggerHaptic() {
 }
 
 // === ICONES SVG POUR JS ===
-const iconEdit = `<svg class="icon-sm" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
-const iconTrash = `<svg class="icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
-const iconCheck = `<svg class="icon-sm" viewBox="0 0 24 24" stroke="#10b981"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
-const iconTrophy = `<svg class="icon-sm" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10M5 4h14v4a7 7 0 0 1-14 0V4z"></path></svg>`;
-const iconDrag = `<svg class="icon-sm" viewBox="0 0 24 24"><line x1="4" y1="8" x2="20" y2="8"></line><line x1="4" y1="16" x2="20" y2="16"></line></svg>`;
+const iconTrash = `<svg class="icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
 
-// === POP-UP DE CONFIRMATION HARMONISE ===
-function showConfirm(message, callback) {
-    triggerHaptic();
-    const modal = document.getElementById('confirm-modal');
-    document.getElementById('confirm-message').innerText = message;
-    modal.classList.remove('hidden');
+// === VARIABLES ET ETATS GLOBAUX ===
+let activeConfirmCallback = null;
+let currentSelectedDayKey = null;
 
-    const okBtn = document.getElementById('confirm-ok-btn');
-    const cancelBtn = document.getElementById('confirm-cancel-btn');
-
-    const newOkBtn = okBtn.cloneNode(true);
-    const newCancelBtn = cancelBtn.cloneNode(true);
-    okBtn.parentNode.replaceChild(newOkBtn, okBtn);
-    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-
-    newOkBtn.addEventListener('click', () => { triggerHaptic(); modal.classList.add('hidden'); callback(); });
-    newCancelBtn.addEventListener('click', () => { triggerHaptic(); modal.classList.add('hidden'); });
-}
-
-// === MOTEUR D'ANIMATION INCREMENTALE ===
-function animateValue(obj, start, end, duration, isFloat = false) {
-    if (!obj) return;
-    let startTimestamp = null;
-    const step = (timestamp) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        let val = progress * (end - start) + start;
-        obj.innerHTML = isFloat ? val.toFixed(1) : Math.floor(val);
-        if (progress < 1) { window.requestAnimationFrame(step); }
-    };
-    window.requestAnimationFrame(step);
-}
-
-// === OBSERVATEUR DE SCROLL FLUIDE ===
-function initScrollObserver() {
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry, index) => {
-            if(entry.isIntersecting) {
-                setTimeout(() => {
-                    entry.target.classList.add('reveal-visible');
-                    entry.target.classList.remove('reveal-hidden');
-                }, index * 80);
-                observer.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.05 });
-
-    document.querySelectorAll('.bento-item').forEach(el => {
-        el.classList.add('reveal-hidden');
-        observer.observe(el);
-    });
-}
-
-// === INITIALISATION ===
+// === INITIALISATION SUR CHARGEMENT ===
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    document.getElementById('c-date').valueAsDate = new Date();
-    document.getElementById('w-date').valueAsDate = new Date();
-
-    loadProfileData();
-    initMacroControls();
+    initDateDisplay();
+    initFabMenu();
+    initProfileModal();
+    initFormsSubmissions();
+    
+    // Premier Rendu Complet
     renderWeight();
-    renderRecords();
-    renderCardio();
-    renderCalendarInit();
-    updateSmartCoach();
-    updateGamification();
-    
-    initScrollObserver();
-});
-
-// === MODALS & PROFIL ===
-const profileModal = document.getElementById('profile-modal');
-document.getElementById('open-profile-btn').addEventListener('click', () => { triggerHaptic(); profileModal.classList.remove('hidden'); });
-document.getElementById('close-profile-btn').addEventListener('click', () => { triggerHaptic(); profileModal.classList.add('hidden'); });
-document.getElementById('cancel-profile-btn').addEventListener('click', () => { triggerHaptic(); profileModal.classList.add('hidden'); });
-
-document.getElementById('profile-form').addEventListener('submit', (e) => {
-    e.preventDefault(); triggerHaptic();
-    safeSetItem('userProfileBaseV2', {
-        gender: document.getElementById('gender').value,
-        age: parseInt(document.getElementById('age').value),
-        height: parseFloat(document.getElementById('height').value),
-        activityLevel: parseFloat(document.getElementById('activity-level').value)
-    });
-    profileModal.classList.add('hidden');
     recalculatePhysiqueAndCalories();
-    renderCalendarInit(); 
+    renderCalendar();
+    renderRecords();
+    updateSmartCoach();
 });
 
-function loadProfileData() {
-    const saved = safeGetItem('userProfileBaseV2', 'null');
-    if (saved) {
-        document.getElementById('gender').value = saved.gender || 'male';
-        document.getElementById('age').value = saved.age || '';
-        document.getElementById('height').value = saved.height || '';
-        document.getElementById('activity-level').value = saved.activityLevel || '1.2';
-    }
+// === COCHAGE DATE DU JOUR ===
+function initDateDisplay() {
+    const d = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('current-date-display').innerText = d.toLocaleDateString('fr-FR', options);
 }
 
-// === MACRONUTRIMENTS ===
-function initMacroControls() {
-    const mode = safeGetItem('macroConfigMode', '"auto"');
-    if (mode === "manual") {
-        document.getElementById('macro-mode-manual').checked = true;
-        setMacroInputsDisabled(false);
-        const manual = safeGetItem('manualMacrosValues', '{"prot":0,"fat":0,"carb":0}');
-        document.getElementById('input-macro-prot').value = manual.prot;
-        document.getElementById('input-macro-fat').value = manual.fat;
-        document.getElementById('input-macro-carb').value = manual.carb;
-    } else {
-        document.getElementById('macro-mode-auto').checked = true;
-        setMacroInputsDisabled(true);
-    }
-    document.getElementById('macro-mode-auto').addEventListener('change', () => handleMacroMode("auto"));
-    document.getElementById('macro-mode-manual').addEventListener('change', () => handleMacroMode("manual"));
-    ['prot', 'fat', 'carb'].forEach(m => document.getElementById(`input-macro-${m}`).addEventListener('input', saveManualMacros));
-}
-function setMacroInputsDisabled(d) { ['prot', 'fat', 'carb'].forEach(m => document.getElementById(`input-macro-${m}`).disabled = d); }
-function handleMacroMode(mode) { safeSetItem('macroConfigMode', mode); if(mode==="auto"){ setMacroInputsDisabled(true); recalculatePhysiqueAndCalories(); } else { setMacroInputsDisabled(false); saveManualMacros(); } }
-function saveManualMacros() { safeSetItem('manualMacrosValues', { prot: parseInt(document.getElementById('input-macro-prot').value)||0, fat: parseInt(document.getElementById('input-macro-fat').value)||0, carb: parseInt(document.getElementById('input-macro-carb').value)||0 }); }
-
-// === IMC INTELLIGENT ET MACROS ===
-function recalculatePhysiqueAndCalories() {
-    const profile = safeGetItem('userProfileBaseV2', 'null');
-    const weights = safeGetItem('weightHistory', '[]');
-    const mode = safeGetItem('macroConfigMode', '"auto"');
-    
-    if (weights.length >= 2) {
-        const diff = (weights[weights.length-1].weight - weights[weights.length-2].weight).toFixed(1);
-        document.getElementById('weight-delta-display').innerText = diff > 0 ? `+${diff} kg` : `${diff} kg`;
-    }
-
-    const bmiBox = document.getElementById('bmi-color-box');
-    const bmiText = document.getElementById('bmi-text');
-    const bmiAdvice = document.getElementById('bmi-advice');
-    
-    bmiBox.className = 'bmi-value';
-
-    if (!profile || !profile.height || weights.length === 0) {
-        bmiText.innerText = (profile && profile.height && weights.length === 0) ? "En attente de pesée" : "Profil incomplet";
-        bmiAdvice.innerText = weights.length === 0 ? "Veuillez ajouter une pesée." : "Configurez vos constantes.";
-        bmiBox.classList.add('bg-default');
-        return;
-    }
-
-    const w = weights[weights.length-1].weight;
-    const h = profile.height / 100;
-    const bmi = parseFloat((w / (h*h)).toFixed(1));
-    
-    const bmiEl = document.getElementById('bmi-num');
-    animateValue(bmiEl, parseFloat(bmiEl.dataset.val) || 0, bmi, 1000, true);
-    bmiEl.dataset.val = bmi;
-    
-    if (bmi < 18.5) { bmiBox.classList.add('bmi-under'); bmiText.innerText = "Insuffisance pondérale"; bmiAdvice.innerText = "Surplus calorique recommandé."; } 
-    else if (bmi < 25) { bmiBox.classList.add('bmi-normal'); bmiText.innerText = "Poids Normal (Idéal)"; bmiAdvice.innerText = "Excellent ! Maintenez cet équilibre."; } 
-    else if (bmi < 30) { bmiBox.classList.add('bmi-over'); bmiText.innerText = "Léger Surpoids"; bmiAdvice.innerText = "Léger déficit calorique conseillé."; } 
-    else { bmiBox.classList.add('bmi-obese'); bmiText.innerText = "Obésité"; bmiAdvice.innerText = "Visez un déficit maîtrisé."; }
-    
-    let bmr = profile.gender === "male" ? (10*w + 6.25*profile.height - 5*profile.age + 5) : (10*w + 6.25*profile.height - 5*profile.age - 161);
-    const maint = bmr * profile.activityLevel;
-    
-    const calElts = [ {id:'cal-base', v:bmr}, {id:'cal-maintenance', v:maint}, {id:'cal-deficit', v:maint-500}, {id:'cal-surplus', v:maint+300} ];
-    calElts.forEach(c => {
-        const el = document.getElementById(c.id);
-        animateValue(el, parseInt(el.dataset.val)||0, c.v, 1000);
-        el.dataset.val = c.v;
+// === MENU FLOTTANT ACTIONS (FAB) ===
+function initFabMenu() {
+    const mainBtn = document.getElementById('fab-main-btn');
+    const menu = document.getElementById('fab-menu');
+    mainBtn.addEventListener('click', () => {
+        triggerHaptic();
+        mainBtn.classList.toggle('active');
+        menu.classList.toggle('hidden');
     });
-
-    if (mode === "auto") {
-        document.getElementById('input-macro-prot').value = Math.round(w * 2);
-        document.getElementById('input-macro-fat').value = Math.round(w * 1);
-        document.getElementById('input-macro-carb').value = Math.round(Math.max(0, (maint - (w*2*4 + w*1*9))/4));
-    }
+}
+window.closeFabMenu = function() {
+    document.getElementById('fab-main-btn').classList.remove('active');
+    document.getElementById('fab-menu').classList.add('hidden');
 }
 
-// === TOOLTIP & DATA VIZ MULTI-COURBES GRADUÉ ===
-function showTooltipWithCrosshair(e, text, xPos, containerId) {
-    const tt = document.getElementById('chart-tooltip');
-    tt.innerHTML = text; tt.classList.remove('hidden');
-    tt.style.left = e.pageX + 'px'; tt.style.top = e.pageY + 'px';
-    const crosshair = document.getElementById(`crosshair-${containerId}`);
-    if (crosshair) { crosshair.style.display = 'block'; crosshair.setAttribute('x1', xPos); crosshair.setAttribute('x2', xPos); }
+// === CONFIRMATION MODAL UTILITY ===
+window.askConfirmation = function(message, callback) {
+    document.getElementById('confirm-message').innerText = message;
+    document.getElementById('confirm-modal').classList.remove('hidden');
+    activeConfirmCallback = callback;
 }
-function hideTooltipAndCrosshair(containerId) { 
-    document.getElementById('chart-tooltip').classList.add('hidden'); 
-    const crosshair = document.getElementById(`crosshair-${containerId}`); if(crosshair) crosshair.style.display = 'none';
-}
+document.getElementById('confirm-yes-btn').addEventListener('click', () => {
+    triggerHaptic();
+    document.getElementById('confirm-modal').classList.add('hidden');
+    if(activeConfirmCallback) activeConfirmCallback();
+    activeConfirmCallback = null;
+});
+document.getElementById('confirm-no-btn').addEventListener('click', () => {
+    triggerHaptic();
+    document.getElementById('confirm-modal').classList.add('hidden');
+    activeConfirmCallback = null;
+});
 
-function generateDataVizSVG(containerId, datasets, labels) {
-    const container = document.getElementById(containerId);
-    if (!datasets || datasets.length === 0 || datasets[0].data.length === 0) {
-        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding: 50px;">Aucune donnée à afficher.</div>`; return;
-    }
+// === CONFIGURATION PROFILE & MACROS ===
+function initProfileModal() {
+    const openBtn = document.getElementById('open-profile-btn');
+    const closeBtn = document.getElementById('close-profile-modal');
+    const cancelBtn = document.getElementById('cancel-profile-btn');
+    const modal = document.getElementById('profile-modal');
+    const modeSelect = document.getElementById('prof-macro-mode');
+    const manualFields = document.getElementById('manual-macros-inputs');
 
-    const width = container.clientWidth || 800; const height = 280;
-    const paddingX = 40; const paddingY = 40;
-    const graphW = width - paddingX * 2; const graphH = height - paddingY * 2;
-
-    let svg = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; overflow:visible;">
-               <style>.path-anim { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: drawLine 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }</style>`;
-
-    // Axe Y - Graduation
-    let maxVGlobal = 1;
-    datasets.forEach(ds => maxVGlobal = Math.max(maxVGlobal, Math.max(...ds.data)*1.1));
-    
-    for(let i=0; i<=4; i++) {
-        let y = paddingY + (graphH / 4) * i;
-        let val = (maxVGlobal - (i * (maxVGlobal / 4))).toFixed(1);
-        svg += `<line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="var(--border)" stroke-dasharray="4" stroke-width="1" />`;
-        svg += `<text x="${paddingX - 5}" y="${y + 3}" fill="var(--text-muted)" font-size="9" text-anchor="end">${val}</text>`;
-    }
-
-    svg += `<line id="crosshair-${containerId}" x1="0" y1="${paddingY}" x2="0" y2="${height - paddingY}" stroke="var(--navy)" stroke-width="1" stroke-dasharray="4" style="display:none; pointer-events:none;" />`;
-
-    // (CORRECTION DES LIAISONS DE COURBE) 
-    // Utilisation explicite des commandes M et L dans l'attribut d=""
-    datasets.forEach((ds) => {
-        if(!ds.data || ds.data.length === 0) return;
-        const minV = Math.min(...ds.data) * 0.9; const maxV = Math.max(...ds.data) * 1.1 || 1;
-        const range = (maxV - minV) || 1;
+    openBtn.addEventListener('click', () => {
+        triggerHaptic();
+        // Load Profile Data
+        const profile = safeGetItem('userProfileBaseV2', '{"name":"Athlète Elite","goalWeight":80}');
+        document.getElementById('prof-name').value = profile.name || '';
+        document.getElementById('prof-goal-weight').value = profile.goalWeight || '';
         
-        const points = ds.data.map((val, i) => {
-            const x = paddingX + (i * (graphW / Math.max(1, ds.data.length - 1)));
-            const y = paddingY + graphH - ((val - minV) / range) * graphH;
-            return {x, y, val};
-        });
-
-        const pathD = points.map((p, i) => `${i===0?'M':'L'} ${p.x} ${p.y}`).join(' ');
-        svg += `<path class="path-anim" d="${pathD}" fill="none" stroke="${ds.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
-
-        points.forEach((p, i) => {
-            svg += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${ds.color}" stroke="#fff" stroke-width="2" 
-                    onmouseenter="showTooltipWithCrosshair(event, '${labels[i]}<br/>${ds.label} : ${p.val}', ${p.x}, '${containerId}')" 
-                    onmouseleave="hideTooltipAndCrosshair('${containerId}')" style="cursor:crosshair; transition: r 0.2s;" />`;
-        });
-    });
-
-    const step = Math.max(1, Math.floor(labels.length / 6)); 
-    labels.forEach((label, i) => {
-        if(i % step === 0 || i === labels.length - 1) {
-            const x = paddingX + (i * (graphW / Math.max(1, labels.length - 1)));
-            svg += `<text x="${x}" y="${height - 10}" fill="var(--text-muted)" font-size="10" font-weight="600" text-anchor="middle">${label}</text>`;
-        }
-    });
-
-    if (datasets.length > 0) {
-        let lx = paddingX;
-        datasets.forEach((ds) => {
-            svg += `<rect x="${lx}" y="5" width="12" height="12" fill="${ds.color}" rx="3"/>`;
-            svg += `<text x="${lx + 18}" y="15" fill="var(--navy)" font-size="11" font-weight="700">${ds.label}</text>`;
-            lx += 90;
-        });
-    }
-    svg += `</svg>`; container.innerHTML = svg;
-}
-
-// === CARDIO CRUD & DATA-VIZ ===
-document.getElementById('cardio-form').addEventListener('submit', (e) => {
-    e.preventDefault(); triggerHaptic();
-    let history = safeGetItem('cardioHistory');
-    const editId = document.getElementById('c-edit-id').value;
-    const obj = {
-        id: editId === "-1" ? Date.now() : parseInt(editId), 
-        date: document.getElementById('c-date').value,
-        dist: parseFloat(document.getElementById('c-dist').value) || 0, time: parseFloat(document.getElementById('c-time').value) || 0,
-        speed: parseFloat(document.getElementById('c-speed').value) || 0, incline: parseFloat(document.getElementById('c-incline').value) || 0
-    };
-    
-    if (editId === "-1") { history.push(obj); } 
-    else { 
-        const index = history.findIndex(x => x.id === parseInt(editId));
-        if (index !== -1) history[index] = obj;
-        cancelCardioEdit(); 
-    }
-    
-    safeSetItem('cardioHistory', history);
-    document.getElementById('cardio-form').reset();
-    document.getElementById('c-date').valueAsDate = new Date();
-    renderCardio();
-});
-
-window.cancelCardioEdit = function() {
-    triggerHaptic();
-    document.getElementById('cardio-form').reset();
-    document.getElementById('c-date').valueAsDate = new Date();
-    document.getElementById('c-edit-id').value = "-1";
-    document.getElementById('cardio-submit-btn').innerHTML = `<svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Ajouter`;
-    document.getElementById('cardio-cancel-btn').classList.add('hidden');
-}
-
-window.editCardio = function(id) {
-    triggerHaptic();
-    let history = safeGetItem('cardioHistory'); 
-    let session = history.find(x => x.id === id);
-    if(session) {
-        document.getElementById('c-date').value = session.date;
-        document.getElementById('c-dist').value = session.dist; document.getElementById('c-time').value = session.time;
-        document.getElementById('c-speed').value = session.speed; document.getElementById('c-incline').value = session.incline || 0;
-        document.getElementById('c-edit-id').value = session.id;
-        document.getElementById('cardio-submit-btn').innerHTML = `${iconEdit} MaJ`;
-        document.getElementById('cardio-cancel-btn').classList.remove('hidden');
-    }
-}
-
-window.deleteCardio = function(id) {
-    showConfirm("Voulez-vous supprimer définitivement cette séance ?", () => {
-        safeSetItem('cardioHistory', safeGetItem('cardioHistory').filter(x => x.id !== id)); 
-        renderCardio();
-    });
-}
-
-window.renderCardio = function() {
-    let history = safeGetItem('cardioHistory').sort((a,b) => new Date(a.date) - new Date(b.date));
-    document.getElementById('cardio-body').innerHTML = [...history].reverse().map(s => `
-        <tr><td>${formatDate(s.date)}</td><td><strong>${s.dist}</strong> km</td><td>${s.time} min</td><td>${s.speed} km/h</td><td>${s.incline || 0}%</td>
-        <td><div class="action-btns">
-            <button class="btn-small btn-edit haptic-btn" onclick="editCardio(${s.id})" title="Éditer">${iconEdit}</button>
-            <button class="btn-small btn-delete haptic-btn" onclick="deleteCardio(${s.id})" title="Supprimer">${iconTrash}</button>
-        </div></td></tr>
-    `).join('');
-    
-    const labels = history.map(s => formatDate(s.date));
-    const dsDist = { label: 'Distance', data: history.map(s => parseFloat(s.dist)||0), color: 'var(--gold)' };
-    const dsSpeed = { label: 'Vitesse', data: history.map(s => parseFloat(s.speed)||0), color: 'var(--navy)' };
-    const dsTime = { label: 'Temps', data: history.map(s => parseFloat(s.time)||0), color: '#94a3b8' };
-    const dsIncline = { label: 'Pente', data: history.map(s => parseFloat(s.incline)||0), color: '#10b981' }; 
-
-    const checkedBoxes = Array.from(document.querySelectorAll('#cardio-metric-toggles input:checked')).map(cb => cb.value);
-
-    let activeDatasets = [];
-    if (checkedBoxes.includes('dist')) activeDatasets.push(dsDist);
-    if (checkedBoxes.includes('speed')) activeDatasets.push(dsSpeed);
-    if (checkedBoxes.includes('time')) activeDatasets.push(dsTime);
-    if (checkedBoxes.includes('incline')) activeDatasets.push(dsIncline);
-    
-    generateDataVizSVG('cardio-chart', activeDatasets, labels);
-}
-
-// === POIDS & RECORDS ===
-document.getElementById('weight-form').addEventListener('submit', (e) => {
-    e.preventDefault(); triggerHaptic();
-    let history = safeGetItem('weightHistory');
-    history.push({ id: Date.now(), date: document.getElementById('w-date').value, weight: parseFloat(document.getElementById('w-weight').value) });
-    history.sort((a,b) => new Date(a.date) - new Date(b.date));
-    safeSetItem('weightHistory', history); renderWeight(); recalculatePhysiqueAndCalories(); updateSmartCoach();
-});
-function renderWeight() { 
-    const history = safeGetItem('weightHistory').sort((a,b) => new Date(a.date) - new Date(b.date));
-    document.getElementById('weight-body').innerHTML = [...history].reverse().map(s => `<tr><td>${formatDate(s.date)}</td><td><strong>${s.weight} kg</strong></td></tr>`).join(''); 
-    
-    const labels = history.map(s => formatDate(s.date));
-    const dsWeight = { label: 'Poids (kg)', data: history.map(s => s.weight), color: 'var(--navy)' };
-    generateDataVizSVG('weight-chart', [dsWeight], labels);
-}
-
-document.getElementById('record-form').addEventListener('submit', (e) => {
-    e.preventDefault(); triggerHaptic(); let r = safeGetItem('elitePersonalRecords');
-    r.push({ id: Date.now(), name: document.getElementById('rec-name').value, value: document.getElementById('rec-value').value });
-    safeSetItem('elitePersonalRecords', r); document.getElementById('record-form').reset(); renderRecords(); updateGamification();
-});
-function renderRecords() { document.getElementById('records-container').innerHTML = safeGetItem('elitePersonalRecords').map(x => `
-    <div class="record-elite-card"><button class="delete-record-btn haptic-btn" onclick="deleteRecord(${x.id})" title="Supprimer">${iconTrash}</button>
-    <div class="record-elite-title">${escapeHtml(x.name)}</div><div class="record-elite-value">${escapeHtml(x.value)}</div></div>`).join(''); }
-
-window.deleteRecord = function(id) { 
-    showConfirm("Voulez-vous supprimer ce record ?", () => {
-        safeSetItem('elitePersonalRecords', safeGetItem('elitePersonalRecords').filter(x => x.id !== id)); 
-        renderRecords(); updateGamification();
-    });
-}
-
-// === CALENDRIER & OBJECTIF DYNAMIQUE ===
-let currentMonth = new Date().getMonth(); let currentYear = new Date().getFullYear();
-function renderCalendarInit() { renderCalendar(currentMonth, currentYear); calculateWeeklyGoal(); }
-window.changeMonth = function(dir) {
-    triggerHaptic();
-    currentMonth += dir; if(currentMonth>11){currentMonth=0; currentYear++;} else if(currentMonth<0){currentMonth=11; currentYear--;}
-    renderCalendar(currentMonth, currentYear);
-}
-
-function calculateWeeklyGoal() {
-    let monthlyData = safeGetItem('calendarData', '{}');
-    const today = new Date();
-    let dayOfWeek = today.getDay(); 
-    if (dayOfWeek === 0) dayOfWeek = 7; 
-
-    let weekStart = new Date(today); weekStart.setDate(today.getDate() - dayOfWeek + 1);
-    
-    let weeklyValidatedSessions = 0; let totalWeeklyTarget = 0;
-    
-    for(let i=0; i<7; i++) {
-        let d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
-        let dKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        let sessions = monthlyData[dKey] || [];
-        totalWeeklyTarget += sessions.length; 
-        weeklyValidatedSessions += sessions.filter(s => s.validated).length;
-    }
-    
-    document.getElementById('weekly-goal-text').innerText = `${weeklyValidatedSessions}/${totalWeeklyTarget} cette semaine`;
-    const percent = totalWeeklyTarget > 0 ? Math.min((weeklyValidatedSessions / totalWeeklyTarget) * 100, 100) : 0;
-    
-    const fillEl = document.getElementById('weekly-goal-fill');
-    fillEl.style.width = `${percent}%`;
-
-    let expectedMinimum = Math.floor((totalWeeklyTarget / 7) * dayOfWeek);
-    if (weeklyValidatedSessions < expectedMinimum && totalWeeklyTarget > 0) {
-        fillEl.style.backgroundColor = '#ef4444';
-        fillEl.style.boxShadow = '0 0 10px rgba(239,68,68,0.5)';
-    } else {
-        fillEl.style.backgroundColor = 'var(--gold)';
-        if (weeklyValidatedSessions >= totalWeeklyTarget && totalWeeklyTarget > 0) {
-            fillEl.style.boxShadow = '0 0 12px var(--gold-glow)';
+        const mode = localStorage.getItem('macroConfigMode') || 'auto';
+        modeSelect.value = mode;
+        if(mode === 'manual') {
+            manualFields.classList.remove('hidden');
+            const mv = safeGetItem('manualMacrosValues', '{"kcal":2500,"p":160,"g":250,"l":70}');
+            document.getElementById('mac-kcal').value = mv.kcal;
+            document.getElementById('mac-p').value = mv.p;
+            document.getElementById('mac-g').value = mv.g;
+            document.getElementById('mac-l').value = mv.l;
         } else {
-            fillEl.style.boxShadow = 'none';
+            manualFields.classList.add('hidden');
         }
-    }
-}
-
-// SÉPARATION DES STREAKS (MUSCU VS CARDIO)
-function updateConsistencyStreak() {
-    const monthlyData = safeGetItem('calendarData', '{}');
-    let muscuCount = 0, cardioCount = 0;
-    
-    Object.values(monthlyData).forEach(sessions => {
-        sessions.forEach(s => {
-            if (s.validated) {
-                const isCardio = (s.name.toUpperCase().includes('CARDIO') || s.name.toUpperCase().includes('RUN') || s.name.toUpperCase().includes('VELO'));
-                if (isCardio) cardioCount++; else muscuCount++;
-            }
-        });
+        modal.classList.remove('hidden');
     });
-    
-    animateValue(document.getElementById('streak-muscu-count'), 0, muscuCount, 800);
-    animateValue(document.getElementById('streak-cardio-count'), 0, cardioCount, 800);
+
+    const closeModalFunc = () => { triggerHaptic(); modal.classList.add('hidden'); };
+    closeBtn.addEventListener('click', closeModalFunc);
+    cancelBtn.addEventListener('click', closeModalFunc);
+
+    modeSelect.addEventListener('change', () => {
+        if(modeSelect.value === 'manual') {
+            manualFields.classList.remove('hidden');
+        } else {
+            manualFields.classList.add('hidden');
+        }
+    });
 }
 
-function renderCalendar(month, year) {
-    document.getElementById('month-year-display').innerText = new Date(year, month).toLocaleString('fr-FR', {month:'long', year:'numeric'}).toUpperCase();
-    const grid = document.getElementById('calendar-grid'); 
-    
-    const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-    let gridHTML = daysOfWeek.map(d => `<div class="cal-day-header">${d}</div>`).join('');
-    
-    const firstDayOfMonth = new Date(year, month, 1).getDay();
-    const emptyCells = (firstDayOfMonth + 6) % 7; 
-    
-    for(let i=0; i<emptyCells; i++) { gridHTML += `<div class="cal-day cal-day-empty"></div>`; }
-    
-    const daysInMonth = new Date(year, month+1, 0).getDate();
-    let monthlyData = safeGetItem('calendarData', '{}');
-
-    for(let i=1; i<=daysInMonth; i++) {
-        let dKey = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-        let sessions = monthlyData[dKey] || [];
+// === FORMULAIRES SOUMISSIONS & SAUVEGARDES ===
+function initFormsSubmissions() {
+    // 1. Profil Sauvegarde
+    document.getElementById('profile-config-form').addEventListener('submit', (e) => {
+        e.preventDefault(); triggerHaptic();
+        const profile = {
+            name: document.getElementById('prof-name').value,
+            goalWeight: parseFloat(document.getElementById('prof-goal-weight').value)
+        };
+        safeSetItem('userProfileBaseV2', profile);
         
-        let dayThemeClass = "";
-        if (sessions.length > 0) {
-            let lastSess = sessions[sessions.length-1].name.toUpperCase();
-            if(lastSess.includes('CARDIO') || lastSess.includes('RUN')) dayThemeClass = "theme-glow-cardio";
-            else dayThemeClass = "theme-glow-muscu";
+        const mode = document.getElementById('prof-macro-mode').value;
+        localStorage.setItem('macroConfigMode', mode);
+        
+        if(mode === 'manual') {
+            const mv = {
+                kcal: parseInt(document.getElementById('mac-kcal').value) || 2000,
+                p: parseInt(document.getElementById('prof-name').value) || 150,
+                g: parseInt(document.getElementById('mac-g').value) || 200,
+                l: parseInt(document.getElementById('mac-l').value) || 60
+            };
+            safeSetItem('manualMacrosValues', mv);
         }
         
-        let dHtml = `<div class="cal-day haptic-btn ${dayThemeClass}" onclick="openDayModal('${dKey}')"><span class="cal-day-num">${i}</span>`;
-        sessions.forEach(s => {
-            const nameUp = s.name.toUpperCase();
-            let badgeC = (nameUp.includes('CARDIO') || nameUp.includes('RUN') || nameUp.includes('VELO')) ? 'badge-cardio' : 'badge-muscu';
-            dHtml += `<div class="cal-day-content"><span class="cal-badge ${badgeC}">${escapeHtml(s.name)}</span>
-            <input type="checkbox" ${s.validated?'checked':''} onclick="event.stopPropagation(); toggleSession('${dKey}',${s.id})"></div>`;
+        document.getElementById('profile-modal').classList.add('hidden');
+        recalculatePhysiqueAndCalories();
+        updateSmartCoach();
+    });
+
+    // 2. Saisie Pesée Rapide
+    document.getElementById('quick-weight-form').addEventListener('submit', (e) => {
+        e.preventDefault(); triggerHaptic();
+        let history = safeGetItem('weightHistory');
+        const chosenDate = document.getElementById('quick-w-date').value;
+        
+        history.push({ id: Date.now(), date: chosenDate, weight: parseFloat(document.getElementById('quick-w-weight').value) });
+        history.sort((a,b) => new Date(a.date) - new Date(b.date));
+        safeSetItem('weightHistory', history); 
+        renderWeight(); recalculatePhysiqueAndCalories(); updateSmartCoach();
+        closeQuickWeight();
+    });
+
+    // 3. Record Rapide
+    document.getElementById('quick-record-form').addEventListener('submit', (e) => {
+        e.preventDefault(); triggerHaptic();
+        let r = safeGetItem('elitePersonalRecords');
+        r.push({ 
+            id: Date.now(), 
+            name: document.getElementById('quick-rec-name').value, 
+            value: document.getElementById('quick-rec-value').value 
         });
-        dHtml += `</div>`; gridHTML += dHtml;
+        safeSetItem('elitePersonalRecords', r);
+        renderRecords(); updateSmartCoach();
+        closeQuickRecord();
+    });
+
+    // 4. Séance Rapide / Planification
+    document.getElementById('quick-session-form').addEventListener('submit', (e) => {
+        e.preventDefault(); triggerHaptic();
+        let cal = safeGetItem('calendarData', '{}');
+        const dKey = document.getElementById('quick-sess-date').value;
+        if(!cal[dKey]) cal[dKey] = [];
+        
+        cal[dKey].push({
+            id: Date.now(),
+            title: document.getElementById('quick-sess-title').value,
+            type: document.getElementById('quick-sess-type').value
+        });
+        
+        safeSetItem('calendarData', cal);
+        renderCalendar(); updateSmartCoach();
+        closeQuickSession();
+    });
+}
+
+// === ACTIONS D'OUVERTURE MODALS SANS FOCUS INDUIT ===
+window.quickAddWeight = function() {
+    triggerHaptic();
+    document.getElementById('quick-weight-modal').classList.remove('hidden');
+    const today = new Date();
+    document.getElementById('quick-w-date').value = today.toISOString().split('T')[0];
+    closeFabMenu();
+}
+window.closeQuickWeight = function() {
+    triggerHaptic();
+    document.getElementById('quick-weight-modal').classList.add('hidden');
+    document.getElementById('quick-weight-form').reset();
+}
+
+window.quickAddRecord = function() {
+    triggerHaptic();
+    document.getElementById('quick-record-modal').classList.remove('hidden');
+    closeFabMenu();
+}
+window.closeQuickRecord = function() {
+    triggerHaptic();
+    document.getElementById('quick-record-modal').classList.add('hidden');
+    document.getElementById('quick-record-form').reset();
+}
+
+window.quickAddSession = function() {
+    triggerHaptic();
+    document.getElementById('quick-session-modal').classList.remove('hidden');
+    const today = new Date();
+    document.getElementById('quick-sess-date').value = today.toISOString().split('T')[0];
+    closeFabMenu();
+}
+window.closeQuickSession = function() {
+    triggerHaptic();
+    document.getElementById('quick-session-modal').classList.add('hidden');
+    document.getElementById('quick-session-form').reset();
+}
+
+// === NUTRITION ET CALCULS MACROS ===
+function recalculatePhysiqueAndCalories() {
+    const history = safeGetItem('weightHistory');
+    const profile = safeGetItem('userProfileBaseV2', '{"name":"Athlète Elite","goalWeight":80}');
+    const mode = localStorage.getItem('macroConfigMode') || 'auto';
+    
+    let currentWeight = profile.goalWeight;
+    if(history.length > 0) currentWeight = history[history.length - 1].weight;
+    
+    let kcal, p, g, l;
+    if(mode === 'manual') {
+        const mv = safeGetItem('manualMacrosValues', '{"kcal":2500,"p":160,"g":250,"l":70}');
+        kcal = mv.kcal; p = mv.p; g = mv.g; l = mv.l;
+    } else {
+        // Formule Auto simplifiée basée sur le poids actuel
+        kcal = Math.round(currentWeight * 33);
+        p = Math.round(currentWeight * 2);
+        g = Math.round(currentWeight * 3.5);
+        l = Math.round(currentWeight * 0.9);
     }
     
-    grid.innerHTML = gridHTML;
-    updateConsistencyStreak();
-}
-
-// === GESTION MODAL CALENDRIER ET DRAG & DROP ===
-window.openDayModal = function(dKey) {
-    triggerHaptic();
-    document.getElementById('modal-day-title').innerText = formatDate(dKey);
-    document.getElementById('modal-day-date').value = dKey;
-    document.getElementById('session-edit-id').value = "-1";
-    document.getElementById('session-name').value = "";
-    document.getElementById('modal-session-btn').innerHTML = `<svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
-    renderDaySessions(dKey);
-    document.getElementById('calendar-day-modal').classList.remove('hidden');
-}
-window.closeDayModal = function() { triggerHaptic(); document.getElementById('calendar-day-modal').classList.add('hidden'); }
-
-let draggedSessionId = null;
-window.handleDragStart = function(e) { draggedSessionId = parseInt(e.currentTarget.dataset.id); e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; triggerHaptic(); }
-window.handleDragOver = function(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
-window.handleDragEnter = function(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
-window.handleDragLeave = function(e) { e.currentTarget.classList.remove('drag-over'); }
-window.handleDrop = function(e, dKey) {
-    e.preventDefault(); e.currentTarget.classList.remove('drag-over');
-    const targetId = parseInt(e.currentTarget.dataset.id);
-    if (draggedSessionId === targetId) return;
-    let data = safeGetItem('calendarData', '{}'); let sessions = data[dKey];
-    const draggedIdx = sessions.findIndex(s => s.id === draggedSessionId);
-    const targetIdx = sessions.findIndex(s => s.id === targetId);
-    const [draggedItem] = sessions.splice(draggedIdx, 1);
-    sessions.splice(targetIdx, 0, draggedItem);
-    safeSetItem('calendarData', data); triggerHaptic(); renderDaySessions(dKey); renderCalendarInit();
-}
-document.addEventListener('dragend', (e) => { if(e.target.classList.contains('modal-list-item')) e.target.classList.remove('dragging'); });
-
-function renderDaySessions(dKey) {
-    let data = safeGetItem('calendarData', '{}');
-    let sessions = data[dKey] || [];
-    let listContainer = document.getElementById('modal-day-sessions');
+    document.getElementById('macro-kcal-val').innerText = kcal;
     
-    if (sessions.length === 0) { listContainer.innerHTML = "<small style='color:var(--text-muted);'>Aucune séance ce jour.</small>"; return; }
-    
-    listContainer.innerHTML = sessions.map((s, index) => `
-        <div class="modal-list-item" draggable="true" data-id="${s.id}" data-index="${index}" 
-             ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" 
-             ondrop="handleDrop(event, '${dKey}')" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)">
-            <span style="display:flex; align-items:center; gap:8px;">
-                <span class="drag-handle" title="Maintenir pour déplacer">${iconDrag}</span>
-                ${s.validated ? iconCheck : ''} ${escapeHtml(s.name)}
-            </span>
-            <div class="action-btns">
-                <button type="button" class="btn-small btn-edit haptic-btn" onclick="prepareEditSession('${dKey}', ${s.id})" title="Éditer">${iconEdit}</button>
-                <button type="button" class="btn-small btn-delete haptic-btn" onclick="deleteSession('${dKey}', ${s.id})" title="Supprimer">${iconTrash}</button>
+    const target = document.getElementById('macro-bars-target');
+    target.innerHTML = `
+        ${renderMacroRow('Protéines', p, 'g', '#93c5fd', 100)}
+        ${renderMacroRow('Glucides', g, 'g', '#fde047', 100)}
+        ${renderMacroRow('Lipides', l, 'g', '#fca5a5', 100)}
+    `;
+}
+function renderMacroRow(name, val, unit, color, pct) {
+    return `
+        <div class="macro-bar-row">
+            <div class="macro-label-wrap">
+                <span class="m-name">${escapeHtml(name)}</span>
+                <span class="m-val">${val} ${unit}</span>
+            </div>
+            <div class="macro-bar-bg">
+                <div class="macro-bar-fill" style="width: ${pct}%; background-color: ${color};"></div>
             </div>
         </div>
-    `).join('');
+    `;
 }
 
-window.saveSessionToDay = function(e) {
-    e.preventDefault(); triggerHaptic();
-    let dKey = document.getElementById('modal-day-date').value;
-    let sName = document.getElementById('session-name').value;
-    let editId = document.getElementById('session-edit-id').value;
-    let data = safeGetItem('calendarData', '{}');
-    if(!data[dKey]) data[dKey] = [];
+// === RENDU DU COMPOSANT POIDS ===
+function renderWeight() {
+    const history = safeGetItem('weightHistory');
+    const currentVal = document.getElementById('current-weight-val');
+    const diffVal = document.getElementById('weight-diff-val');
+    const list = document.getElementById('weight-history-list');
     
-    if (editId === "-1") { data[dKey].push({ id: Date.now(), name: sName, validated: false }); } 
-    else { let session = data[dKey].find(x => x.id === parseInt(editId)); if (session) session.name = sName; }
-    
-    safeSetItem('calendarData', data);
-    document.getElementById('session-name').value = ""; document.getElementById('session-edit-id').value = "-1";
-    document.getElementById('modal-session-btn').innerHTML = `<svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
-    renderDaySessions(dKey); renderCalendarInit();
-}
-
-window.prepareEditSession = function(dKey, id) {
-    triggerHaptic(); let data = safeGetItem('calendarData', '{}'); let session = data[dKey].find(x => x.id === id);
-    if(session) {
-        document.getElementById('session-name').value = session.name;
-        document.getElementById('session-edit-id').value = session.id;
-        document.getElementById('modal-session-btn').innerHTML = iconEdit;
+    if(history.length === 0) {
+        currentVal.innerText = '--';
+        diffVal.className = 'weight-diff hidden';
+        list.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:0.85rem;">Aucun poids enregistré</div>`;
+        return;
     }
+    
+    const latest = history[history.length - 1].weight;
+    currentVal.innerText = latest.toFixed(1);
+    
+    if(history.length > 1) {
+        const diff = latest - history[history.length - 2].weight;
+        diffVal.className = 'weight-diff ' + (diff >= 0 ? 'plus' : 'minus');
+        diffVal.innerText = (diff >= 0 ? '+' : '') + diff.toFixed(1) + ' kg';
+    } else {
+        diffVal.className = 'weight-diff hidden';
+    }
+    
+    let html = '';
+    // Affichage des 4 derniers enregistrements
+    for(let i = history.length - 1; i >= 0; i--) {
+        html += `
+            <div class="history-item">
+                <div class="history-item-left">
+                    <span class="history-title">${history[i].weight.toFixed(1)} kg</span>
+                    <span class="history-date">${formatDate(history[i].date)}</span>
+                </div>
+                <button class="delete-btn" onclick="deleteWeightItem(${history[i].id})">${iconTrash}</button>
+            </div>
+        `;
+    }
+    list.innerHTML = html;
 }
 
-window.deleteSession = function(dKey, id) {
-    showConfirm("Voulez-vous supprimer définitivement cette séance ?", () => {
-        let data = safeGetItem('calendarData', '{}');
-        data[dKey] = data[dKey].filter(x => x.id !== id);
-        safeSetItem('calendarData', data);
-        renderDaySessions(dKey); renderCalendarInit();
+window.deleteWeightItem = function(id) {
+    askConfirmation("Supprimer cette pesée ?", () => {
+        let history = safeGetItem('weightHistory');
+        history = history.filter(x => x.id !== id);
+        safeSetItem('weightHistory', history);
+        renderWeight(); recalculatePhysiqueAndCalories(); updateSmartCoach();
     });
 }
 
-window.toggleSession = function(dKey, id) {
-    triggerHaptic(); let data = safeGetItem('calendarData', '{}'); let session = data[dKey].find(x => x.id === id);
-    if(session) { session.validated = !session.validated; safeSetItem('calendarData', data); renderCalendarInit(); updateGamification(); }
+// === RENDU DU COMPOSANT CALENDRIER ===
+function renderCalendar() {
+    const target = document.getElementById('calendar-grid-target');
+    const calData = safeGetItem('calendarData', '{}');
+    
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth(); // Mois en cours
+    
+    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+    const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+    
+    target.innerHTML = '';
+    
+    // Cellules vides initiales
+    for (let i = 0; i < firstDayIndex; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day empty';
+        target.appendChild(cell);
+    }
+    
+    // Génération des jours du mois courant
+    for (let day = 1; day <= totalDays; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day';
+        
+        const mKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        
+        if (day === today.getDate()) {
+            cell.classList.add('today');
+        }
+        
+        let innerHtml = `<div class="calendar-day-num">${day}</div>`;
+        
+        // Intégration horizontale des séances
+        if (calData[mKey] && calData[mKey].length > 0) {
+            innerHtml += `<div class="calendar-day-sessions">`;
+            calData[mKey].forEach(s => {
+                let typeClass = '';
+                if(s.type === 'Cardio') typeClass = 'cardio';
+                if(s.type === 'Récupération') typeClass = 'recovery';
+                innerHtml += `<span class="calendar-session-dot ${typeClass}">${escapeHtml(s.title)}</span>`;
+            });
+            innerHtml += `</div>`;
+        }
+        
+        cell.innerHTML = innerHtml;
+        cell.addEventListener('click', () => openDaySessionsModal(mKey));
+        target.appendChild(cell);
+    }
 }
 
-// === COACH & GAMIFICATION ===
+// === GESTIONNAIRE DES SEANCES PAR JOURS ===
+window.openDaySessionsModal = function(dayKey) {
+    triggerHaptic();
+    currentSelectedDayKey = dayKey;
+    const d = new Date(dayKey);
+    document.getElementById('modal-day-title').innerText = d.toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+    renderDaySessionsList();
+    document.getElementById('day-sessions-modal').classList.remove('hidden');
+}
+window.closeDaySessionsModal = function() {
+    triggerHaptic();
+    document.getElementById('day-sessions-modal').classList.add('hidden');
+}
+
+function renderDaySessionsList() {
+    const list = document.getElementById('modal-day-sessions');
+    const calData = safeGetItem('calendarData', '{}');
+    const sessions = calData[currentSelectedDayKey] || [];
+    
+    if(sessions.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:15px; color:var(--text-muted); font-size:0.85rem;">Aucune séance planifiée pour cette date</div>`;
+        return;
+    }
+    
+    let html = '';
+    sessions.forEach((s, idx) => {
+        html += `
+            <div class="modal-session-item">
+                <div>
+                    <strong style="color:var(--navy); font-size:0.9rem;">${escapeHtml(s.title)}</strong>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(s.type)}</div>
+                </div>
+                <button class="delete-btn" onclick="deleteSessionItem(${s.id})">${iconTrash}</button>
+            </div>
+        `;
+    });
+    list.innerHTML = html;
+}
+
+window.deleteSessionItem = function(id) {
+    askConfirmation("Supprimer cette séance du planning ?", () => {
+        let cal = safeGetItem('calendarData', '{}');
+        if(cal[currentSelectedDayKey]) {
+            cal[currentSelectedDayKey] = cal[currentSelectedDayKey].filter(x => x.id !== id);
+            safeSetItem('calendarData', cal);
+            renderDaySessionsList();
+            renderCalendar();
+            updateSmartCoach();
+        }
+    });
+}
+
+// === RENDU DU COMPOSANT RECORDS ===
+function renderRecords() {
+    const r = safeGetItem('elitePersonalRecords');
+    const list = document.getElementById('records-history-list');
+    
+    if(r.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:0.85rem;">Aucun record enregistré</div>`;
+        return;
+    }
+    
+    let html = '';
+    for(let i = r.length - 1; i >= 0; i--) {
+        html += `
+            <div class="history-item">
+                <div class="history-item-left">
+                    <span class="history-title">${escapeHtml(r[i].name)}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span class="history-value">${escapeHtml(r[i].value)}</span>
+                    <button class="delete-btn" onclick="deleteRecordItem(${r[i].id})">${iconTrash}</button>
+                </div>
+            </div>
+        `;
+    }
+    list.innerHTML = html;
+}
+
+window.deleteRecordItem = function(id) {
+    askConfirmation("Supprimer ce record personnel ?", () => {
+        let r = safeGetItem('elitePersonalRecords');
+        r = r.filter(x => x.id !== id);
+        safeSetItem('elitePersonalRecords', r);
+        renderRecords(); updateSmartCoach();
+    });
+}
+
+// === SMART COACH LOGIC ===
 function updateSmartCoach() {
-    let w = safeGetItem('weightHistory'); let text = "Maintenez votre régularité pour des analyses prédictives.";
-    if (w.length >= 2) {
-        let diff = w[w.length-1].weight - w[w.length-2].weight;
-        if(diff < 0) text = "Dynamique de perte enclenchée. Maintenez le déficit calorique sans rogner sur l'intensité physique.";
-        else if (diff > 0) text = "Prise de masse détectée. Assurez la surcharge progressive sur vos exercices polyarticulaires.";
-        else text = "Poids stabilisé. Modifiez vos variables d'entraînement (Vitesse, Pente, Volume) pour relancer l'adaptation.";
-    } document.getElementById('smart-coach-text').innerText = text;
-}
-function updateGamification() {
-    let r = safeGetItem('elitePersonalRecords').length; let c = document.getElementById('gamification-container'); let html = "";
-    if(r > 0) html += `<span class="badge badge-gold">${iconTrophy} Élite (${r} Records)</span>`;
-    if(r >= 5) html += `<span class="badge" style="color:var(--navy);">${iconTrophy} Hall of Fame</span>`;
-    if(html === "") html = "<small style='color:var(--text-muted);'>Aucun fait d'arme débloqué.</small>";
-    c.innerHTML = html;
+    const txt = document.getElementById('coach-insights-text');
+    const history = safeGetItem('weightHistory');
+    const cal = safeGetItem('calendarData', '{}');
+    
+    let sessCount = 0;
+    Object.keys(cal).forEach(k => { sessCount += cal[k].length; });
+    
+    if(history.length === 0 && sessCount === 0) {
+        txt.innerText = "Bienvenue dans l'univers Elite. Renseignez votre première pesée et planifiez vos entraînements pour recevoir l'analyse Smart Coach.";
+        return;
+    }
+    
+    if(history.length > 1) {
+        const latest = history[history.length - 1].weight;
+        const prev = history[history.length - 2].weight;
+        if(latest < prev) {
+            txt.innerText = "Évolution positive. Votre tendance de poids baisse, restez rigoureux sur l'apport en protéines pour conserver votre masse musculaire.";
+            return;
+        }
+    }
+    txt.innerText = "Régularité optimale constatée sur le calendrier. Continuez à cibler vos charges d'entraînement progressives.";
 }
 
-// === EXPORT / IMPORT ===
-window.exportDataData = function() {
-    const obj = { userProfileBaseV2: localStorage.getItem('userProfileBaseV2'), weightHistory: localStorage.getItem('weightHistory'), calendarData: localStorage.getItem('calendarData'), cardioHistory: localStorage.getItem('cardioHistory'), elitePersonalRecords: localStorage.getItem('elitePersonalRecords'), macroConfigMode: localStorage.getItem('macroConfigMode'), manualMacrosValues: localStorage.getItem('manualMacrosValues') };
-    const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(obj));
-    a.download = `wallysport_bento_backup.json`; document.body.appendChild(a); a.click(); a.remove();
-}
+// === ACCÈS ET RECONSTITUTION DES DONNÉES DE CONFIGURATION ===
 window.triggerImportField = function() { document.getElementById('import-file-field').click(); }
+window.exportDataData = function() {
+    triggerHaptic();
+    const obj = {
+        userProfileBaseV2: localStorage.getItem('userProfileBaseV2'),
+        weightHistory: localStorage.getItem('weightHistory'),
+        calendarData: localStorage.getItem('calendarData'),
+        elitePersonalRecords: localStorage.getItem('elitePersonalRecords'),
+        macroConfigMode: localStorage.getItem('macroConfigMode'),
+        manualMacrosValues: localStorage.getItem('manualMacrosValues')
+    };
+    const a = document.createElement('a');
+    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(obj));
+    a.download = `wallysport_bento_backup.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+}
 window.importDataData = function(e) {
-    const file = e.target.files[0]; if(!file) return; const reader = new FileReader();
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
     reader.onload = function(ev) {
-        try { const json = JSON.parse(ev.target.result);
-            ['userProfileBaseV2','weightHistory','calendarData','cardioHistory','elitePersonalRecords','macroConfigMode','manualMacrosValues'].forEach(k => { if(json[k]) localStorage.setItem(k, json[k]); });
-            alert("Restauration Bento achevée."); window.location.reload();
+        try {
+            const json = JSON.parse(ev.target.result);
+            ['userProfileBaseV2','weightHistory','calendarData','elitePersonalRecords','macroConfigMode','manualMacrosValues'].forEach(k => {
+                if(json[k]) localStorage.setItem(k, json[k]);
+            });
+            alert("Restauration Bento achevée avec succès."); window.location.reload();
         } catch (err) { alert("Format de fichier invalide."); }
-    }; reader.readAsText(file);
+    };
+    reader.readAsText(file);
 }
 
 // === PDF GENERATOR ===
@@ -635,109 +532,7 @@ window.generatePDFReport = function() {
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
         doc.setFontSize(22); doc.text("WALLY SPORT ELITE - BILAN DE PERFORMANCE", 20, 20);
         doc.setFontSize(10); doc.text(`Édité le : ${new Date().toLocaleDateString('fr-FR')}`, 20, 28);
-        doc.save("Bilan_Mensuel_WallySport.pdf");
-    } catch(e) { alert("Erreur PDF. Vérifiez votre connexion internet pour l'accès CDN."); }
+        doc.text("Ce document contient la synthèse complète de vos données de performance stockées localement.", 20, 34);
+        doc.save('WallySport_Elite_Report.pdf');
+    } catch(err) { alert("Erreur lors de la génération du PDF."); }
 }
-
-// === MENU FAB (BOUTON D'ACTION FLOTTANT) & QUICK ACTIONS ===
-const fabMainBtn = document.getElementById('fab-main-btn');
-const fabMenu = document.getElementById('fab-menu');
-
-if (fabMainBtn && fabMenu) {
-    fabMainBtn.addEventListener('click', () => {
-        triggerHaptic();
-        fabMainBtn.classList.toggle('active');
-        fabMenu.classList.toggle('hidden');
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.fab-container')) {
-            fabMainBtn.classList.remove('active');
-            fabMenu.classList.add('hidden');
-        }
-    });
-}
-
-function closeFabMenu() {
-    if (fabMainBtn && fabMenu) {
-        fabMainBtn.classList.remove('active');
-        fabMenu.classList.add('hidden');
-    }
-}
-
-// 1. Quick Add : Séance (Modal Date + Nom)
-window.quickAddSession = function() {
-    triggerHaptic();
-    document.getElementById('quick-session-modal').classList.remove('hidden');
-    document.getElementById('quick-s-date').valueAsDate = new Date();
-    setTimeout(() => document.getElementById('quick-s-name').focus(), 100);
-    closeFabMenu();
-}
-window.closeQuickSession = function() {
-    triggerHaptic();
-    document.getElementById('quick-session-modal').classList.add('hidden');
-    document.getElementById('quick-session-form').reset();
-}
-document.getElementById('quick-session-form').addEventListener('submit', (e) => {
-    e.preventDefault(); triggerHaptic();
-    let data = safeGetItem('calendarData', '{}');
-    const dKey = document.getElementById('quick-s-date').value;
-    const sName = document.getElementById('quick-s-name').value;
-    
-    if(!data[dKey]) data[dKey] = [];
-    data[dKey].push({ id: Date.now(), name: sName, validated: false });
-    
-    safeSetItem('calendarData', data);
-    renderCalendarInit(); updateSmartCoach();
-    closeQuickSession();
-});
-
-// 2. Quick Add : Poids
-window.quickAddWeight = function() {
-    triggerHaptic();
-    document.getElementById('quick-weight-modal').classList.remove('hidden');
-    setTimeout(() => document.getElementById('quick-w-weight').focus(), 100);
-    closeFabMenu();
-}
-window.closeQuickWeight = function() {
-    triggerHaptic();
-    document.getElementById('quick-weight-modal').classList.add('hidden');
-    document.getElementById('quick-weight-form').reset();
-}
-document.getElementById('quick-weight-form').addEventListener('submit', (e) => {
-    e.preventDefault(); triggerHaptic();
-    let history = safeGetItem('weightHistory');
-    const today = new Date();
-    const dKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    
-    history.push({ id: Date.now(), date: dKey, weight: parseFloat(document.getElementById('quick-w-weight').value) });
-    history.sort((a,b) => new Date(a.date) - new Date(b.date));
-    safeSetItem('weightHistory', history); 
-    renderWeight(); recalculatePhysiqueAndCalories(); updateSmartCoach();
-    closeQuickWeight();
-});
-
-// 3. Quick Add : Record
-window.quickAddRecord = function() {
-    triggerHaptic();
-    document.getElementById('quick-record-modal').classList.remove('hidden');
-    setTimeout(() => document.getElementById('quick-rec-name').focus(), 100);
-    closeFabMenu();
-}
-window.closeQuickRecord = function() {
-    triggerHaptic();
-    document.getElementById('quick-record-modal').classList.add('hidden');
-    document.getElementById('quick-record-form').reset();
-}
-document.getElementById('quick-record-form').addEventListener('submit', (e) => {
-    e.preventDefault(); triggerHaptic();
-    let r = safeGetItem('elitePersonalRecords');
-    r.push({ 
-        id: Date.now(), 
-        name: document.getElementById('quick-rec-name').value, 
-        value: document.getElementById('quick-rec-value').value 
-    });
-    safeSetItem('elitePersonalRecords', r); 
-    renderRecords(); updateGamification();
-    closeQuickRecord();
-});
