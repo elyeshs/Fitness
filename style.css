@@ -13,7 +13,7 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body); color: var(--text-dark); -webkit-font-smoothing: antialiased; padding-bottom: 80px; /* Espace pour le FAB */ }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body); color: var(--text-dark); -webkit-font-smoothing: antialiased; padding-bottom: 80px; }
 .container { max-width: 1300px; margin: 0 auto; padding: 0 1.5rem; }
 
 /* SVG ICONS */
@@ -23,6 +23,11 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body);
 /* HAPTIC BUTTON FEEL */
 .haptic-btn { transition: transform 0.1s ease; cursor: pointer; }
 .haptic-btn:active { transform: scale(0.92) !important; }
+
+/* KEYFRAMES ANIMATION SVG (CORRECTION LIAISON COURBES) */
+@keyframes drawLine {
+    to { stroke-dashoffset: 0; }
+}
 
 /* TOP HEADER */
 .top-header { background: var(--navy); padding: 1.25rem 0; margin-bottom: 2rem; }
@@ -36,10 +41,21 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body);
 /* FLOATING TOOLTIP */
 .custom-tooltip { position: absolute; background: var(--navy); color: var(--white); padding: 8px 12px; border-radius: 6px; font-size: 0.75rem; pointer-events: none; z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border-left: 3px solid var(--gold); transform: translate(-50%, -130%); }
 
-/* BENTO GRID (SANS EFFET 3D/HOVER) */
-.bento-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; }
-.bento-item { background: var(--card-bg); border-radius: var(--radius-bento); padding: 1.75rem; box-shadow: var(--bento-shadow); border: 1px solid rgba(15,23,42,0.02); display: flex; flex-direction: column; justify-content: space-between; }
-/* FIN DES EFFETS 3D - Les cartes restent à plat */
+/* BENTO GRID (SANS EFFET 3D/HOVER initial) + MODE FOCUS INTELLIGENT */
+.bento-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; transition: background-color 0.3s ease; }
+.bento-item { background: var(--card-bg); border-radius: var(--radius-bento); padding: 1.75rem; box-shadow: var(--bento-shadow); border: 1px solid rgba(15,23,42,0.02); display: flex; flex-direction: column; justify-content: space-between; transition: opacity 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; }
+
+/* MODE FOCUS DYNAMIQUE (Intelligent Dimming) */
+@media (hover: hover) {
+    .bento-grid:has(.bento-item:hover) .bento-item:not(:hover) {
+        opacity: 0.3;
+    }
+    .bento-item:hover {
+        border-color: var(--gold);
+        box-shadow: 0 0 15px var(--gold-glow);
+        opacity: 1;
+    }
+}
 
 .col-span-12 { grid-column: span 12; } .col-span-8 { grid-column: span 8; } .col-span-6 { grid-column: span 6; } .col-span-4 { grid-column: span 4; }
 @media (max-width: 1024px) { .col-span-8, .col-span-6, .col-span-4 { grid-column: span 12; } }
@@ -49,7 +65,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body);
 .bento-item h3 { font-size: 1.15rem; margin-bottom: 0.2rem; }
 .bento-item-desc { font-size: 0.8rem; color: var(--text-muted); font-weight: 400; margin-bottom: 1rem; }
 
-/* ANIMATION SCROLL (CONSERVÉE) */
+/* ANIMATION SCROLL */
 .reveal-hidden { opacity: 0; transform: translateY(20px); transition: all 0.6s ease-out; }
 .reveal-visible { opacity: 1; transform: translateY(0); }
 
@@ -61,11 +77,13 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body);
 .theme-glow-cardio { border-bottom: 3px solid #64748b !important; }
 .theme-glow-muscu { border-bottom: 3px solid var(--gold) !important; }
 .cal-day-header { text-align: center; font-size: 0.7rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; }
-.cal-day { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; min-height: 80px; padding: 6px; display: flex; flex-direction: column; justify-content: flex-start; position: relative; }
+.cal-day { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; min-height: 80px; height: auto; padding: 6px; display: flex; flex-direction: column; justify-content: flex-start; position: relative; }
 .cal-day-empty { background: transparent; border: none; }
 .cal-day-num { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); align-self: flex-end; margin-bottom: 4px;}
 .cal-day-content { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 2px; }
-.cal-badge { font-size: 0.55rem; font-weight: 700; padding: 3px 4px; border-radius: 3px; color: var(--white); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* CORRECTION BADGE CALENDRIER (Texte entier) */
+.cal-badge { font-size: 0.55rem; font-weight: 700; padding: 3px 4px; border-radius: 3px; color: var(--white); flex: 1; white-space: normal; word-break: break-word; }
 .badge-cardio { background: #64748b; } .badge-muscu { background: var(--gold); color: var(--navy); } .badge-default { background: var(--navy); }
 
 /* LISTE MODAL & DRAG */
@@ -74,7 +92,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body);
 .modal-list-item.dragging { opacity: 0.5; border: 2px dashed var(--gold); }
 .modal-list-item.drag-over { border-top: 2px solid var(--gold); padding-top: 12px; }
 
-/* IMC, MACROS, FORMS, TABLES (Conservé à l'identique) */
+/* IMC, MACROS, FORMS, TABLES */
 .bmi-container { display: flex; align-items: center; gap: 1.25rem; }
 .bmi-value { width: 64px; height: 64px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--white); font-family: 'Playfair Display', serif; }
 .bmi-value span { font-size: 1.5rem; font-weight: 700; }
