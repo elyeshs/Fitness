@@ -10,9 +10,11 @@ function formatDate(dateString) {
     const d = new Date(dateString); return isNaN(d) ? '' : d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
 }
 
-// === HAPTIC FEEDBACK (Vibrations Mobile) ===
+// === NOUVEAU : HAPTIC FEEDBACK (Vibrations Mobile) ===
 function triggerHaptic() {
-    if (navigator.vibrate) { navigator.vibrate(40); }
+    if (navigator.vibrate) {
+        navigator.vibrate(40); // Vibration courte et premium
+    }
 }
 
 // === ICONES SVG POUR JS ===
@@ -55,7 +57,7 @@ function animateValue(obj, start, end, duration, isFloat = false) {
     window.requestAnimationFrame(step);
 }
 
-// === OBSERVATEUR DE SCROLL FLUIDE ===
+// === NOUVEAU : OBSERVATEUR DE SCROLL FLUIDE ===
 function initScrollObserver() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach((entry, index) => {
@@ -63,7 +65,7 @@ function initScrollObserver() {
                 setTimeout(() => {
                     entry.target.classList.add('reveal-visible');
                     entry.target.classList.remove('reveal-hidden');
-                }, index * 80);
+                }, index * 80); // Effet cascade
                 observer.unobserve(entry.target);
             }
         });
@@ -72,6 +74,31 @@ function initScrollObserver() {
     document.querySelectorAll('.bento-item').forEach(el => {
         el.classList.add('reveal-hidden');
         observer.observe(el);
+    });
+}
+
+// === NOUVEAU : EFFET PARALLAXE CARD TILT ===
+function initTiltEffect() {
+    document.querySelectorAll('.bento-item').forEach(item => {
+        item.addEventListener('mousemove', e => {
+            const rect = item.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            // Calcul de l'inclinaison opposée
+            const rotateX = ((y - centerY) / centerY) * -4; 
+            const rotateY = ((x - centerX) / centerX) * 4;
+            
+            item.style.transition = 'none'; // Désactive la transition pendant le mvt pour la fluidité
+            item.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+        });
+        
+        item.addEventListener('mouseleave', () => {
+            item.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease';
+            item.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+        });
     });
 }
 
@@ -90,7 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSmartCoach();
     updateGamification();
     
+    // Lancement des interactions App-like
     initScrollObserver();
+    initTiltEffect();
 });
 
 // === MODALS & PROFIL ===
@@ -163,7 +192,7 @@ function recalculatePhysiqueAndCalories() {
 
     if (!profile || !profile.height || weights.length === 0) {
         bmiText.innerText = (profile && profile.height && weights.length === 0) ? "En attente de pesée" : "Profil incomplet";
-        bmiAdvice.innerText = weights.length === 0 ? "Veuillez ajouter une pesée." : "Configurez vos constantes.";
+        bmiAdvice.innerText = weights.length === 0 ? "Veuillez ajouter une pesée dans l'encart Fluctuation Poids." : "Cliquez sur le rouage pour configurer vos constantes.";
         bmiBox.classList.add('bg-default');
         return;
     }
@@ -176,10 +205,23 @@ function recalculatePhysiqueAndCalories() {
     animateValue(bmiEl, parseFloat(bmiEl.dataset.val) || 0, bmi, 1000, true);
     bmiEl.dataset.val = bmi;
     
-    if (bmi < 18.5) { bmiBox.classList.add('bmi-under'); bmiText.innerText = "Insuffisance pondérale"; bmiAdvice.innerText = "Surplus calorique recommandé."; } 
-    else if (bmi < 25) { bmiBox.classList.add('bmi-normal'); bmiText.innerText = "Poids Normal (Idéal)"; bmiAdvice.innerText = "Excellent ! Maintenez cet équilibre."; } 
-    else if (bmi < 30) { bmiBox.classList.add('bmi-over'); bmiText.innerText = "Léger Surpoids"; bmiAdvice.innerText = "Léger déficit calorique conseillé."; } 
-    else { bmiBox.classList.add('bmi-obese'); bmiText.innerText = "Obésité"; bmiAdvice.innerText = "Visez un déficit maîtrisé."; }
+    if (bmi < 18.5) {
+        bmiBox.classList.add('bmi-under');
+        bmiText.innerText = "Insuffisance pondérale";
+        bmiAdvice.innerText = "Un léger surplus calorique et musculaire est recommandé.";
+    } else if (bmi < 25) {
+        bmiBox.classList.add('bmi-normal');
+        bmiText.innerText = "Poids Normal (Idéal)";
+        bmiAdvice.innerText = "Excellent ! Maintenez cet équilibre et vos performances.";
+    } else if (bmi < 30) {
+        bmiBox.classList.add('bmi-over');
+        bmiText.innerText = "Léger Surpoids";
+        bmiAdvice.innerText = "Un léger déficit calorique est conseillé pour affiner.";
+    } else {
+        bmiBox.classList.add('bmi-obese');
+        bmiText.innerText = "Obésité";
+        bmiAdvice.innerText = "Visez un déficit maîtrisé et consultez un professionnel.";
+    }
     
     let bmr = profile.gender === "male" ? (10*w + 6.25*profile.height - 5*profile.age + 5) : (10*w + 6.25*profile.height - 5*profile.age - 161);
     const maint = bmr * profile.activityLevel;
@@ -198,7 +240,7 @@ function recalculatePhysiqueAndCalories() {
     }
 }
 
-// === TOOLTIP & DATA VIZ MULTI-COURBES GRADUÉ ===
+// === TOOLTIP & CROSSHAIR DYNAMIQUE ===
 function showTooltipWithCrosshair(e, text, xPos, containerId) {
     const tt = document.getElementById('chart-tooltip');
     tt.innerHTML = text; tt.classList.remove('hidden');
@@ -214,7 +256,7 @@ function hideTooltipAndCrosshair(containerId) {
 function generateDataVizSVG(containerId, datasets, labels) {
     const container = document.getElementById(containerId);
     if (!datasets || datasets.length === 0 || datasets[0].data.length === 0) {
-        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding: 50px;">Aucune donnée à afficher.</div>`; return;
+        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding: 50px;">Sélectionnez au moins un paramètre.</div>`; return;
     }
 
     const width = container.clientWidth || 800; const height = 280;
@@ -224,21 +266,14 @@ function generateDataVizSVG(containerId, datasets, labels) {
     let svg = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; overflow:visible;">
                <style>.path-anim { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: drawLine 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }</style>`;
 
-    // Axe Y - Graduation
-    let maxVGlobal = 1;
-    datasets.forEach(ds => maxVGlobal = Math.max(maxVGlobal, Math.max(...ds.data)*1.1));
-    
-    for(let i=0; i<=4; i++) {
-        let y = paddingY + (graphH / 4) * i;
-        let val = (maxVGlobal - (i * (maxVGlobal / 4))).toFixed(1);
+    const gridLines = 4;
+    for(let i=0; i<=gridLines; i++) {
+        let y = paddingY + (graphH / gridLines) * i;
         svg += `<line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="var(--border)" stroke-dasharray="4" stroke-width="1" />`;
-        svg += `<text x="${paddingX - 5}" y="${y + 3}" fill="var(--text-muted)" font-size="9" text-anchor="end">${val}</text>`;
     }
 
     svg += `<line id="crosshair-${containerId}" x1="0" y1="${paddingY}" x2="0" y2="${height - paddingY}" stroke="var(--navy)" stroke-width="1" stroke-dasharray="4" style="display:none; pointer-events:none;" />`;
 
-    // (CORRECTION DES LIAISONS DE COURBE) 
-    // Utilisation explicite des commandes M et L dans l'attribut d=""
     datasets.forEach((ds) => {
         if(!ds.data || ds.data.length === 0) return;
         const minV = Math.min(...ds.data) * 0.9; const maxV = Math.max(...ds.data) * 1.1 || 1;
@@ -273,13 +308,13 @@ function generateDataVizSVG(containerId, datasets, labels) {
         datasets.forEach((ds) => {
             svg += `<rect x="${lx}" y="5" width="12" height="12" fill="${ds.color}" rx="3"/>`;
             svg += `<text x="${lx + 18}" y="15" fill="var(--navy)" font-size="11" font-weight="700">${ds.label}</text>`;
-            lx += 90;
+            lx += 110;
         });
     }
     svg += `</svg>`; container.innerHTML = svg;
 }
 
-// === CARDIO CRUD & DATA-VIZ ===
+// === CARDIO CRUD & TIMELINE VISUELLE ===
 document.getElementById('cardio-form').addEventListener('submit', (e) => {
     e.preventDefault(); triggerHaptic();
     let history = safeGetItem('cardioHistory');
@@ -287,8 +322,8 @@ document.getElementById('cardio-form').addEventListener('submit', (e) => {
     const obj = {
         id: editId === "-1" ? Date.now() : parseInt(editId), 
         date: document.getElementById('c-date').value,
-        dist: parseFloat(document.getElementById('c-dist').value) || 0, time: parseFloat(document.getElementById('c-time').value) || 0,
-        speed: parseFloat(document.getElementById('c-speed').value) || 0, incline: parseFloat(document.getElementById('c-incline').value) || 0
+        dist: parseFloat(document.getElementById('c-dist').value), time: parseFloat(document.getElementById('c-time').value),
+        speed: parseFloat(document.getElementById('c-speed').value), incline: parseFloat(document.getElementById('c-incline').value) || 0
     };
     
     if (editId === "-1") { history.push(obj); } 
@@ -304,7 +339,7 @@ document.getElementById('cardio-form').addEventListener('submit', (e) => {
     renderCardio();
 });
 
-window.cancelCardioEdit = function() {
+function cancelCardioEdit() {
     triggerHaptic();
     document.getElementById('cardio-form').reset();
     document.getElementById('c-date').valueAsDate = new Date();
@@ -336,19 +371,38 @@ window.deleteCardio = function(id) {
 
 window.renderCardio = function() {
     let history = safeGetItem('cardioHistory').sort((a,b) => new Date(a.date) - new Date(b.date));
-    document.getElementById('cardio-body').innerHTML = [...history].reverse().map(s => `
-        <tr><td>${formatDate(s.date)}</td><td><strong>${s.dist}</strong> km</td><td>${s.time} min</td><td>${s.speed} km/h</td><td>${s.incline || 0}%</td>
-        <td><div class="action-btns">
-            <button class="btn-small btn-edit haptic-btn" onclick="editCardio(${s.id})" title="Éditer">${iconEdit}</button>
-            <button class="btn-small btn-delete haptic-btn" onclick="deleteCardio(${s.id})" title="Supprimer">${iconTrash}</button>
-        </div></td></tr>
-    `).join('');
+    const timelineContainer = document.getElementById('cardio-timeline');
+    
+    if (timelineContainer) {
+        if (history.length === 0) {
+            timelineContainer.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding: 30px;">Aucune séance enregistrée pour le moment.</div>`;
+        } else {
+            timelineContainer.innerHTML = [...history].reverse().map(s => `
+                <div class="timeline-item">
+                    <div class="timeline-badge"></div>
+                    <div class="timeline-header">
+                        <span class="timeline-date">${formatDate(s.date)}</span>
+                        <div class="action-btns">
+                            <button class="btn-small btn-edit haptic-btn" onclick="editCardio(${s.id})" title="Éditer">${iconEdit}</button>
+                            <button class="btn-small btn-delete haptic-btn" onclick="deleteCardio(${s.id})" title="Supprimer">${iconTrash}</button>
+                        </div>
+                    </div>
+                    <div class="timeline-details">
+                        <div>Distance : <strong>${s.dist} km</strong></div>
+                        <div>Temps : <strong>${s.time} min</strong></div>
+                        <div>Vitesse : <strong>${s.speed} km/h</strong></div>
+                        <div>Pente : <strong>${s.incline || 0}%</strong></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
     
     const labels = history.map(s => formatDate(s.date));
-    const dsDist = { label: 'Distance', data: history.map(s => parseFloat(s.dist)||0), color: 'var(--gold)' };
-    const dsSpeed = { label: 'Vitesse', data: history.map(s => parseFloat(s.speed)||0), color: 'var(--navy)' };
-    const dsTime = { label: 'Temps', data: history.map(s => parseFloat(s.time)||0), color: '#94a3b8' };
-    const dsIncline = { label: 'Pente', data: history.map(s => parseFloat(s.incline)||0), color: '#10b981' }; 
+    const dsDist = { label: 'Distance', data: history.map(s => s.dist), color: 'var(--gold)' };
+    const dsSpeed = { label: 'Vitesse', data: history.map(s => s.speed), color: 'var(--navy)' };
+    const dsTime = { label: 'Temps', data: history.map(s => s.time), color: '#94a3b8' };
+    const dsIncline = { label: 'Pente', data: history.map(s => s.incline || 0), color: '#10b981' }; 
 
     const checkedBoxes = Array.from(document.querySelectorAll('#cardio-metric-toggles input:checked')).map(cb => cb.value);
 
@@ -384,17 +438,17 @@ document.getElementById('record-form').addEventListener('submit', (e) => {
     safeSetItem('elitePersonalRecords', r); document.getElementById('record-form').reset(); renderRecords(); updateGamification();
 });
 function renderRecords() { document.getElementById('records-container').innerHTML = safeGetItem('elitePersonalRecords').map(x => `
-    <div class="record-elite-card"><button class="delete-record-btn haptic-btn" onclick="deleteRecord(${x.id})" title="Supprimer">${iconTrash}</button>
+    <div class="record-elite-card"><button class="delete-record-btn" onclick="deleteRecord(${x.id})" title="Supprimer">${iconTrash}</button>
     <div class="record-elite-title">${escapeHtml(x.name)}</div><div class="record-elite-value">${escapeHtml(x.value)}</div></div>`).join(''); }
 
 window.deleteRecord = function(id) { 
     showConfirm("Voulez-vous supprimer ce record ?", () => {
         safeSetItem('elitePersonalRecords', safeGetItem('elitePersonalRecords').filter(x => x.id !== id)); 
-        renderRecords(); updateGamification();
+        renderRecords(); 
     });
 }
 
-// === CALENDRIER & OBJECTIF DYNAMIQUE ===
+// === CALENDRIER & OBJECTIF (COULEUR DYNAMIQUE) ===
 let currentMonth = new Date().getMonth(); let currentYear = new Date().getFullYear();
 function renderCalendarInit() { renderCalendar(currentMonth, currentYear); calculateWeeklyGoal(); }
 window.changeMonth = function(dir) {
@@ -406,8 +460,8 @@ window.changeMonth = function(dir) {
 function calculateWeeklyGoal() {
     let monthlyData = safeGetItem('calendarData', '{}');
     const today = new Date();
-    let dayOfWeek = today.getDay(); 
-    if (dayOfWeek === 0) dayOfWeek = 7; 
+    let dayOfWeek = today.getDay(); // Dimanche = 0, Lundi = 1
+    if (dayOfWeek === 0) dayOfWeek = 7; // Ajustement Lundi -> Dimanche
 
     let weekStart = new Date(today); weekStart.setDate(today.getDate() - dayOfWeek + 1);
     
@@ -427,36 +481,33 @@ function calculateWeeklyGoal() {
     const fillEl = document.getElementById('weekly-goal-fill');
     fillEl.style.width = `${percent}%`;
 
+    // NOUVEAU : Logique de couleur dynamique (Rouge si en retard, Gold si OK/Avance)
     let expectedMinimum = Math.floor((totalWeeklyTarget / 7) * dayOfWeek);
     if (weeklyValidatedSessions < expectedMinimum && totalWeeklyTarget > 0) {
-        fillEl.style.backgroundColor = '#ef4444';
+        fillEl.style.backgroundColor = '#ef4444'; // Rouge vif (Retard)
         fillEl.style.boxShadow = '0 0 10px rgba(239,68,68,0.5)';
     } else {
-        fillEl.style.backgroundColor = 'var(--gold)';
+        fillEl.style.backgroundColor = 'var(--gold)'; // Gold (Dans les temps ou Avance)
         if (weeklyValidatedSessions >= totalWeeklyTarget && totalWeeklyTarget > 0) {
-            fillEl.style.boxShadow = '0 0 12px var(--gold-glow)';
+            fillEl.style.boxShadow = '0 0 12px var(--gold-glow)'; // Récompense visuelle brillante
         } else {
             fillEl.style.boxShadow = 'none';
         }
     }
 }
 
-// SÉPARATION DES STREAKS (MUSCU VS CARDIO)
-function updateConsistencyStreak() {
-    const monthlyData = safeGetItem('calendarData', '{}');
-    let muscuCount = 0, cardioCount = 0;
-    
-    Object.values(monthlyData).forEach(sessions => {
+function updateConsistencyStreak(monthlyData, daysInMonth, year, month) {
+    let muscuValidated = 0, cardioValidated = 0;
+    for(let i = 1; i <= daysInMonth; i++) {
+        let dKey = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+        let sessions = monthlyData[dKey] || [];
         sessions.forEach(s => {
-            if (s.validated) {
-                const isCardio = (s.name.toUpperCase().includes('CARDIO') || s.name.toUpperCase().includes('RUN') || s.name.toUpperCase().includes('VELO'));
-                if (isCardio) cardioCount++; else muscuCount++;
-            }
+            const isCardio = (s.name.toUpperCase().includes('CARDIO') || s.name.toUpperCase().includes('RUN') || s.name.toUpperCase().includes('VELO'));
+            if (s.validated) { if(isCardio) cardioValidated++; else muscuValidated++; }
         });
-    });
-    
-    animateValue(document.getElementById('streak-muscu-count'), 0, muscuCount, 800);
-    animateValue(document.getElementById('streak-cardio-count'), 0, cardioCount, 800);
+    }
+    animateValue(document.getElementById('streak-muscu-count'), 0, muscuValidated, 800);
+    animateValue(document.getElementById('streak-cardio-count'), 0, cardioValidated, 800);
 }
 
 function renderCalendar(month, year) {
@@ -496,7 +547,7 @@ function renderCalendar(month, year) {
     }
     
     grid.innerHTML = gridHTML;
-    updateConsistencyStreak();
+    updateConsistencyStreak(monthlyData, daysInMonth, year, month);
 }
 
 // === GESTION MODAL CALENDRIER ET DRAG & DROP ===
@@ -510,25 +561,49 @@ window.openDayModal = function(dKey) {
     renderDaySessions(dKey);
     document.getElementById('calendar-day-modal').classList.remove('hidden');
 }
+
 window.closeDayModal = function() { triggerHaptic(); document.getElementById('calendar-day-modal').classList.add('hidden'); }
 
+// NOUVEAU : Fonctions de Drag and Drop
 let draggedSessionId = null;
-window.handleDragStart = function(e) { draggedSessionId = parseInt(e.currentTarget.dataset.id); e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; triggerHaptic(); }
+
+window.handleDragStart = function(e) {
+    draggedSessionId = parseInt(e.currentTarget.dataset.id);
+    e.currentTarget.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    triggerHaptic(); // Petit feedback au moment de prendre la carte
+}
+
 window.handleDragOver = function(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
 window.handleDragEnter = function(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
 window.handleDragLeave = function(e) { e.currentTarget.classList.remove('drag-over'); }
+
 window.handleDrop = function(e, dKey) {
-    e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
     const targetId = parseInt(e.currentTarget.dataset.id);
+    
     if (draggedSessionId === targetId) return;
-    let data = safeGetItem('calendarData', '{}'); let sessions = data[dKey];
+
+    let data = safeGetItem('calendarData', '{}');
+    let sessions = data[dKey];
+    
     const draggedIdx = sessions.findIndex(s => s.id === draggedSessionId);
     const targetIdx = sessions.findIndex(s => s.id === targetId);
+
+    // Déplacement dans l'array
     const [draggedItem] = sessions.splice(draggedIdx, 1);
     sessions.splice(targetIdx, 0, draggedItem);
-    safeSetItem('calendarData', data); triggerHaptic(); renderDaySessions(dKey); renderCalendarInit();
+
+    safeSetItem('calendarData', data);
+    triggerHaptic(); // Feedback au laché
+    renderDaySessions(dKey);
+    renderCalendarInit();
 }
-document.addEventListener('dragend', (e) => { if(e.target.classList.contains('modal-list-item')) e.target.classList.remove('dragging'); });
+
+document.addEventListener('dragend', (e) => {
+    if(e.target.classList.contains('modal-list-item')) e.target.classList.remove('dragging');
+});
 
 function renderDaySessions(dKey) {
     let data = safeGetItem('calendarData', '{}');
@@ -537,6 +612,7 @@ function renderDaySessions(dKey) {
     
     if (sessions.length === 0) { listContainer.innerHTML = "<small style='color:var(--text-muted);'>Aucune séance ce jour.</small>"; return; }
     
+    // Intégration du Drag and Drop HTML5 sur chaque élément de la liste
     listContainer.innerHTML = sessions.map((s, index) => `
         <div class="modal-list-item" draggable="true" data-id="${s.id}" data-index="${index}" 
              ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" 
@@ -561,17 +637,25 @@ window.saveSessionToDay = function(e) {
     let data = safeGetItem('calendarData', '{}');
     if(!data[dKey]) data[dKey] = [];
     
-    if (editId === "-1") { data[dKey].push({ id: Date.now(), name: sName, validated: false }); } 
-    else { let session = data[dKey].find(x => x.id === parseInt(editId)); if (session) session.name = sName; }
+    if (editId === "-1") {
+        data[dKey].push({ id: Date.now(), name: sName, validated: false });
+    } else {
+        let session = data[dKey].find(x => x.id === parseInt(editId));
+        if (session) session.name = sName;
+    }
     
     safeSetItem('calendarData', data);
-    document.getElementById('session-name').value = ""; document.getElementById('session-edit-id').value = "-1";
+    document.getElementById('session-name').value = "";
+    document.getElementById('session-edit-id').value = "-1";
     document.getElementById('modal-session-btn').innerHTML = `<svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
-    renderDaySessions(dKey); renderCalendarInit();
+    renderDaySessions(dKey);
+    renderCalendarInit();
 }
 
 window.prepareEditSession = function(dKey, id) {
-    triggerHaptic(); let data = safeGetItem('calendarData', '{}'); let session = data[dKey].find(x => x.id === id);
+    triggerHaptic();
+    let data = safeGetItem('calendarData', '{}');
+    let session = data[dKey].find(x => x.id === id);
     if(session) {
         document.getElementById('session-name').value = session.name;
         document.getElementById('session-edit-id').value = session.id;
@@ -584,12 +668,15 @@ window.deleteSession = function(dKey, id) {
         let data = safeGetItem('calendarData', '{}');
         data[dKey] = data[dKey].filter(x => x.id !== id);
         safeSetItem('calendarData', data);
-        renderDaySessions(dKey); renderCalendarInit();
+        renderDaySessions(dKey);
+        renderCalendarInit();
     });
 }
 
 window.toggleSession = function(dKey, id) {
-    triggerHaptic(); let data = safeGetItem('calendarData', '{}'); let session = data[dKey].find(x => x.id === id);
+    triggerHaptic();
+    let data = safeGetItem('calendarData', '{}');
+    let session = data[dKey].find(x => x.id === id);
     if(session) { session.validated = !session.validated; safeSetItem('calendarData', data); renderCalendarInit(); updateGamification(); }
 }
 
@@ -638,106 +725,3 @@ window.generatePDFReport = function() {
         doc.save("Bilan_Mensuel_WallySport.pdf");
     } catch(e) { alert("Erreur PDF. Vérifiez votre connexion internet pour l'accès CDN."); }
 }
-
-// === MENU FAB (BOUTON D'ACTION FLOTTANT) & QUICK ACTIONS ===
-const fabMainBtn = document.getElementById('fab-main-btn');
-const fabMenu = document.getElementById('fab-menu');
-
-if (fabMainBtn && fabMenu) {
-    fabMainBtn.addEventListener('click', () => {
-        triggerHaptic();
-        fabMainBtn.classList.toggle('active');
-        fabMenu.classList.toggle('hidden');
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.fab-container')) {
-            fabMainBtn.classList.remove('active');
-            fabMenu.classList.add('hidden');
-        }
-    });
-}
-
-function closeFabMenu() {
-    if (fabMainBtn && fabMenu) {
-        fabMainBtn.classList.remove('active');
-        fabMenu.classList.add('hidden');
-    }
-}
-
-// 1. Quick Add : Séance (Modal Date + Nom)
-window.quickAddSession = function() {
-    triggerHaptic();
-    document.getElementById('quick-session-modal').classList.remove('hidden');
-    document.getElementById('quick-s-date').valueAsDate = new Date();
-    setTimeout(() => document.getElementById('quick-s-name').focus(), 100);
-    closeFabMenu();
-}
-window.closeQuickSession = function() {
-    triggerHaptic();
-    document.getElementById('quick-session-modal').classList.add('hidden');
-    document.getElementById('quick-session-form').reset();
-}
-document.getElementById('quick-session-form').addEventListener('submit', (e) => {
-    e.preventDefault(); triggerHaptic();
-    let data = safeGetItem('calendarData', '{}');
-    const dKey = document.getElementById('quick-s-date').value;
-    const sName = document.getElementById('quick-s-name').value;
-    
-    if(!data[dKey]) data[dKey] = [];
-    data[dKey].push({ id: Date.now(), name: sName, validated: false });
-    
-    safeSetItem('calendarData', data);
-    renderCalendarInit(); updateSmartCoach();
-    closeQuickSession();
-});
-
-// 2. Quick Add : Poids
-window.quickAddWeight = function() {
-    triggerHaptic();
-    document.getElementById('quick-weight-modal').classList.remove('hidden');
-    setTimeout(() => document.getElementById('quick-w-weight').focus(), 100);
-    closeFabMenu();
-}
-window.closeQuickWeight = function() {
-    triggerHaptic();
-    document.getElementById('quick-weight-modal').classList.add('hidden');
-    document.getElementById('quick-weight-form').reset();
-}
-document.getElementById('quick-weight-form').addEventListener('submit', (e) => {
-    e.preventDefault(); triggerHaptic();
-    let history = safeGetItem('weightHistory');
-    const today = new Date();
-    const dKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    
-    history.push({ id: Date.now(), date: dKey, weight: parseFloat(document.getElementById('quick-w-weight').value) });
-    history.sort((a,b) => new Date(a.date) - new Date(b.date));
-    safeSetItem('weightHistory', history); 
-    renderWeight(); recalculatePhysiqueAndCalories(); updateSmartCoach();
-    closeQuickWeight();
-});
-
-// 3. Quick Add : Record
-window.quickAddRecord = function() {
-    triggerHaptic();
-    document.getElementById('quick-record-modal').classList.remove('hidden');
-    setTimeout(() => document.getElementById('quick-rec-name').focus(), 100);
-    closeFabMenu();
-}
-window.closeQuickRecord = function() {
-    triggerHaptic();
-    document.getElementById('quick-record-modal').classList.add('hidden');
-    document.getElementById('quick-record-form').reset();
-}
-document.getElementById('quick-record-form').addEventListener('submit', (e) => {
-    e.preventDefault(); triggerHaptic();
-    let r = safeGetItem('elitePersonalRecords');
-    r.push({ 
-        id: Date.now(), 
-        name: document.getElementById('quick-rec-name').value, 
-        value: document.getElementById('quick-rec-value').value 
-    });
-    safeSetItem('elitePersonalRecords', r); 
-    renderRecords(); updateGamification();
-    closeQuickRecord();
-});
