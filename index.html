@@ -31,7 +31,7 @@
 
     <main class="container bento-grid">
         
-        <section class="bento-item col-span-6 bento-bmi">
+        <section class="bento-item col-span-6 bento-bmi" style="animation-delay: 0.1s;">
             <div class="bmi-container">
                 <div class="bmi-value bg-default" id="bmi-color-box">
                     <span id="bmi-num" class="anim-number" data-val="0">0</span>
@@ -48,7 +48,7 @@
             </div>
         </section>
 
-        <section class="bento-item col-span-6 bento-streak">
+        <section class="bento-item col-span-6 bento-streak" style="animation-delay: 0.2s;">
             <div class="streak-header">
                 <div class="streak-icon">
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
@@ -75,7 +75,7 @@
             </div>
         </section>
 
-        <section class="bento-item col-span-6 bento-coach">
+        <section class="bento-item col-span-6 bento-coach" style="animation-delay: 0.3s;">
             <div class="section-header">
                 <h2>Coach Virtuel</h2>
                 <p>Analyse de votre dynamique.</p>
@@ -85,7 +85,7 @@
             </div>
         </section>
 
-        <section class="bento-item col-span-6 bento-gamification">
+        <section class="bento-item col-span-6 bento-gamification" style="animation-delay: 0.4s;">
             <div class="section-header">
                 <h2>Succès Élite</h2>
                 <p>Débloquez des hauts faits.</p>
@@ -93,7 +93,7 @@
             <div class="gami-grid" id="gamification-container"></div>
         </section>
 
-        <section class="bento-item bento-macros col-span-12">
+        <section class="bento-item bento-macros col-span-12" style="animation-delay: 0.5s;">
             <div class="macros-main-header">
                 <div>
                     <h2>Bilan Énergétique & Macronutriments</h2>
@@ -132,7 +132,7 @@
             </div>
         </section>
 
-        <section class="bento-item col-span-12">
+        <section class="bento-item col-span-12" style="animation-delay: 0.6s;">
             <div class="section-header">
                 <h2>Data-Viz Suite (Performances)</h2>
                 <p>Analysez votre évolution métrique avec précision.</p>
@@ -175,7 +175,7 @@
         </section>
 
         <div class="col-span-6" style="display:flex; flex-direction:column; gap:1.5rem;">
-            <section class="bento-item">
+            <section class="bento-item" style="animation-delay: 0.7s;">
                 <div class="section-header"><h2>Fluctuations Poids</h2></div>
                 <form id="weight-form" class="bento-inline-form">
                     <input type="date" id="w-date" required>
@@ -192,7 +192,7 @@
                 </div>
             </section>
             
-            <section class="bento-item">
+            <section class="bento-item" style="animation-delay: 0.8s;">
                 <div class="section-header"><h2>Records Historiques</h2></div>
                 <form id="record-form" class="bento-inline-form">
                     <input type="text" id="rec-name" placeholder="Ex: Développé Couché" required>
@@ -205,7 +205,7 @@
             </section>
         </div>
 
-        <section class="bento-item col-span-6">
+        <section class="bento-item col-span-6" style="animation-delay: 0.9s;">
             <div class="calendar-header">
                 <button class="btn-icon haptic-btn" onclick="changeMonth(-1)">
                     <svg class="icon-sm" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -290,7 +290,7 @@
                     </button>
                 </form>
                 
-                <h3 style="font-size:0.85rem; margin-top:15px; color:var(--text-muted);">Séances enregistrées (Glisser pour réorganiser) :</h3>
+                <h3 style="font-size:0.85rem; margin-top:15px; color:var(--text-muted);">Séances enregistrées :</h3>
                 <div id="modal-day-sessions" class="modal-session-list"></div>
             </div>
         </div>
