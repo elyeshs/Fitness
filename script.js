@@ -10,31 +10,6 @@ function formatDate(dateString) {
     const d = new Date(dateString); return isNaN(d) ? '' : d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
 }
 
-// === ICONES SVG POUR JS ===
-const iconEdit = `<svg class="icon-sm" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
-const iconTrash = `<svg class="icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
-const iconCheck = `<svg class="icon-sm" viewBox="0 0 24 24" stroke="#10b981"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
-const iconTrophy = `<svg class="icon-sm" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10M5 4h14v4a7 7 0 0 1-14 0V4z"></path></svg>`;
-
-// === POP-UP DE CONFIRMATION HARMONISE (Remplace window.confirm) ===
-function showConfirm(message, callback) {
-    const modal = document.getElementById('confirm-modal');
-    document.getElementById('confirm-message').innerText = message;
-    modal.classList.remove('hidden');
-
-    const okBtn = document.getElementById('confirm-ok-btn');
-    const cancelBtn = document.getElementById('confirm-cancel-btn');
-
-    // On clone pour retirer les anciens écouteurs d'événements
-    const newOkBtn = okBtn.cloneNode(true);
-    const newCancelBtn = cancelBtn.cloneNode(true);
-    okBtn.parentNode.replaceChild(newOkBtn, okBtn);
-    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-
-    newOkBtn.addEventListener('click', () => { modal.classList.add('hidden'); callback(); });
-    newCancelBtn.addEventListener('click', () => { modal.classList.add('hidden'); });
-}
-
 // === MOTEUR D'ANIMATION INCREMENTALE ===
 function animateValue(obj, start, end, duration, isFloat = false) {
     if (!obj) return;
@@ -116,31 +91,17 @@ function setMacroInputsDisabled(d) { ['prot', 'fat', 'carb'].forEach(m => docume
 function handleMacroMode(mode) { safeSetItem('macroConfigMode', mode); if(mode==="auto"){ setMacroInputsDisabled(true); recalculatePhysiqueAndCalories(); } else { setMacroInputsDisabled(false); saveManualMacros(); } }
 function saveManualMacros() { safeSetItem('manualMacrosValues', { prot: parseInt(document.getElementById('input-macro-prot').value)||0, fat: parseInt(document.getElementById('input-macro-fat').value)||0, carb: parseInt(document.getElementById('input-macro-carb').value)||0 }); }
 
-// === IMC INTELLIGENT ET MACROS ===
 function recalculatePhysiqueAndCalories() {
     const profile = safeGetItem('userProfileBaseV2', 'null');
     const weights = safeGetItem('weightHistory', '[]');
     const mode = safeGetItem('macroConfigMode', '"auto"');
     
-    // Tendance de pesée
     if (weights.length >= 2) {
         const diff = (weights[weights.length-1].weight - weights[weights.length-2].weight).toFixed(1);
         document.getElementById('weight-delta-display').innerText = diff > 0 ? `+${diff} kg` : `${diff} kg`;
     }
 
-    const bmiBox = document.getElementById('bmi-color-box');
-    const bmiText = document.getElementById('bmi-text');
-    const bmiAdvice = document.getElementById('bmi-advice');
-    
-    // Reset classes
-    bmiBox.className = 'bmi-value';
-
-    if (!profile || !profile.height || weights.length === 0) {
-        bmiText.innerText = (profile && profile.height && weights.length === 0) ? "En attente de pesée" : "Profil incomplet";
-        bmiAdvice.innerText = weights.length === 0 ? "Veuillez ajouter une pesée dans l'encart Fluctuation Poids." : "Cliquez sur le rouage pour configurer vos constantes.";
-        bmiBox.classList.add('bg-default');
-        return;
-    }
+    if (!profile || !profile.height || weights.length === 0) return;
 
     const w = weights[weights.length-1].weight;
     const h = profile.height / 100;
@@ -150,26 +111,6 @@ function recalculatePhysiqueAndCalories() {
     animateValue(bmiEl, parseFloat(bmiEl.dataset.val) || 0, bmi, 1000, true);
     bmiEl.dataset.val = bmi;
     
-    // NOUVELLE LOGIQUE D'IMC INTELLIGENT
-    if (bmi < 18.5) {
-        bmiBox.classList.add('bmi-under');
-        bmiText.innerText = "Insuffisance pondérale";
-        bmiAdvice.innerText = "Un léger surplus calorique et musculaire est recommandé.";
-    } else if (bmi < 25) {
-        bmiBox.classList.add('bmi-normal');
-        bmiText.innerText = "Poids Normal (Idéal)";
-        bmiAdvice.innerText = "Excellent ! Maintenez cet équilibre et vos performances.";
-    } else if (bmi < 30) {
-        bmiBox.classList.add('bmi-over');
-        bmiText.innerText = "Léger Surpoids";
-        bmiAdvice.innerText = "Un léger déficit calorique est conseillé pour affiner.";
-    } else {
-        bmiBox.classList.add('bmi-obese');
-        bmiText.innerText = "Obésité";
-        bmiAdvice.innerText = "Visez un déficit maîtrisé et consultez un professionnel.";
-    }
-    
-    // Base Métabolique
     let bmr = profile.gender === "male" ? (10*w + 6.25*profile.height - 5*profile.age + 5) : (10*w + 6.25*profile.height - 5*profile.age - 161);
     const maint = bmr * profile.activityLevel;
     
@@ -192,6 +133,7 @@ function showTooltipWithCrosshair(e, text, xPos, containerId) {
     const tt = document.getElementById('chart-tooltip');
     tt.innerHTML = text; tt.classList.remove('hidden');
     tt.style.left = e.pageX + 'px'; tt.style.top = e.pageY + 'px';
+    
     const crosshair = document.getElementById(`crosshair-${containerId}`);
     if (crosshair) { crosshair.style.display = 'block'; crosshair.setAttribute('x1', xPos); crosshair.setAttribute('x2', xPos); }
 }
@@ -224,11 +166,11 @@ function generateDataVizSVG(containerId, datasets, labels) {
     datasets.forEach((ds) => {
         if(!ds.data || ds.data.length === 0) return;
         const minV = Math.min(...ds.data) * 0.9; const maxV = Math.max(...ds.data) * 1.1 || 1;
-        const range = (maxV - minV) || 1;
+        const range = maxV - minV;
         
         const points = ds.data.map((val, i) => {
             const x = paddingX + (i * (graphW / Math.max(1, ds.data.length - 1)));
-            const y = paddingY + graphH - ((val - minV) / range) * graphH;
+            const y = paddingY + graphH - ((val - minV) / Math.max(1, range)) * graphH;
             return {x, y, val};
         });
 
@@ -258,80 +200,64 @@ function generateDataVizSVG(containerId, datasets, labels) {
             lx += 110;
         });
     }
-    svg += `</svg>`; container.innerHTML = svg;
+
+    svg += `</svg>`;
+    container.innerHTML = svg;
 }
 
-// === CARDIO CRUD & DATA-VIZ ===
+// === CARDIO CRUD & DATA-VIZ MULTI-CHECKBOXES ===
 document.getElementById('cardio-form').addEventListener('submit', (e) => {
     e.preventDefault();
     let history = safeGetItem('cardioHistory');
-    const editId = document.getElementById('c-edit-id').value;
+    const idx = document.getElementById('c-edit-index').value;
     const obj = {
-        id: editId === "-1" ? Date.now() : parseInt(editId), 
-        date: document.getElementById('c-date').value,
+        id: Date.now(), date: document.getElementById('c-date').value,
         dist: parseFloat(document.getElementById('c-dist').value), time: parseFloat(document.getElementById('c-time').value),
         speed: parseFloat(document.getElementById('c-speed').value), incline: parseFloat(document.getElementById('c-incline').value) || 0
     };
-    
-    // SECURISATION DU SYSTEME DE SAUVEGARDE (Mise à jour via l'ID exact)
-    if (editId === "-1") {
-        history.push(obj); 
-    } else { 
-        const index = history.findIndex(x => x.id === parseInt(editId));
-        if (index !== -1) history[index] = obj;
-        cancelCardioEdit(); 
-    }
-    
+    if (idx === "-1") history.push(obj); 
+    else { history[parseInt(idx)] = obj; cancelCardioEdit(); }
     safeSetItem('cardioHistory', history);
     document.getElementById('cardio-form').reset();
     document.getElementById('c-date').valueAsDate = new Date();
     renderCardio();
 });
-
 function cancelCardioEdit() {
     document.getElementById('cardio-form').reset();
     document.getElementById('c-date').valueAsDate = new Date();
-    document.getElementById('c-edit-id').value = "-1";
-    document.getElementById('cardio-submit-btn').innerHTML = `<svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Ajouter`;
+    document.getElementById('c-edit-index').value = "-1";
+    document.getElementById('cardio-submit-btn').innerText = "Ajouter";
     document.getElementById('cardio-cancel-btn').classList.add('hidden');
 }
-
 window.editCardio = function(id) {
-    let history = safeGetItem('cardioHistory'); 
-    let session = history.find(x => x.id === id);
-    if(session) {
-        document.getElementById('c-date').value = session.date;
-        document.getElementById('c-dist').value = session.dist; document.getElementById('c-time').value = session.time;
-        document.getElementById('c-speed').value = session.speed; document.getElementById('c-incline').value = session.incline || 0;
-        document.getElementById('c-edit-id').value = session.id;
-        document.getElementById('cardio-submit-btn').innerHTML = `${iconEdit} MaJ`;
+    let history = safeGetItem('cardioHistory'); let idx = history.findIndex(x => x.id === id);
+    if(idx !== -1) {
+        let s = history[idx]; document.getElementById('c-date').value = s.date;
+        document.getElementById('c-dist').value = s.dist; document.getElementById('c-time').value = s.time;
+        document.getElementById('c-speed').value = s.speed; document.getElementById('c-incline').value = s.incline || 0;
+        document.getElementById('c-edit-index').value = idx;
+        document.getElementById('cardio-submit-btn').innerText = "MaJ";
         document.getElementById('cardio-cancel-btn').classList.remove('hidden');
     }
 }
-
 window.deleteCardio = function(id) {
-    showConfirm("Voulez-vous supprimer définitivement cette séance ?", () => {
-        safeSetItem('cardioHistory', safeGetItem('cardioHistory').filter(x => x.id !== id)); 
-        renderCardio();
-    });
+    if(confirm("Supprimer cette séance ?")) { safeSetItem('cardioHistory', safeGetItem('cardioHistory').filter(x => x.id !== id)); renderCardio(); }
 }
-
 window.renderCardio = function() {
     let history = safeGetItem('cardioHistory').sort((a,b) => new Date(a.date) - new Date(b.date));
     document.getElementById('cardio-body').innerHTML = [...history].reverse().map(s => `
         <tr><td>${formatDate(s.date)}</td><td><strong>${s.dist}</strong> km</td><td>${s.time} min</td><td>${s.speed} km/h</td><td>${s.incline || 0}%</td>
-        <td><div class="action-btns">
-            <button class="btn-small btn-edit haptic-btn" onclick="editCardio(${s.id})" title="Éditer">${iconEdit}</button>
-            <button class="btn-small btn-delete haptic-btn" onclick="deleteCardio(${s.id})" title="Supprimer">${iconTrash}</button>
-        </div></td></tr>
+        <td><div class="action-btns"><button class="btn-small btn-edit haptic-btn" onclick="editCardio(${s.id})">Éditer</button><button class="btn-small btn-delete haptic-btn" onclick="deleteCardio(${s.id})">X</button></div></td></tr>
     `).join('');
     
     const labels = history.map(s => formatDate(s.date));
+    
     const dsDist = { label: 'Distance', data: history.map(s => s.dist), color: 'var(--gold)' };
     const dsSpeed = { label: 'Vitesse', data: history.map(s => s.speed), color: 'var(--navy)' };
     const dsTime = { label: 'Temps', data: history.map(s => s.time), color: '#94a3b8' };
     const dsIncline = { label: 'Pente', data: history.map(s => s.incline || 0), color: '#10b981' }; 
 
+    // Lecture dynamique des Checkboxes
     const checkedBoxes = Array.from(document.querySelectorAll('#cardio-metric-toggles input:checked')).map(cb => cb.value);
 
     let activeDatasets = [];
@@ -347,7 +273,7 @@ window.renderCardio = function() {
 document.getElementById('weight-form').addEventListener('submit', (e) => {
     e.preventDefault();
     let history = safeGetItem('weightHistory');
-    history.push({ id: Date.now(), date: document.getElementById('w-date').value, weight: parseFloat(document.getElementById('w-weight').value) });
+    history.push({ date: document.getElementById('w-date').value, weight: parseFloat(document.getElementById('w-weight').value) });
     history.sort((a,b) => new Date(a.date) - new Date(b.date));
     safeSetItem('weightHistory', history); renderWeight(); recalculatePhysiqueAndCalories(); updateSmartCoach();
 });
@@ -366,15 +292,9 @@ document.getElementById('record-form').addEventListener('submit', (e) => {
     safeSetItem('elitePersonalRecords', r); document.getElementById('record-form').reset(); renderRecords(); updateGamification();
 });
 function renderRecords() { document.getElementById('records-container').innerHTML = safeGetItem('elitePersonalRecords').map(x => `
-    <div class="record-elite-card"><button class="delete-record-btn" onclick="deleteRecord(${x.id})" title="Supprimer">${iconTrash}</button>
+    <div class="record-elite-card"><button class="delete-record-btn" onclick="deleteRecord(${x.id})">&times;</button>
     <div class="record-elite-title">${escapeHtml(x.name)}</div><div class="record-elite-value">${escapeHtml(x.value)}</div></div>`).join(''); }
-
-window.deleteRecord = function(id) { 
-    showConfirm("Voulez-vous supprimer ce record ?", () => {
-        safeSetItem('elitePersonalRecords', safeGetItem('elitePersonalRecords').filter(x => x.id !== id)); 
-        renderRecords(); 
-    });
-}
+window.deleteRecord = function(id) { safeSetItem('elitePersonalRecords', safeGetItem('elitePersonalRecords').filter(x => x.id !== id)); renderRecords(); }
 
 // === CALENDRIER & OBJECTIF DYNAMIQUE ===
 let currentMonth = new Date().getMonth(); let currentYear = new Date().getFullYear();
@@ -390,13 +310,14 @@ function calculateWeeklyGoal() {
     const day = today.getDay() || 7; 
     let weekStart = new Date(today); weekStart.setDate(today.getDate() - day + 1);
     
-    let weeklyValidatedSessions = 0; let totalWeeklyTarget = 0;
+    let weeklyValidatedSessions = 0;
+    let totalWeeklyTarget = 0;
     
     for(let i=0; i<7; i++) {
         let d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
         let dKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         let sessions = monthlyData[dKey] || [];
-        totalWeeklyTarget += sessions.length; 
+        totalWeeklyTarget += sessions.length; // L'objectif est défini par le nb de séances placées !
         weeklyValidatedSessions += sessions.filter(s => s.validated).length;
     }
     
@@ -465,7 +386,7 @@ window.openDayModal = function(dKey) {
     document.getElementById('modal-day-date').value = dKey;
     document.getElementById('session-edit-id').value = "-1";
     document.getElementById('session-name').value = "";
-    document.getElementById('modal-session-btn').innerHTML = `<svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+    document.getElementById('modal-session-btn').innerText = "+";
     renderDaySessions(dKey);
     document.getElementById('calendar-day-modal').classList.remove('hidden');
 }
@@ -481,10 +402,10 @@ function renderDaySessions(dKey) {
     
     listContainer.innerHTML = sessions.map(s => `
         <div class="modal-list-item">
-            <span style="display:flex; align-items:center; gap:6px;">${s.validated ? iconCheck : ''}${escapeHtml(s.name)}</span>
+            <span>${s.validated ? '✅ ' : ''}${escapeHtml(s.name)}</span>
             <div class="action-btns">
-                <button class="btn-small btn-edit haptic-btn" onclick="prepareEditSession('${dKey}', ${s.id})" title="Éditer">${iconEdit}</button>
-                <button class="btn-small btn-delete haptic-btn" onclick="deleteSession('${dKey}', ${s.id})" title="Supprimer">${iconTrash}</button>
+                <button class="btn-small btn-edit haptic-btn" onclick="prepareEditSession('${dKey}', ${s.id})">✏️</button>
+                <button class="btn-small btn-delete haptic-btn" onclick="deleteSession('${dKey}', ${s.id})">🗑️</button>
             </div>
         </div>
     `).join('');
@@ -508,7 +429,7 @@ window.saveSessionToDay = function(e) {
     safeSetItem('calendarData', data);
     document.getElementById('session-name').value = "";
     document.getElementById('session-edit-id').value = "-1";
-    document.getElementById('modal-session-btn').innerHTML = `<svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+    document.getElementById('modal-session-btn').innerText = "+";
     renderDaySessions(dKey);
     renderCalendarInit();
 }
@@ -519,18 +440,18 @@ window.prepareEditSession = function(dKey, id) {
     if(session) {
         document.getElementById('session-name').value = session.name;
         document.getElementById('session-edit-id').value = session.id;
-        document.getElementById('modal-session-btn').innerHTML = iconEdit;
+        document.getElementById('modal-session-btn').innerText = "MaJ";
     }
 }
 
 window.deleteSession = function(dKey, id) {
-    showConfirm("Voulez-vous supprimer définitivement cette séance ?", () => {
+    if(confirm("Supprimer définitivement cette séance ?")) {
         let data = safeGetItem('calendarData', '{}');
         data[dKey] = data[dKey].filter(x => x.id !== id);
         safeSetItem('calendarData', data);
         renderDaySessions(dKey);
         renderCalendarInit();
-    });
+    }
 }
 
 window.toggleSession = function(dKey, id) {
@@ -551,8 +472,8 @@ function updateSmartCoach() {
 }
 function updateGamification() {
     let r = safeGetItem('elitePersonalRecords').length; let c = document.getElementById('gamification-container'); let html = "";
-    if(r > 0) html += `<span class="badge badge-gold">${iconTrophy} Élite (${r} Records)</span>`;
-    if(r >= 5) html += `<span class="badge" style="color:var(--navy);">${iconTrophy} Hall of Fame</span>`;
+    if(r > 0) html += `<span class="badge badge-gold">🏆 Élite (${r} Records)</span>`;
+    if(r >= 5) html += `<span class="badge">🔥 Hall of Fame</span>`;
     if(html === "") html = "<small style='color:var(--text-muted);'>Aucun fait d'arme débloqué.</small>";
     c.innerHTML = html;
 }
