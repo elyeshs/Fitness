@@ -293,6 +293,31 @@
         </div>
     </div>
 
+    <div class="modal-overlay hidden" id="quick-session-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>📅 Ajouter une Séance</h2>
+                <button class="close-modal-btn haptic-btn" onclick="closeQuickSession()">&times;</button>
+            </div>
+            <form id="quick-session-form">
+                <div class="modal-body">
+                    <div class="input-group modal-input">
+                        <label>Date de la séance</label>
+                        <input type="date" id="quick-s-date" required>
+                    </div>
+                    <div class="input-group modal-input">
+                        <label>Nom de la séance</label>
+                        <input type="text" id="quick-s-name" placeholder="Ex: Push, Cardio..." required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel haptic-btn" onclick="closeQuickSession()">Annuler</button>
+                    <button type="submit" class="btn-action haptic-btn">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="modal-overlay hidden" id="quick-weight-modal">
         <div class="modal-card">
             <div class="modal-header">
