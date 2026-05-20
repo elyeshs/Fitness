@@ -1,40 +1,57 @@
-// SYSTÈME DE STOCKAGE LOCAL ROBUSTE
+// === STOCKAGE ROBUSTE ===
 function safeGetItem(key, defaultValue = '[]') {
-    try {
-        const item = localStorage.getItem(key);
-        return item ? JSON.parse(item) : JSON.parse(defaultValue);
-    } catch (e) {
-        return JSON.parse(defaultValue);
-    }
+    try { const item = localStorage.getItem(key); return item ? JSON.parse(item) : JSON.parse(defaultValue); } catch (e) { return JSON.parse(defaultValue); }
 }
-
 function safeSetItem(key, data) {
     try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
 }
+function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function formatDate(dateString) {
+    const d = new Date(dateString); return isNaN(d) ? '' : d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+}
 
-// MANAGEMENT NAVIGATION / POPUPS GLOBALES
-const profileModal = document.getElementById('profile-modal');
-const openProfileBtn = document.getElementById('open-profile-btn');
-const closeProfileBtn = document.getElementById('close-profile-btn');
-const cancelProfileBtn = document.getElementById('cancel-profile-btn');
-const profileForm = document.getElementById('profile-form');
-const tooltipElement = document.getElementById('chart-tooltip');
-const calendarDayModal = document.getElementById('calendar-day-modal');
+// === ICONES SVG POUR JS ===
+const iconEdit = `<svg class="icon-sm" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+const iconTrash = `<svg class="icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+const iconCheck = `<svg class="icon-sm" viewBox="0 0 24 24" stroke="#10b981"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+const iconTrophy = `<svg class="icon-sm" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10M5 4h14v4a7 7 0 0 1-14 0V4z"></path></svg>`;
 
-openProfileBtn.addEventListener('click', () => profileModal.classList.remove('hidden'));
-closeProfileBtn.addEventListener('click', () => profileModal.classList.add('hidden'));
-cancelProfileBtn.addEventListener('click', () => profileModal.classList.add('hidden'));
+// === POP-UP DE CONFIRMATION HARMONISE (Remplace window.confirm) ===
+function showConfirm(message, callback) {
+    const modal = document.getElementById('confirm-modal');
+    document.getElementById('confirm-message').innerText = message;
+    modal.classList.remove('hidden');
 
-window.addEventListener('click', (e) => { 
-    if (e.target === profileModal) profileModal.classList.add('hidden'); 
-    if (e.target === calendarDayModal) calendarDayModal.classList.add('hidden');
-});
+    const okBtn = document.getElementById('confirm-ok-btn');
+    const cancelBtn = document.getElementById('confirm-cancel-btn');
 
-// CYCLE DE VIE INITIALISATION DASHBOARD
+    // On clone pour retirer les anciens écouteurs d'événements
+    const newOkBtn = okBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+    newOkBtn.addEventListener('click', () => { modal.classList.add('hidden'); callback(); });
+    newCancelBtn.addEventListener('click', () => { modal.classList.add('hidden'); });
+}
+
+// === MOTEUR D'ANIMATION INCREMENTALE ===
+function animateValue(obj, start, end, duration, isFloat = false) {
+    if (!obj) return;
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        let val = progress * (end - start) + start;
+        obj.innerHTML = isFloat ? val.toFixed(1) : Math.floor(val);
+        if (progress < 1) { window.requestAnimationFrame(step); }
+    };
+    window.requestAnimationFrame(step);
+}
+
+// === INITIALISATION ===
 document.addEventListener('DOMContentLoaded', () => {
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('fr-FR', options);
-
+    document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     document.getElementById('c-date').valueAsDate = new Date();
     document.getElementById('w-date').valueAsDate = new Date();
 
@@ -42,700 +59,527 @@ document.addEventListener('DOMContentLoaded', () => {
     initMacroControls();
     renderWeight();
     renderRecords();
-    renderCalendar();
     renderCardio();
+    renderCalendarInit();
     updateSmartCoach();
     updateGamification();
 });
 
-profileForm.addEventListener('submit', (e) => {
+// === MODALS & PROFIL ===
+const profileModal = document.getElementById('profile-modal');
+document.getElementById('open-profile-btn').addEventListener('click', () => profileModal.classList.remove('hidden'));
+document.getElementById('close-profile-btn').addEventListener('click', () => profileModal.classList.add('hidden'));
+document.getElementById('cancel-profile-btn').addEventListener('click', () => profileModal.classList.add('hidden'));
+
+document.getElementById('profile-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    const profileData = {
+    safeSetItem('userProfileBaseV2', {
         gender: document.getElementById('gender').value,
         age: parseInt(document.getElementById('age').value),
         height: parseFloat(document.getElementById('height').value),
         activityLevel: parseFloat(document.getElementById('activity-level').value)
-    };
-    safeSetItem('userProfileBaseV2', profileData);
+    });
     profileModal.classList.add('hidden');
     recalculatePhysiqueAndCalories();
+    renderCalendarInit(); 
 });
 
 function loadProfileData() {
     const saved = safeGetItem('userProfileBaseV2', 'null');
     if (saved) {
-        document.getElementById('gender').value = saved.gender;
-        document.getElementById('age').value = saved.age;
-        document.getElementById('height').value = saved.height;
-        document.getElementById('activity-level').value = saved.activityLevel;
+        document.getElementById('gender').value = saved.gender || 'male';
+        document.getElementById('age').value = saved.age || '';
+        document.getElementById('height').value = saved.height || '';
+        document.getElementById('activity-level').value = saved.activityLevel || '1.2';
     }
 }
 
-
-// === GESTION INTERACTIVE HYBRIDE DES MACRONUTRIMENTS ===
-const radioAuto = document.getElementById('macro-mode-auto');
-const radioManual = document.getElementById('macro-mode-manual');
-const inputProt = document.getElementById('input-macro-prot');
-const inputFat = document.getElementById('input-macro-fat');
-const inputCarb = document.getElementById('input-macro-carb');
-
+// === MACRONUTRIMENTS ===
 function initMacroControls() {
     const mode = safeGetItem('macroConfigMode', '"auto"');
     if (mode === "manual") {
-        radioManual.checked = true;
+        document.getElementById('macro-mode-manual').checked = true;
         setMacroInputsDisabled(false);
-        const savedManual = safeGetItem('manualMacrosValues', '{"prot":0,"fat":0,"carb":0}');
-        inputProt.value = savedManual.prot;
-        inputFat.value = savedManual.fat;
-        inputCarb.value = savedManual.carb;
+        const manual = safeGetItem('manualMacrosValues', '{"prot":0,"fat":0,"carb":0}');
+        document.getElementById('input-macro-prot').value = manual.prot;
+        document.getElementById('input-macro-fat').value = manual.fat;
+        document.getElementById('input-macro-carb').value = manual.carb;
     } else {
-        radioAuto.checked = true;
+        document.getElementById('macro-mode-auto').checked = true;
         setMacroInputsDisabled(true);
     }
+    document.getElementById('macro-mode-auto').addEventListener('change', () => handleMacroMode("auto"));
+    document.getElementById('macro-mode-manual').addEventListener('change', () => handleMacroMode("manual"));
+    ['prot', 'fat', 'carb'].forEach(m => document.getElementById(`input-macro-${m}`).addEventListener('input', saveManualMacros));
+}
+function setMacroInputsDisabled(d) { ['prot', 'fat', 'carb'].forEach(m => document.getElementById(`input-macro-${m}`).disabled = d); }
+function handleMacroMode(mode) { safeSetItem('macroConfigMode', mode); if(mode==="auto"){ setMacroInputsDisabled(true); recalculatePhysiqueAndCalories(); } else { setMacroInputsDisabled(false); saveManualMacros(); } }
+function saveManualMacros() { safeSetItem('manualMacrosValues', { prot: parseInt(document.getElementById('input-macro-prot').value)||0, fat: parseInt(document.getElementById('input-macro-fat').value)||0, carb: parseInt(document.getElementById('input-macro-carb').value)||0 }); }
 
-    radioAuto.addEventListener('change', () => handleMacroModeChange("auto"));
-    radioManual.addEventListener('change', () => handleMacroModeChange("manual"));
-    [inputProt, inputFat, inputCarb].forEach(i => i.addEventListener('input', saveManualMacrosFromFields));
+// === IMC INTELLIGENT ET MACROS ===
+function recalculatePhysiqueAndCalories() {
+    const profile = safeGetItem('userProfileBaseV2', 'null');
+    const weights = safeGetItem('weightHistory', '[]');
+    const mode = safeGetItem('macroConfigMode', '"auto"');
+    
+    // Tendance de pesée
+    if (weights.length >= 2) {
+        const diff = (weights[weights.length-1].weight - weights[weights.length-2].weight).toFixed(1);
+        document.getElementById('weight-delta-display').innerText = diff > 0 ? `+${diff} kg` : `${diff} kg`;
+    }
+
+    const bmiBox = document.getElementById('bmi-color-box');
+    const bmiText = document.getElementById('bmi-text');
+    const bmiAdvice = document.getElementById('bmi-advice');
+    
+    // Reset classes
+    bmiBox.className = 'bmi-value';
+
+    if (!profile || !profile.height || weights.length === 0) {
+        bmiText.innerText = (profile && profile.height && weights.length === 0) ? "En attente de pesée" : "Profil incomplet";
+        bmiAdvice.innerText = weights.length === 0 ? "Veuillez ajouter une pesée dans l'encart Fluctuation Poids." : "Cliquez sur le rouage pour configurer vos constantes.";
+        bmiBox.classList.add('bg-default');
+        return;
+    }
+
+    const w = weights[weights.length-1].weight;
+    const h = profile.height / 100;
+    const bmi = parseFloat((w / (h*h)).toFixed(1));
+    
+    const bmiEl = document.getElementById('bmi-num');
+    animateValue(bmiEl, parseFloat(bmiEl.dataset.val) || 0, bmi, 1000, true);
+    bmiEl.dataset.val = bmi;
+    
+    // NOUVELLE LOGIQUE D'IMC INTELLIGENT
+    if (bmi < 18.5) {
+        bmiBox.classList.add('bmi-under');
+        bmiText.innerText = "Insuffisance pondérale";
+        bmiAdvice.innerText = "Un léger surplus calorique et musculaire est recommandé.";
+    } else if (bmi < 25) {
+        bmiBox.classList.add('bmi-normal');
+        bmiText.innerText = "Poids Normal (Idéal)";
+        bmiAdvice.innerText = "Excellent ! Maintenez cet équilibre et vos performances.";
+    } else if (bmi < 30) {
+        bmiBox.classList.add('bmi-over');
+        bmiText.innerText = "Léger Surpoids";
+        bmiAdvice.innerText = "Un léger déficit calorique est conseillé pour affiner.";
+    } else {
+        bmiBox.classList.add('bmi-obese');
+        bmiText.innerText = "Obésité";
+        bmiAdvice.innerText = "Visez un déficit maîtrisé et consultez un professionnel.";
+    }
+    
+    // Base Métabolique
+    let bmr = profile.gender === "male" ? (10*w + 6.25*profile.height - 5*profile.age + 5) : (10*w + 6.25*profile.height - 5*profile.age - 161);
+    const maint = bmr * profile.activityLevel;
+    
+    const calElts = [ {id:'cal-base', v:bmr}, {id:'cal-maintenance', v:maint}, {id:'cal-deficit', v:maint-500}, {id:'cal-surplus', v:maint+300} ];
+    calElts.forEach(c => {
+        const el = document.getElementById(c.id);
+        animateValue(el, parseInt(el.dataset.val)||0, c.v, 1000);
+        el.dataset.val = c.v;
+    });
+
+    if (mode === "auto") {
+        document.getElementById('input-macro-prot').value = Math.round(w * 2);
+        document.getElementById('input-macro-fat').value = Math.round(w * 1);
+        document.getElementById('input-macro-carb').value = Math.round(Math.max(0, (maint - (w*2*4 + w*1*9))/4));
+    }
 }
 
-function setMacroInputsDisabled(disabled) {
-    inputProt.disabled = disabled; inputFat.disabled = disabled; inputCarb.disabled = disabled;
+// === TOOLTIP & CROSSHAIR DYNAMIQUE ===
+function showTooltipWithCrosshair(e, text, xPos, containerId) {
+    const tt = document.getElementById('chart-tooltip');
+    tt.innerHTML = text; tt.classList.remove('hidden');
+    tt.style.left = e.pageX + 'px'; tt.style.top = e.pageY + 'px';
+    const crosshair = document.getElementById(`crosshair-${containerId}`);
+    if (crosshair) { crosshair.style.display = 'block'; crosshair.setAttribute('x1', xPos); crosshair.setAttribute('x2', xPos); }
+}
+function hideTooltipAndCrosshair(containerId) { 
+    document.getElementById('chart-tooltip').classList.add('hidden'); 
+    const crosshair = document.getElementById(`crosshair-${containerId}`); if(crosshair) crosshair.style.display = 'none';
 }
 
-function handleMacroModeChange(mode) {
-    safeSetItem('macroConfigMode', mode);
-    if (mode === "auto") { setMacroInputsDisabled(true); recalculatePhysiqueAndCalories(); } 
-    else { setMacroInputsDisabled(false); saveManualMacrosFromFields(); }
+function generateDataVizSVG(containerId, datasets, labels) {
+    const container = document.getElementById(containerId);
+    if (!datasets || datasets.length === 0 || datasets[0].data.length === 0) {
+        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding: 50px;">Sélectionnez au moins un paramètre pour afficher le graphique.</div>`; return;
+    }
+
+    const width = container.clientWidth || 800; const height = 280;
+    const paddingX = 40; const paddingY = 40;
+    const graphW = width - paddingX * 2; const graphH = height - paddingY * 2;
+
+    let svg = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; overflow:visible;">
+               <style>.path-anim { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: drawLine 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }</style>`;
+
+    const gridLines = 4;
+    for(let i=0; i<=gridLines; i++) {
+        let y = paddingY + (graphH / gridLines) * i;
+        svg += `<line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="var(--border)" stroke-dasharray="4" stroke-width="1" />`;
+    }
+
+    svg += `<line id="crosshair-${containerId}" x1="0" y1="${paddingY}" x2="0" y2="${height - paddingY}" stroke="var(--navy)" stroke-width="1" stroke-dasharray="4" style="display:none; pointer-events:none;" />`;
+
+    datasets.forEach((ds) => {
+        if(!ds.data || ds.data.length === 0) return;
+        const minV = Math.min(...ds.data) * 0.9; const maxV = Math.max(...ds.data) * 1.1 || 1;
+        const range = (maxV - minV) || 1;
+        
+        const points = ds.data.map((val, i) => {
+            const x = paddingX + (i * (graphW / Math.max(1, ds.data.length - 1)));
+            const y = paddingY + graphH - ((val - minV) / range) * graphH;
+            return {x, y, val};
+        });
+
+        const pathD = points.map((p, i) => `${i===0?'M':'L'} ${p.x} ${p.y}`).join(' ');
+        svg += `<path class="path-anim" d="${pathD}" fill="none" stroke="${ds.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+        points.forEach((p, i) => {
+            svg += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${ds.color}" stroke="#fff" stroke-width="2" 
+                    onmouseenter="showTooltipWithCrosshair(event, '${labels[i]}<br/>${ds.label} : ${p.val}', ${p.x}, '${containerId}')" 
+                    onmouseleave="hideTooltipAndCrosshair('${containerId}')" style="cursor:crosshair; transition: r 0.2s;" />`;
+        });
+    });
+
+    const step = Math.max(1, Math.floor(labels.length / 6)); 
+    labels.forEach((label, i) => {
+        if(i % step === 0 || i === labels.length - 1) {
+            const x = paddingX + (i * (graphW / Math.max(1, labels.length - 1)));
+            svg += `<text x="${x}" y="${height - 10}" fill="var(--text-muted)" font-size="10" font-weight="600" text-anchor="middle">${label}</text>`;
+        }
+    });
+
+    if (datasets.length > 0) {
+        let lx = paddingX;
+        datasets.forEach((ds) => {
+            svg += `<rect x="${lx}" y="5" width="12" height="12" fill="${ds.color}" rx="3"/>`;
+            svg += `<text x="${lx + 18}" y="15" fill="var(--navy)" font-size="11" font-weight="700">${ds.label}</text>`;
+            lx += 110;
+        });
+    }
+    svg += `</svg>`; container.innerHTML = svg;
 }
 
-function saveManualMacrosFromFields() {
-    safeSetItem('manualMacrosValues', {
-        prot: parseInt(inputProt.value) || 0, fat: parseInt(inputFat.value) || 0, carb: parseInt(inputCarb.value) || 0
+// === CARDIO CRUD & DATA-VIZ ===
+document.getElementById('cardio-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    let history = safeGetItem('cardioHistory');
+    const editId = document.getElementById('c-edit-id').value;
+    const obj = {
+        id: editId === "-1" ? Date.now() : parseInt(editId), 
+        date: document.getElementById('c-date').value,
+        dist: parseFloat(document.getElementById('c-dist').value), time: parseFloat(document.getElementById('c-time').value),
+        speed: parseFloat(document.getElementById('c-speed').value), incline: parseFloat(document.getElementById('c-incline').value) || 0
+    };
+    
+    // SECURISATION DU SYSTEME DE SAUVEGARDE (Mise à jour via l'ID exact)
+    if (editId === "-1") {
+        history.push(obj); 
+    } else { 
+        const index = history.findIndex(x => x.id === parseInt(editId));
+        if (index !== -1) history[index] = obj;
+        cancelCardioEdit(); 
+    }
+    
+    safeSetItem('cardioHistory', history);
+    document.getElementById('cardio-form').reset();
+    document.getElementById('c-date').valueAsDate = new Date();
+    renderCardio();
+});
+
+function cancelCardioEdit() {
+    document.getElementById('cardio-form').reset();
+    document.getElementById('c-date').valueAsDate = new Date();
+    document.getElementById('c-edit-id').value = "-1";
+    document.getElementById('cardio-submit-btn').innerHTML = `<svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Ajouter`;
+    document.getElementById('cardio-cancel-btn').classList.add('hidden');
+}
+
+window.editCardio = function(id) {
+    let history = safeGetItem('cardioHistory'); 
+    let session = history.find(x => x.id === id);
+    if(session) {
+        document.getElementById('c-date').value = session.date;
+        document.getElementById('c-dist').value = session.dist; document.getElementById('c-time').value = session.time;
+        document.getElementById('c-speed').value = session.speed; document.getElementById('c-incline').value = session.incline || 0;
+        document.getElementById('c-edit-id').value = session.id;
+        document.getElementById('cardio-submit-btn').innerHTML = `${iconEdit} MaJ`;
+        document.getElementById('cardio-cancel-btn').classList.remove('hidden');
+    }
+}
+
+window.deleteCardio = function(id) {
+    showConfirm("Voulez-vous supprimer définitivement cette séance ?", () => {
+        safeSetItem('cardioHistory', safeGetItem('cardioHistory').filter(x => x.id !== id)); 
+        renderCardio();
     });
 }
 
-// === CENTRAL PROCESSING UNIT : CALCULS MÉTABOLIQUES & TENDANCES ===
-function recalculatePhysiqueAndCalories() {
-    const profile = safeGetItem('userProfileBaseV2', 'null');
-    const weights = safeGetItem('weightHistory');
-    const macroMode = safeGetItem('macroConfigMode', '"auto"');
-    
-    const bmiNum = document.getElementById('bmi-num');
-    const bmiText = document.getElementById('bmi-text');
-    const bmiAdvice = document.getElementById('bmi-advice');
-    const colorBox = document.getElementById('bmi-color-box');
-    const deltaDisplay = document.getElementById('weight-delta-display');
-
-    const calBaseDisplay = document.getElementById('cal-base');
-    const calMaintenanceDisplay = document.getElementById('cal-maintenance');
-    const calDeficitDisplay = document.getElementById('cal-deficit');
-    const calSurplusDisplay = document.getElementById('cal-surplus');
-
-    if (weights.length >= 2) {
-        const diff = (weights[weights.length - 1].weight - weights[weights.length - 2].weight).toFixed(1);
-        deltaDisplay.innerText = diff > 0 ? `+${diff} kg` : `${diff} kg`;
-    } else {
-        deltaDisplay.innerText = "—";
-    }
-
-    if (!profile || !profile.height || !profile.age || weights.length === 0) {
-        bmiNum.innerText = "--"; bmiText.innerText = "Profil incomplet";
-        colorBox.className = "bmi-value bg-default";
-        calBaseDisplay.innerText = "--"; calMaintenanceDisplay.innerText = "--";
-        calDeficitDisplay.innerText = "--"; calSurplusDisplay.innerText = "--";
-        if (macroMode === "auto") { inputProt.value = 0; inputFat.value = 0; inputCarb.value = 0; }
-        return;
-    }
-
-    const activeWeight = weights[weights.length - 1].weight;
-    const hMeter = profile.height / 100;
-    const bmi = (activeWeight / (hMeter * hMeter)).toFixed(1);
-    bmiNum.innerText = bmi;
-    colorBox.className = "bmi-value";
-
-    if (bmi < 18.5) { bmiText.innerText = "Insuffisance"; colorBox.classList.add('bg-warning'); } 
-    else if (bmi < 25) { bmiText.innerText = "Normal"; colorBox.classList.add('bg-normal'); } 
-    else if (bmi < 30) { bmiText.innerText = "Surpoids"; colorBox.classList.add('bg-warning'); } 
-    else { bmiText.innerText = "Obésité"; colorBox.classList.add('bg-danger'); }
-    bmiAdvice.innerText = `Basé sur votre pesée de ${activeWeight} kg.`;
-
-    let bmr = profile.gender === "male" 
-        ? (10 * activeWeight + 6.25 * profile.height - 5 * profile.age + 5)
-        : (10 * activeWeight + 6.25 * profile.height - 5 * profile.age - 161);
-
-    const maintenance = bmr * profile.activityLevel;
-    calBaseDisplay.innerText = `${Math.round(bmr)} kcal`;
-    calMaintenanceDisplay.innerText = `${Math.round(maintenance)} kcal`;
-    calDeficitDisplay.innerText = `${Math.round(Math.max(1200, maintenance - 500))} kcal`;
-    calSurplusDisplay.innerText = `${Math.round(maintenance + 300)} kcal`;
-
-    if (macroMode === "auto") {
-        inputProt.value = Math.round(activeWeight * 2);
-        inputFat.value = Math.round(activeWeight * 1);
-        inputCarb.value = Math.round(Math.max(0, (maintenance - ((activeWeight * 2 * 4) + (activeWeight * 1 * 9))) / 4));
-    }
-}
-
-// === MODULE : RECORDS HISTORIQUES ===
-const recordForm = document.getElementById('record-form');
-recordForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    let records = safeGetItem('elitePersonalRecords', '[]');
-    records.push({ id: Date.now(), name: document.getElementById('rec-name').value.trim(), value: document.getElementById('rec-value').value.trim() });
-    safeSetItem('elitePersonalRecords', records);
-    recordForm.reset();
-    renderRecords();
-    updateGamification();
-    updateSmartCoach();
-});
-
-function renderRecords() {
-    const container = document.getElementById('records-container');
-    const records = safeGetItem('elitePersonalRecords', '[]');
-    if(records.length === 0) { container.innerHTML = `<div style="color:var(--text-muted); font-size:0.75rem; font-style:italic;">Aucune marque gravée.</div>`; return; }
-    container.innerHTML = records.map(rec => `
-        <div class="record-elite-card">
-            <button class="delete-record-btn" onclick="deleteRecord(${rec.id})">&times;</button>
-            <div class="record-elite-title">${escapeHtml(rec.name)}</div>
-            <div class="record-elite-value">${escapeHtml(rec.value)}</div>
-        </div>
+window.renderCardio = function() {
+    let history = safeGetItem('cardioHistory').sort((a,b) => new Date(a.date) - new Date(b.date));
+    document.getElementById('cardio-body').innerHTML = [...history].reverse().map(s => `
+        <tr><td>${formatDate(s.date)}</td><td><strong>${s.dist}</strong> km</td><td>${s.time} min</td><td>${s.speed} km/h</td><td>${s.incline || 0}%</td>
+        <td><div class="action-btns">
+            <button class="btn-small btn-edit haptic-btn" onclick="editCardio(${s.id})" title="Éditer">${iconEdit}</button>
+            <button class="btn-small btn-delete haptic-btn" onclick="deleteCardio(${s.id})" title="Supprimer">${iconTrash}</button>
+        </div></td></tr>
     `).join('');
-}
-function deleteRecord(id) { if(confirm("Supprimer ce record ?")) { safeSetItem('elitePersonalRecords', safeGetItem('elitePersonalRecords', '[]').filter(r => r.id !== id)); renderRecords(); updateGamification(); } }
+    
+    const labels = history.map(s => formatDate(s.date));
+    const dsDist = { label: 'Distance', data: history.map(s => s.dist), color: 'var(--gold)' };
+    const dsSpeed = { label: 'Vitesse', data: history.map(s => s.speed), color: 'var(--navy)' };
+    const dsTime = { label: 'Temps', data: history.map(s => s.time), color: '#94a3b8' };
+    const dsIncline = { label: 'Pente', data: history.map(s => s.incline || 0), color: '#10b981' }; 
 
-// === MODULE : POIDS HISTORIQUE ===
-const weightForm = document.getElementById('weight-form');
-weightForm.addEventListener('submit', (e) => {
+    const checkedBoxes = Array.from(document.querySelectorAll('#cardio-metric-toggles input:checked')).map(cb => cb.value);
+
+    let activeDatasets = [];
+    if (checkedBoxes.includes('dist')) activeDatasets.push(dsDist);
+    if (checkedBoxes.includes('speed')) activeDatasets.push(dsSpeed);
+    if (checkedBoxes.includes('time')) activeDatasets.push(dsTime);
+    if (checkedBoxes.includes('incline')) activeDatasets.push(dsIncline);
+    
+    generateDataVizSVG('cardio-chart', activeDatasets, labels);
+}
+
+// === POIDS & RECORDS ===
+document.getElementById('weight-form').addEventListener('submit', (e) => {
     e.preventDefault();
     let history = safeGetItem('weightHistory');
-    const editIndex = document.getElementById('w-edit-index').value;
-    const dataObj = { date: document.getElementById('w-date').value, weight: parseFloat(document.getElementById('w-weight').value) };
-
-    if (editIndex === "-1") history.push(dataObj); else { history[parseInt(editIndex)] = dataObj; cancelWeightEdit(); }
-    history.sort((a, b) => new Date(a.date) - new Date(b.date));
-    safeSetItem('weightHistory', history);
-    renderWeight();
-    weightForm.reset();
-    document.getElementById('w-date').valueAsDate = new Date();
-    updateSmartCoach();
+    history.push({ id: Date.now(), date: document.getElementById('w-date').value, weight: parseFloat(document.getElementById('w-weight').value) });
+    history.sort((a,b) => new Date(a.date) - new Date(b.date));
+    safeSetItem('weightHistory', history); renderWeight(); recalculatePhysiqueAndCalories(); updateSmartCoach();
 });
-
-function renderWeight() {
-    const body = document.getElementById('weight-body');
-    const history = safeGetItem('weightHistory');
-    body.innerHTML = [...history].reverse().map((s, idx) => {
-        const realIndex = history.findIndex(x => x.date === s.date && x.weight === s.weight);
-        let diffStr = "—";
-        if (realIndex > 0) {
-            let diff = (s.weight - history[realIndex - 1].weight).toFixed(1);
-            diffStr = diff > 0 ? `+${diff}` : `${diff}`;
-        }
-        return `<tr>
-            <td>${formatDate(s.date)}</td>
-            <td><strong>${s.weight} kg</strong></td>
-            <td>${diffStr}</td>
-            <td class="action-btns">
-                <button onclick="editWeight(${realIndex})" class="btn-small btn-edit">Mod</button>
-                <button onclick="deleteWeight(${realIndex})" class="btn-small btn-delete">Sup</button>
-            </td>
-        </tr>`;
-    }).join('');
-    generateBentoAreaChart('weight-chart', history.map(item => item.weight), history.map(item => formatDate(item.date)), "kg");
-    recalculatePhysiqueAndCalories();
-}
-function editWeight(i) {
-    const entry = safeGetItem('weightHistory')[i];
-    document.getElementById('w-date').value = entry.date; document.getElementById('w-weight').value = entry.weight;
-    document.getElementById('w-edit-index').value = i; document.getElementById('weight-submit-btn').innerText = "OK";
-    document.getElementById('weight-cancel-btn').classList.remove('hidden');
-}
-function deleteWeight(i) { if(confirm("Supprimer la pesée ?")) { let h = safeGetItem('weightHistory'); h.splice(i, 1); safeSetItem('weightHistory', h); renderWeight(); updateSmartCoach(); } }
-function cancelWeightEdit() {
-    weightForm.reset(); document.getElementById('w-date').valueAsDate = new Date(); document.getElementById('w-edit-index').value = "-1";
-    document.getElementById('weight-submit-btn').innerText = "Ajouter"; document.getElementById('weight-cancel-btn').classList.add('hidden');
+function renderWeight() { 
+    const history = safeGetItem('weightHistory').sort((a,b) => new Date(a.date) - new Date(b.date));
+    document.getElementById('weight-body').innerHTML = [...history].reverse().map(s => `<tr><td>${formatDate(s.date)}</td><td><strong>${s.weight} kg</strong></td></tr>`).join(''); 
+    
+    const labels = history.map(s => formatDate(s.date));
+    const dsWeight = { label: 'Poids (kg)', data: history.map(s => s.weight), color: 'var(--navy)' };
+    generateDataVizSVG('weight-chart', [dsWeight], labels);
 }
 
-// === MODULE CALENDRIER : MULTI-SEANCES ET VALIDATION ===
-let currentCalDate = new Date();
-function changeMonth(offset) { currentCalDate.setMonth(currentCalDate.getMonth() + offset); renderCalendar(); }
+document.getElementById('record-form').addEventListener('submit', (e) => {
+    e.preventDefault(); let r = safeGetItem('elitePersonalRecords');
+    r.push({ id: Date.now(), name: document.getElementById('rec-name').value, value: document.getElementById('rec-value').value });
+    safeSetItem('elitePersonalRecords', r); document.getElementById('record-form').reset(); renderRecords(); updateGamification();
+});
+function renderRecords() { document.getElementById('records-container').innerHTML = safeGetItem('elitePersonalRecords').map(x => `
+    <div class="record-elite-card"><button class="delete-record-btn" onclick="deleteRecord(${x.id})" title="Supprimer">${iconTrash}</button>
+    <div class="record-elite-title">${escapeHtml(x.name)}</div><div class="record-elite-value">${escapeHtml(x.value)}</div></div>`).join(''); }
 
-function renderCalendar() {
-    const year = currentCalDate.getFullYear(), month = currentCalDate.getMonth();
-    const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
-    document.getElementById('month-year-display').innerText = `${monthNames[month]} ${year}`;
+window.deleteRecord = function(id) { 
+    showConfirm("Voulez-vous supprimer ce record ?", () => {
+        safeSetItem('elitePersonalRecords', safeGetItem('elitePersonalRecords').filter(x => x.id !== id)); 
+        renderRecords(); 
+    });
+}
 
-    const startOffset = new Date(year, month, 1).getDay() === 0 ? 6 : new Date(year, month, 1).getDay() - 1;
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const grid = document.getElementById('calendar-grid'); grid.innerHTML = "";
+// === CALENDRIER & OBJECTIF DYNAMIQUE ===
+let currentMonth = new Date().getMonth(); let currentYear = new Date().getFullYear();
+function renderCalendarInit() { renderCalendar(currentMonth, currentYear); calculateWeeklyGoal(); }
+window.changeMonth = function(dir) {
+    currentMonth += dir; if(currentMonth>11){currentMonth=0; currentYear++;} else if(currentMonth<0){currentMonth=11; currentYear--;}
+    renderCalendar(currentMonth, currentYear);
+}
 
+function calculateWeeklyGoal() {
     let monthlyData = safeGetItem('calendarData', '{}');
-    const statsCounter = {}; 
-    let totalCount = 0;
+    const today = new Date();
+    const day = today.getDay() || 7; 
+    let weekStart = new Date(today); weekStart.setDate(today.getDate() - day + 1);
+    
+    let weeklyValidatedSessions = 0; let totalWeeklyTarget = 0;
+    
+    for(let i=0; i<7; i++) {
+        let d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
+        let dKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        let sessions = monthlyData[dKey] || [];
+        totalWeeklyTarget += sessions.length; 
+        weeklyValidatedSessions += sessions.filter(s => s.validated).length;
+    }
+    
+    document.getElementById('weekly-goal-text').innerText = `${weeklyValidatedSessions}/${totalWeeklyTarget} cette semaine`;
+    const percent = totalWeeklyTarget > 0 ? Math.min((weeklyValidatedSessions / totalWeeklyTarget) * 100, 100) : 0;
+    document.getElementById('weekly-goal-fill').style.width = `${percent}%`;
+}
 
-    for (let i = 0; i < startOffset; i++) grid.innerHTML += `<div class="cal-day empty"></div>`;
+function updateConsistencyStreak(monthlyData, daysInMonth, year, month) {
+    let muscuValidated = 0, cardioValidated = 0;
+    for(let i = 1; i <= daysInMonth; i++) {
+        let dKey = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+        let sessions = monthlyData[dKey] || [];
+        sessions.forEach(s => {
+            const isCardio = (s.name.toUpperCase().includes('CARDIO') || s.name.toUpperCase().includes('RUN') || s.name.toUpperCase().includes('VELO'));
+            if (s.validated) { if(isCardio) cardioValidated++; else muscuValidated++; }
+        });
+    }
+    animateValue(document.getElementById('streak-muscu-count'), 0, muscuValidated, 800);
+    animateValue(document.getElementById('streak-cardio-count'), 0, cardioValidated, 800);
+}
 
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+function renderCalendar(month, year) {
+    document.getElementById('month-year-display').innerText = new Date(year, month).toLocaleString('fr-FR', {month:'long', year:'numeric'}).toUpperCase();
+    const grid = document.getElementById('calendar-grid'); 
+    
+    const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    let gridHTML = daysOfWeek.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+    
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const emptyCells = (firstDayOfMonth + 6) % 7; 
+    
+    for(let i=0; i<emptyCells; i++) { gridHTML += `<div class="cal-day cal-day-empty"></div>`; }
+    
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    let monthlyData = safeGetItem('calendarData', '{}');
+
+    for(let i=1; i<=daysInMonth; i++) {
+        let dKey = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+        let sessions = monthlyData[dKey] || [];
         
-        // Migration à la volée vers le tableau multi-séances si format obsolète
-        if (typeof monthlyData[dateKey] === 'string') {
-            const oldValidData = safeGetItem('calendarValidated', '{}');
-            monthlyData[dateKey] = [{ id: Date.now() + day, name: monthlyData[dateKey], validated: oldValidData[dateKey] || false }];
-            safeSetItem('calendarData', monthlyData);
-        }
-
-        let sessions = monthlyData[dateKey] || [];
-        let badgesHtml = "";
-        
+        let dayThemeClass = "";
         if (sessions.length > 0) {
-            sessions.forEach(session => {
-                const norm = session.name.trim().toUpperCase();
-                statsCounter[norm] = (statsCounter[norm] || 0) + 1; totalCount++;
-                let badgeClass = norm.includes("CARDIO") || norm.includes("RUN") ? "badge-cardio" : (norm.includes("MUSCU") || norm.includes("BODY") || norm.includes("PUSH") || norm.includes("PULL") || norm.includes("LEGS") ? "badge-muscu" : "badge-default");
-                
-                const isChecked = session.validated ? 'checked' : '';
-                badgesHtml += `
-                    <div class="cal-day-content">
-                        <span class="cal-badge ${badgeClass}" title="${escapeHtml(session.name)}">${escapeHtml(session.name)}</span>
-                        <input type="checkbox" class="cal-checkbox" ${isChecked} onclick="toggleSessionValidation(event, '${dateKey}', ${session.id})" title="Valider">
-                    </div>
-                `;
-            });
+            let lastSess = sessions[sessions.length-1].name.toUpperCase();
+            if(lastSess.includes('CARDIO') || lastSess.includes('RUN')) dayThemeClass = "theme-glow-cardio";
+            else dayThemeClass = "theme-glow-muscu";
         }
-
-        const dayDiv = document.createElement('div'); dayDiv.className = 'cal-day';
-        dayDiv.innerHTML = `
-            <span class="cal-date">${day}</span>
-            <div class="cal-sessions-wrapper">${badgesHtml}</div>
-        `;
-        dayDiv.onclick = () => openCalendarDayModal(dateKey, `${day} ${monthNames[month]}`);
-        grid.appendChild(dayDiv);
+        
+        let dHtml = `<div class="cal-day haptic-btn ${dayThemeClass}" onclick="openDayModal('${dKey}')"><span class="cal-day-num">${i}</span>`;
+        sessions.forEach(s => {
+            const nameUp = s.name.toUpperCase();
+            let badgeC = (nameUp.includes('CARDIO') || nameUp.includes('RUN') || nameUp.includes('VELO')) ? 'badge-cardio' : 'badge-muscu';
+            dHtml += `<div class="cal-day-content"><span class="cal-badge ${badgeC}">${escapeHtml(s.name)}</span>
+            <input type="checkbox" ${s.validated?'checked':''} onclick="event.stopPropagation(); toggleSession('${dKey}',${s.id})"></div>`;
+        });
+        dHtml += `</div>`; gridHTML += dHtml;
     }
-    renderStats(statsCounter, totalCount);
-    updateConsistencyStreak();
-}
-
-window.toggleSessionValidation = function(e, dateKey, sessionId) {
-    e.stopPropagation(); 
-    let monthlyData = safeGetItem('calendarData', '{}');
-    if(monthlyData[dateKey]) {
-        let session = monthlyData[dateKey].find(s => s.id === sessionId);
-        if(session) {
-            session.validated = e.target.checked;
-            safeSetItem('calendarData', monthlyData);
-            updateConsistencyStreak();
-            updateGamification();
-        }
-    }
-};
-
-function updateConsistencyStreak() {
-    const monthlyData = safeGetItem('calendarData', '{}');
-    const countDisplay = document.getElementById('streak-days-count');
     
-    const currentYear = currentCalDate.getFullYear();
-    const currentMonth = currentCalDate.getMonth() + 1;
-    const prefix = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
-
-    let totalSessionsThisMonth = 0;
-    let validatedSessionsThisMonth = 0;
-
-    for (let key in monthlyData) {
-        if (key.startsWith(prefix)) {
-            monthlyData[key].forEach(s => {
-                totalSessionsThisMonth++;
-                if(s.validated) validatedSessionsThisMonth++;
-            });
-        }
-    }
-    countDisplay.innerText = `${validatedSessionsThisMonth} / ${totalSessionsThisMonth}`;
+    grid.innerHTML = gridHTML;
+    updateConsistencyStreak(monthlyData, daysInMonth, year, month);
 }
 
-// LOGIQUE MODAL MULTI-SEANCES
-function openCalendarDayModal(dateKey, displayDate) {
-    document.getElementById('current-selected-date').value = dateKey;
-    document.getElementById('calendar-day-title').innerText = `Séances du ${displayDate}`;
-    renderDaySessionsList(dateKey);
-    calendarDayModal.classList.remove('hidden');
+// === GESTION MODAL CALENDRIER ===
+window.openDayModal = function(dKey) {
+    document.getElementById('modal-day-title').innerText = formatDate(dKey);
+    document.getElementById('modal-day-date').value = dKey;
+    document.getElementById('session-edit-id').value = "-1";
+    document.getElementById('session-name').value = "";
+    document.getElementById('modal-session-btn').innerHTML = `<svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+    renderDaySessions(dKey);
+    document.getElementById('calendar-day-modal').classList.remove('hidden');
 }
 
-function closeCalendarDayModal() {
-    calendarDayModal.classList.add('hidden');
-    document.getElementById('new-session-input').value = "";
-    renderCalendar();
-}
+window.closeDayModal = function() { document.getElementById('calendar-day-modal').classList.add('hidden'); }
 
-function renderDaySessionsList(dateKey) {
-    const listContainer = document.getElementById('calendar-day-sessions-list');
-    let monthlyData = safeGetItem('calendarData', '{}');
-    let sessions = monthlyData[dateKey] || [];
+function renderDaySessions(dKey) {
+    let data = safeGetItem('calendarData', '{}');
+    let sessions = data[dKey] || [];
+    let listContainer = document.getElementById('modal-day-sessions');
     
-    if(sessions.length === 0) {
-        listContainer.innerHTML = `<span style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">Journée de repos. Aucune séance.</span>`;
-        return;
-    }
-
+    if (sessions.length === 0) { listContainer.innerHTML = "<small style='color:var(--text-muted);'>Aucune séance ce jour.</small>"; return; }
+    
     listContainer.innerHTML = sessions.map(s => `
-        <div class="session-list-item">
-            <span style="flex:1;">${escapeHtml(s.name)} ${s.validated ? '✅' : ''}</span>
+        <div class="modal-list-item">
+            <span style="display:flex; align-items:center; gap:6px;">${s.validated ? iconCheck : ''}${escapeHtml(s.name)}</span>
             <div class="action-btns">
-                <button class="btn-small btn-edit" onclick="editSessionInDay('${dateKey}', ${s.id}, '${escapeHtml(s.name)}')">Mod</button>
-                <button class="btn-small btn-delete" onclick="deleteSessionFromDay('${dateKey}', ${s.id})">Sup</button>
+                <button class="btn-small btn-edit haptic-btn" onclick="prepareEditSession('${dKey}', ${s.id})" title="Éditer">${iconEdit}</button>
+                <button class="btn-small btn-delete haptic-btn" onclick="deleteSession('${dKey}', ${s.id})" title="Supprimer">${iconTrash}</button>
             </div>
         </div>
     `).join('');
 }
 
-window.addSessionToDay = function() {
-    const dateKey = document.getElementById('current-selected-date').value;
-    const input = document.getElementById('new-session-input');
-    const name = input.value.trim();
-    if(!name) return;
-
-    let monthlyData = safeGetItem('calendarData', '{}');
-    if(!monthlyData[dateKey]) monthlyData[dateKey] = [];
-    
-    monthlyData[dateKey].push({ id: Date.now(), name: name, validated: false });
-    safeSetItem('calendarData', monthlyData);
-    
-    input.value = "";
-    renderDaySessionsList(dateKey);
-    updateSmartCoach();
-}
-
-window.deleteSessionFromDay = function(dateKey, sessionId) {
-    if(!confirm("Supprimer cette séance ?")) return;
-    let monthlyData = safeGetItem('calendarData', '{}');
-    if(monthlyData[dateKey]) {
-        monthlyData[dateKey] = monthlyData[dateKey].filter(s => s.id !== sessionId);
-        if(monthlyData[dateKey].length === 0) delete monthlyData[dateKey];
-        safeSetItem('calendarData', monthlyData);
-        renderDaySessionsList(dateKey);
-    }
-}
-
-window.editSessionInDay = function(dateKey, sessionId, currentName) {
-    const newName = prompt("Nouveau nom :", currentName);
-    if(newName && newName.trim() !== "") {
-        let monthlyData = safeGetItem('calendarData', '{}');
-        let session = monthlyData[dateKey].find(s => s.id === sessionId);
-        if(session) {
-            session.name = newName.trim();
-            safeSetItem('calendarData', monthlyData);
-            renderDaySessionsList(dateKey);
-        }
-    }
-}
-
-function renderStats(stats, total) {
-    const list = document.getElementById('monthly-stats'); list.innerHTML = "";
-    const keys = Object.keys(stats);
-    if (keys.length === 0) { list.innerHTML = `<li style="font-style:italic; color:var(--text-muted);">Aucune planification.</li>`; return; }
-    keys.forEach(k => { list.innerHTML += `<li>${k} <span>${((stats[k]/total)*100).toFixed(0)}%</span></li>`; });
-}
-
-// === MODULE : SUIVI CARDIO ===
-const cardioForm = document.getElementById('cardio-form');
-cardioForm.addEventListener('submit', (e) => {
+window.saveSessionToDay = function(e) {
     e.preventDefault();
-    let history = safeGetItem('cardioHistory');
-    const editIndex = document.getElementById('c-edit-index').value;
-    const session = {
-        date: document.getElementById('c-date').value, 
-        speed: parseFloat(document.getElementById('c-speed').value),
-        time: parseFloat(document.getElementById('c-time').value), 
-        incline: parseFloat(document.getElementById('c-incline').value || 0),
-        dist: parseFloat(document.getElementById('c-dist').value)
-    };
-    if (editIndex === "-1") history.push(session); else { history[parseInt(editIndex)] = session; cancelCardioEdit(); }
-    history.sort((a, b) => new Date(a.date) - new Date(b.date));
-    safeSetItem('cardioHistory', history);
-    renderCardio();
-    cardioForm.reset();
-    document.getElementById('c-date').valueAsDate = new Date();
-    updateSmartCoach();
-    updateGamification();
-});
-
-window.renderCardio = function() {
-    const history = safeGetItem('cardioHistory');
-    const metricSelect = document.getElementById('cardio-metric-select');
-    const metric = metricSelect ? metricSelect.value : 'dist';
-
-    document.getElementById('cardio-body').innerHTML = [...history].reverse().map((s) => {
-        const realIndex = history.findIndex(x => x.date === s.date && x.dist === s.dist && x.time === s.time);
-        return `<tr>
-            <td>${formatDate(s.date)}</td>
-            <td>${s.speed}</td>
-            <td>${s.time}</td>
-            <td>${s.incline}%</td>
-            <td><strong>${s.dist}</strong></td>
-            <td class="action-btns">
-                <button onclick="editCardio(${realIndex})" class="btn-small btn-edit">Mod</button>
-                <button onclick="deleteCardio(${realIndex})" class="btn-small btn-delete">Sup</button>
-            </td>
-        </tr>`;
-    }).join('');
-
-    let unitStr = "km";
-    if(metric === "speed") unitStr = "km/h";
-    if(metric === "time") unitStr = "min";
-    if(metric === "incline") unitStr = "%";
-
-    generateBentoAreaChart('cardio-chart', history.map(item => parseFloat(item[metric])), history.map(item => formatDate(item.date)), unitStr, metric !== "time" && metric !== "incline");
-}
-function editCardio(i) {
-    const s = safeGetItem('cardioHistory')[i];
-    document.getElementById('c-date').value = s.date; document.getElementById('c-speed').value = s.speed;
-    document.getElementById('c-time').value = s.time; document.getElementById('c-incline').value = s.incline;
-    document.getElementById('c-dist').value = s.dist; document.getElementById('c-edit-index').value = i;
-    document.getElementById('cardio-submit-btn').innerText = "OK"; document.getElementById('cardio-cancel-btn').classList.remove('hidden');
-}
-function deleteCardio(i) { if(confirm("Supprimer la séance ?")) { let h = safeGetItem('cardioHistory'); h.splice(i, 1); safeSetItem('cardioHistory', h); renderCardio(); updateGamification(); } }
-function cancelCardioEdit() {
-    cardioForm.reset(); document.getElementById('c-date').valueAsDate = new Date(); document.getElementById('c-edit-index').value = "-1";
-    document.getElementById('cardio-submit-btn').innerText = "OK"; document.getElementById('cardio-cancel-btn').classList.add('hidden');
-}
-
-// === COURBES INTERACTIVES AREA ===
-function generateBentoAreaChart(containerId, dataPoints, labels, unitStr = "", isCardio = false) {
-    const container = document.getElementById(containerId);
-    if (dataPoints.length === 0) {
-        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.75rem; margin:auto; font-style:italic;">En attente de rapports analytiques...</div>`;
-        return;
+    let dKey = document.getElementById('modal-day-date').value;
+    let sName = document.getElementById('session-name').value;
+    let editId = document.getElementById('session-edit-id').value;
+    let data = safeGetItem('calendarData', '{}');
+    if(!data[dKey]) data[dKey] = [];
+    
+    if (editId === "-1") {
+        data[dKey].push({ id: Date.now(), name: sName, validated: false });
+    } else {
+        let session = data[dKey].find(x => x.id === parseInt(editId));
+        if (session) session.name = sName;
     }
-
-    const maxVal = Math.max(...dataPoints) * 1.05 || 10;
-    const minVal = isCardio ? 0 : Math.min(...dataPoints) * 0.95;
-    const range = maxVal - minVal;
-
-    const width = 400; const height = 180; const paddingX = 25; const paddingY = 15;
-    const graphWidth = width - paddingX * 2;
-    const graphHeight = height - paddingY * 2;
     
-    let pointsCoords = "";
-    const stepX = graphWidth / (dataPoints.length > 1 ? dataPoints.length - 1 : 1);
-
-    dataPoints.forEach((val, i) => {
-        const x = paddingX + i * stepX;
-        const y = paddingY + graphHeight - ((val - minVal) / (range || 1)) * graphHeight;
-        pointsCoords += `${x},${y} `;
-    });
-
-    let fillCoords = `${paddingX},${height - paddingY} ` + pointsCoords + `${paddingX + (dataPoints.length - 1) * stepX},${height - paddingY}`;
-
-    let svg = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; overflow:visible;">
-        <defs>
-            <linearGradient id="gradient-${containerId}" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="var(--gold)" stop-opacity="0.25"/>
-                <stop offset="100%" stop-color="var(--gold)" stop-opacity="0.00"/>
-            </linearGradient>
-        </defs>`;
-        
-    svg += `<line x1="${paddingX}" y1="${paddingY}" x2="${width-paddingX}" y2="${paddingY}" stroke="#f1f5f9" stroke-width="1"/>`;
-    svg += `<line x1="${paddingX}" y1="${paddingY + graphHeight/2}" x2="${width-paddingX}" y2="${paddingY + graphHeight/2}" stroke="#f1f5f9" stroke-width="1"/>`;
-    svg += `<line x1="${paddingX}" y1="${height-paddingY}" x2="${width-paddingX}" y2="${height-paddingY}" stroke="#cbd5e1" stroke-width="1"/>`;
-    
-    svg += `<polygon points="${fillCoords}" fill="url(#gradient-${containerId})"/>`;
-    svg += `<polyline points="${pointsCoords}" fill="none" stroke="var(--navy)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
-    
-    dataPoints.forEach((val, i) => {
-        const x = paddingX + i * stepX;
-        const y = paddingY + graphHeight - ((val - minVal) / (range || 1)) * graphHeight;
-        svg += `<circle cx="${x}" cy="${y}" r="3.5" fill="var(--white)" stroke="var(--gold)" stroke-width="2"
-            style="cursor:pointer;"
-            onmouseover="showCustomTooltip(event, '${labels[i]}', '${val} ${unitStr}')"
-            onmousemove="moveCustomTooltip(event)"
-            onmouseout="hideCustomTooltip()"></circle>`;
-    });
-
-    svg += `</svg>`;
-    container.innerHTML = svg;
+    safeSetItem('calendarData', data);
+    document.getElementById('session-name').value = "";
+    document.getElementById('session-edit-id').value = "-1";
+    document.getElementById('modal-session-btn').innerHTML = `<svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+    renderDaySessions(dKey);
+    renderCalendarInit();
 }
 
-function showCustomTooltip(e, dLabel, vLabel) {
-    tooltipElement.innerHTML = `<strong>Date :</strong> ${dLabel}<br/><strong>Performance :</strong> ${vLabel}`;
-    tooltipElement.classList.remove('hidden'); moveCustomTooltip(e);
+window.prepareEditSession = function(dKey, id) {
+    let data = safeGetItem('calendarData', '{}');
+    let session = data[dKey].find(x => x.id === id);
+    if(session) {
+        document.getElementById('session-name').value = session.name;
+        document.getElementById('session-edit-id').value = session.id;
+        document.getElementById('modal-session-btn').innerHTML = iconEdit;
+    }
 }
-function moveCustomTooltip(e) { tooltipElement.style.left = (e.pageX + 10) + "px"; tooltipElement.style.top = (e.pageY - 15) + "px"; }
-function hideCustomTooltip() { tooltipElement.classList.add('hidden'); }
-function formatDate(s) { const d = new Date(s); return isNaN(d.getTime()) ? s : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`; }
-function escapeHtml(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
-// === MODULE NOUVEAU : COACH INTELLIGENT ===
+window.deleteSession = function(dKey, id) {
+    showConfirm("Voulez-vous supprimer définitivement cette séance ?", () => {
+        let data = safeGetItem('calendarData', '{}');
+        data[dKey] = data[dKey].filter(x => x.id !== id);
+        safeSetItem('calendarData', data);
+        renderDaySessions(dKey);
+        renderCalendarInit();
+    });
+}
+
+window.toggleSession = function(dKey, id) {
+    let data = safeGetItem('calendarData', '{}');
+    let session = data[dKey].find(x => x.id === id);
+    if(session) { session.validated = !session.validated; safeSetItem('calendarData', data); renderCalendarInit(); updateGamification(); }
+}
+
+// === COACH & GAMIFICATION ===
 function updateSmartCoach() {
-    const adviceContainer = document.getElementById('smart-coach-text');
-    if(!adviceContainer) return;
-    const weights = safeGetItem('weightHistory', '[]');
-    const records = safeGetItem('elitePersonalRecords', '[]');
-    const cardio = safeGetItem('cardioHistory', '[]');
-    
-    let text = "Entraînez-vous régulièrement pour recevoir des analyses prédictives.";
-    
-    if (weights.length >= 2) {
-        let diff = weights[weights.length-1].weight - weights[weights.length-2].weight;
-        if (diff < 0) text = "Excellente dynamique ! Votre courbe de poids est en baisse. Maintenez votre déficit calorique pour consolider cette perte sans rogner sur l'intensité.";
-        else if (diff > 0) text = "Prise de masse détectée. Assurez-vous que l'excédent calorique est accompagné d'une surcharge progressive lors de vos séances.";
-        else text = "Poids stabilisé. C'est le moment idéal pour choquer le métabolisme en variant vos séances cardio ou l'intensité de vos charges.";
-    }
-    
-    if (records.length > 0) {
-        text += ` Félicitations pour vos ${records.length} record(s) gravé(s) au Hall of Fame ! La clé est la surcharge progressive.`;
-    }
-
-    if (cardio.length >= 3) {
-        let lastCardio = cardio[cardio.length-1];
-        if(lastCardio.dist > 5) text += " Volume d'endurance élevé détecté. Pensez à bien ajuster vos glucides en conséquence pour la récupération.";
-    }
-
-    adviceContainer.innerText = text;
+    let w = safeGetItem('weightHistory'); let text = "Maintenez votre régularité pour des analyses prédictives.";
+    if (w.length >= 2) {
+        let diff = w[w.length-1].weight - w[w.length-2].weight;
+        if(diff < 0) text = "Dynamique de perte enclenchée. Maintenez le déficit calorique sans rogner sur l'intensité physique.";
+        else if (diff > 0) text = "Prise de masse détectée. Assurez la surcharge progressive sur vos exercices polyarticulaires.";
+        else text = "Poids stabilisé. Modifiez vos variables d'entraînement (Vitesse, Pente, Volume) pour relancer l'adaptation.";
+    } document.getElementById('smart-coach-text').innerText = text;
 }
-
-// === MODULE NOUVEAU : GAMIFICATION (HAUTS FAITS) ===
 function updateGamification() {
-    const gamiContainer = document.getElementById('gamification-container');
-    if(!gamiContainer) return;
-    
-    const records = safeGetItem('elitePersonalRecords', '[]');
-    const cardio = safeGetItem('cardioHistory', '[]');
-    const calendar = safeGetItem('calendarData', '{}');
-    
-    // Conditions des badges
-    let hasHercule = records.length > 0;
-    let maxDist = cardio.reduce((max, c) => Math.max(max, c.dist), 0);
-    let hasMarathon = maxDist >= 10;
-    
-    let totalSessions = 0;
-    for (let k in calendar) { totalSessions += calendar[k].length; }
-    let hasDiscipline = totalSessions >= 10;
-    
-    let hasDouble = false;
-    for (let k in calendar) { if (calendar[k].length >= 2) hasDouble = true; }
-
-    let html = `
-        <div class="gami-badge ${hasHercule ? 'active' : ''}" title="Enregistrer un record personnel">🏋️ Hercule</div>
-        <div class="gami-badge ${hasMarathon ? 'active' : ''}" title="Courir 10km ou plus en une séance">🏃 Marathonien</div>
-        <div class="gami-badge ${hasDiscipline ? 'active' : ''}" title="Planifier au moins 10 séances au total">🛡️ Discipline</div>
-        <div class="gami-badge ${hasDouble ? 'active' : ''}" title="Réaliser 2 séances le même jour">⚔️ Double Impact</div>
-    `;
-    gamiContainer.innerHTML = html;
+    let r = safeGetItem('elitePersonalRecords').length; let c = document.getElementById('gamification-container'); let html = "";
+    if(r > 0) html += `<span class="badge badge-gold">${iconTrophy} Élite (${r} Records)</span>`;
+    if(r >= 5) html += `<span class="badge" style="color:var(--navy);">${iconTrophy} Hall of Fame</span>`;
+    if(html === "") html = "<small style='color:var(--text-muted);'>Aucun fait d'arme débloqué.</small>";
+    c.innerHTML = html;
 }
 
-// === MODULE NOUVEAU : GENERATION PDF MENSUEL ===
+// === EXPORT / IMPORT ===
+window.exportDataData = function() {
+    const obj = { userProfileBaseV2: localStorage.getItem('userProfileBaseV2'), weightHistory: localStorage.getItem('weightHistory'), calendarData: localStorage.getItem('calendarData'), cardioHistory: localStorage.getItem('cardioHistory'), elitePersonalRecords: localStorage.getItem('elitePersonalRecords'), macroConfigMode: localStorage.getItem('macroConfigMode'), manualMacrosValues: localStorage.getItem('manualMacrosValues') };
+    const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(obj));
+    a.download = `wallysport_bento_backup.json`; document.body.appendChild(a); a.click(); a.remove();
+}
+window.triggerImportField = function() { document.getElementById('import-file-field').click(); }
+window.importDataData = function(e) {
+    const file = e.target.files[0]; if(!file) return; const reader = new FileReader();
+    reader.onload = function(ev) {
+        try { const json = JSON.parse(ev.target.result);
+            ['userProfileBaseV2','weightHistory','calendarData','cardioHistory','elitePersonalRecords','macroConfigMode','manualMacrosValues'].forEach(k => { if(json[k]) localStorage.setItem(k, json[k]); });
+            alert("Restauration Bento achevée."); window.location.reload();
+        } catch (err) { alert("Format de fichier invalide."); }
+    }; reader.readAsText(file);
+}
+
+// === PDF GENERATOR ===
 window.generatePDFReport = function() {
     try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        // Titre
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(22);
-        doc.setTextColor(15, 23, 42);
-        doc.text("WALLY SPORT ELITE - BILAN DE PERFORMANCE", 20, 20);
-        
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(100, 116, 139);
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        doc.text(`Édité le : ${new Date().toLocaleDateString('fr-FR', options)}`, 20, 28);
-        
-        // Ligne de séparation
-        doc.setDrawColor(197, 160, 89);
-        doc.setLineWidth(1);
-        doc.line(20, 32, 190, 32);
-        
-        // 1. Synthèse Poids
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(16);
-        doc.setTextColor(15, 23, 42);
-        doc.text("1. Évolution Morphologique", 20, 45);
-        
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(12);
-        const weights = safeGetItem('weightHistory', '[]');
-        if(weights.length >= 2) {
-            const first = weights[0].weight;
-            const last = weights[weights.length-1].weight;
-            const diff = (last - first).toFixed(1);
-            doc.text(`• Poids actuel : ${last} kg`, 25, 55);
-            doc.text(`• Variation totale enregistrée : ${diff > 0 ? '+'+diff : diff} kg`, 25, 65);
-        } else if (weights.length === 1) {
-            doc.text(`• Poids actuel : ${weights[0].weight} kg (Pas assez de données pour tendance)`, 25, 55);
-        } else {
-            doc.text(`• Aucune donnée de poids enregistrée.`, 25, 55);
-        }
-
-        // 2. Synthèse Cardio
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(16);
-        doc.text("2. Statistiques d'Endurance", 20, 85);
-        
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(12);
-        const cardio = safeGetItem('cardioHistory', '[]');
-        if(cardio.length > 0) {
-            let totalDist = 0, maxSpeed = 0, totalTime = 0;
-            cardio.forEach(c => { totalDist += c.dist; totalTime += c.time; maxSpeed = Math.max(maxSpeed, c.speed); });
-            doc.text(`• Distance totale cumulée : ${totalDist.toFixed(1)} km`, 25, 95);
-            doc.text(`• Vitesse maximale atteinte : ${maxSpeed.toFixed(1)} km/h`, 25, 105);
-            doc.text(`• Temps total d'effort : ${totalTime} minutes`, 25, 115);
-        } else {
-            doc.text(`• Aucune donnée cardio enregistrée.`, 25, 95);
-        }
-
-        // 3. Hall of Fame
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(16);
-        doc.text("3. Records Personnels (Hall of Fame)", 20, 135);
-        
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(12);
-        const records = safeGetItem('elitePersonalRecords', '[]');
-        if(records.length > 0) {
-            let y = 145;
-            records.forEach(r => {
-                doc.text(`• ${r.name} : ${r.value}`, 25, y);
-                y += 10;
-            });
-        } else {
-            doc.text(`• Aucun record inscrit pour le moment.`, 25, 145);
-        }
-
-        doc.save(`Bilan_WallySport_${new Date().toISOString().split('T')[0]}.pdf`);
-    } catch (e) {
-        alert("La librairie PDF n'est pas encore chargée ou requiert une connexion internet active.");
-    }
-}
-
-// === MODULE RECONSTITUTION BACKUPS SOUVERAINS ===
-function exportDataData() {
-    const obj = {
-        userProfileBaseV2: localStorage.getItem('userProfileBaseV2'), weightHistory: localStorage.getItem('weightHistory'),
-        calendarData: localStorage.getItem('calendarData'), cardioHistory: localStorage.getItem('cardioHistory'),
-        elitePersonalRecords: localStorage.getItem('elitePersonalRecords'), macroConfigMode: localStorage.getItem('macroConfigMode'),
-        manualMacrosValues: localStorage.getItem('manualMacrosValues')
-    };
-    const a = document.createElement('a');
-    a.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(obj)));
-    a.setAttribute("download", `wallysport_bento_backup.json`);
-    document.body.appendChild(a); a.click(); a.remove();
-}
-function triggerImportField() { document.getElementById('import-file-field').click(); }
-function importDataData(event) {
-    const file = event.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const json = JSON.parse(e.target.result);
-            if (json.userProfileBaseV2) localStorage.setItem('userProfileBaseV2', json.userProfileBaseV2);
-            if (json.weightHistory) localStorage.setItem('weightHistory', json.weightHistory);
-            if (json.calendarData) localStorage.setItem('calendarData', json.calendarData);
-            if (json.cardioHistory) localStorage.setItem('cardioHistory', json.cardioHistory);
-            if (json.elitePersonalRecords) localStorage.setItem('elitePersonalRecords', json.elitePersonalRecords);
-            if (json.macroConfigMode) localStorage.setItem('macroConfigMode', json.macroConfigMode);
-            if (json.manualMacrosValues) localStorage.setItem('manualMacrosValues', json.manualMacrosValues);
-            alert("Restauration Bento achevée."); window.location.reload();
-        } catch (err) { alert("Format invalide."); }
-    };
-    reader.readAsText(file);
+        const { jsPDF } = window.jspdf; const doc = new jsPDF();
+        doc.setFontSize(22); doc.text("WALLY SPORT ELITE - BILAN DE PERFORMANCE", 20, 20);
+        doc.setFontSize(10); doc.text(`Édité le : ${new Date().toLocaleDateString('fr-FR')}`, 20, 28);
+        doc.save("Bilan_Mensuel_WallySport.pdf");
+    } catch(e) { alert("Erreur PDF. Vérifiez votre connexion internet pour l'accès CDN."); }
 }
