@@ -90,7 +90,6 @@
                 <h1 class="text-2xl md:text-3xl font-black tracking-tight">Health<span class="text-blue-600">Tracker</span></h1>
             </div>
             <div class="flex items-center gap-2">
-                <span class="hidden md:inline text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">Raccourcis : C | P | ESC</span>
                 <button onclick="toggleSettings()" class="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 active:scale-90 text-slate-600">
                     <i data-lucide="settings" class="w-6 h-6"></i>
                 </button>
@@ -105,7 +104,6 @@
                         <i data-lucide="sparkles" class="w-5 h-5"></i>
                         <span class="text-xs font-black uppercase tracking-widest text-white">Bilan Hebdomadaire</span>
                     </div>
-                    <i data-lucide="grip-horizontal" class="w-4 h-4 text-slate-500"></i>
                 </div>
                 <div class="grid grid-cols-3 gap-2 pointer-events-none">
                     <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left bg-white/5 p-2 rounded-xl">
@@ -127,7 +125,6 @@
                 <div class="bento-card flex flex-col justify-center min-h-[130px]">
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center gap-2"><div class="icon-box"><i data-lucide="scale" class="w-4 h-4"></i></div><span class="text-slate-500 font-bold text-xs uppercase tracking-widest">IMC</span></div>
-                        <i data-lucide="grip-horizontal" class="w-4 h-4 text-slate-300 md:hidden"></i>
                     </div>
                     <div id="resultat-imc" class="text-4xl font-black text-slate-800">--</div>
                     <div id="imc-statut" class="text-xs mt-2 font-bold px-3 py-1 rounded-full w-fit bg-slate-100 text-slate-500">En attente</div>
@@ -153,7 +150,6 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div class="flex items-center gap-2">
                         <h2 id="month-label" class="text-xl font-black capitalize text-slate-800"></h2>
-                        <i data-lucide="grip-horizontal" class="w-4 h-4 text-slate-300"></i>
                     </div>
                     <div class="flex justify-between w-full sm:w-auto items-center gap-4">
                         <button onclick="toggleRecurrenceModal()" class="text-xs bg-orange-50 text-orange-600 border border-orange-200 px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 active:scale-95 transition">
@@ -173,7 +169,6 @@
                 <div class="bento-card" id="section-cardio" draggable="true">
                     <div class="flex items-center justify-between mb-6">
                         <div class="flex items-center gap-3"><div class="p-2 bg-blue-50 text-blue-600 rounded-xl"><i data-lucide="run" class="w-5 h-5"></i></div><h2 class="text-lg font-black text-slate-800">Cardio</h2></div>
-                        <i data-lucide="grip-horizontal" class="w-4 h-4 text-slate-300"></i>
                     </div>
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <input type="date" id="c-date" class="bg-slate-50 p-3.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 w-full">
@@ -189,7 +184,6 @@
                 <div class="bento-card" id="section-poids" draggable="true">
                     <div class="flex items-center justify-between mb-6">
                         <div class="flex items-center gap-3"><div class="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="bar-chart-3" class="w-5 h-5"></i></div><h2 class="text-lg font-black text-slate-800">Poids</h2></div>
-                        <i data-lucide="grip-horizontal" class="w-4 h-4 text-slate-300"></i>
                     </div>
                     <div class="flex gap-3 mb-4">
                         <input type="date" id="p-date" class="bg-slate-50 p-3.5 rounded-xl text-sm border-0 flex-1 focus:ring-2 focus:ring-emerald-500">
@@ -212,6 +206,7 @@
                 <div class="col-span-2 sm:col-span-1"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Taille (cm)</label><input type="number" id="imc-taille" class="bg-slate-50 border-0 p-3.5 rounded-xl w-full"></div>
                 <div class="col-span-2"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Objectif (kg)</label><input type="number" id="target-poids" class="bg-emerald-50 border-0 p-3.5 rounded-xl w-full text-emerald-700 font-bold"></div>
             </div>
+            <button onclick="requestNotificationPermission()" class="w-full mb-3 bg-slate-100 text-slate-600 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2"><i data-lucide="bell" class="w-4 h-4"></i> Activer les rappels</button>
             <button onclick="saveSettings()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-black">Sauvegarder</button>
         </div>
     </div>
@@ -250,10 +245,10 @@
     </div>
 
     <script>
-        // SERVICE WORKER
+        // SERVICE WORKER & NOTIFICATIONS
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'ht-cache-v5';
+                const CACHE_NAME = 'ht-cache-v6';
                 const ASSETS = [window.location.href, 'https://cdn.tailwindcss.com', 'https://cdn.jsdelivr.net/npm/chart.js', 'https://unpkg.com/lucide@latest'];
                 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
@@ -262,10 +257,28 @@
             navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
         }
 
-        // DEMANDE DE PERSISTANCE PWA (Point 3 & 4)
-        if (navigator.storage && navigator.storage.persist) {
-            navigator.storage.persist().catch(() => {});
+        function requestNotificationPermission() {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') alert('Rappels activés !');
+                });
+            }
         }
+
+        function sendDailyReminder() {
+            if (Notification.permission === 'granted') {
+                const today = new Date().toISOString().split('T')[0];
+                const pending = cardioData.filter(c => c.date === today && c.isFromCalendar && !c.done);
+                if (pending.length > 0) {
+                    new Notification("HealthTracker", {
+                        body: "Tu as des séances prévues aujourd'hui ! Ne lâche rien.",
+                        icon: "https://cdn-icons-png.flaticon.com/512/3233/3233630.png"
+                    });
+                }
+            }
+        }
+
+        if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 
         let currentMonth = new Date();
         let cardioData = JSON.parse(localStorage.getItem('cardio')) || [];
@@ -273,7 +286,6 @@
         let profileSettings = JSON.parse(localStorage.getItem('profileSettings')) || { poids: '', taille: '', targetPoids: '' };
         let recurringDays = JSON.parse(localStorage.getItem('recurringDays')) || []; 
         
-        // INDEXEDDB SYNC (Stockage Sécurisé)
         const dbName = "HealthTrackerDB";
         let db;
         const request = indexedDB.open(dbName, 1);
@@ -290,12 +302,12 @@
             getReq.onsuccess = (e) => {
                 if (e.target.result) {
                     const data = JSON.parse(e.target.result);
-                    if(data.cardio) { cardioData = data.cardio; localStorage.setItem('cardio', JSON.stringify(cardioData)); }
-                    if(data.poids) { poidsData = data.poids; localStorage.setItem('poids', JSON.stringify(poidsData)); }
-                    if(data.profileSettings) { profileSettings = data.profileSettings; localStorage.setItem('profileSettings', JSON.stringify(profileSettings)); }
-                    if(data.recurringDays) { recurringDays = data.recurringDays; localStorage.setItem('recurringDays', JSON.stringify(recurringDays)); }
-                    if(data.bentoOrder) { localStorage.setItem('bentoOrder', JSON.stringify(data.bentoOrder)); restoreBentoOrder(); }
+                    if(data.cardio) { cardioData = data.cardio; }
+                    if(data.poids) { poidsData = data.poids; }
+                    if(data.profileSettings) { profileSettings = data.profileSettings; }
+                    if(data.recurringDays) { recurringDays = data.recurringDays; }
                     updateUI();
+                    sendDailyReminder(); // Check for tasks on load
                 }
             };
         };
@@ -317,7 +329,6 @@
         let selectedDate = '';
         let editCardioIdx = null, editPoidsIdx = null, editModalIdx = null;
 
-        // RIPPLE EFFECT
         function triggerRipple(event) {
             const button = event.currentTarget;
             const card = button.closest('.bento-card');
@@ -408,10 +419,7 @@
             updateObjectivesAndPerseverance(dp);
             updateWeeklyInsight();
             renderCalendar(); renderTables(); renderCharts();
-            localStorage.setItem('cardio', JSON.stringify(cardioData));
-            localStorage.setItem('poids', JSON.stringify(poidsData));
-            localStorage.setItem('profileSettings', JSON.stringify(profileSettings));
-            persistDataToDB(); // Sync automatique vers IndexedDB
+            persistDataToDB();
             lucide.createIcons();
         }
 
@@ -565,7 +573,7 @@
                 const rect = drop.getBoundingClientRect();
                 container.insertBefore(dragTarget, (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5 ? drop.nextSibling : drop);
                 localStorage.setItem('bentoOrder', JSON.stringify(Array.from(container.children).map(c => c.id)));
-                persistDataToDB(); // Sync layout change
+                persistDataToDB();
             }
         });
 
