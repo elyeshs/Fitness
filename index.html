@@ -11,6 +11,8 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#3b82f6">
     
+    <link rel="manifest" href='data:application/manifest+json;utf8,{"name":"HealthTracker Pro","short_name":"HealthTracker","display":"standalone","start_url":".","background_color":"#f8fafc","theme_color":"#3b82f6","icons":[{"src":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiI+PHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIGZpbGw9IiMzYjgyZjYiLz48L3N2Zz4=","sizes":"512x512","type":"image/svg+xml"}]}'>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -35,7 +37,6 @@
             overflow: hidden; 
         }
         
-        /* Retour Visuel Haptique Simulé (Ripple Wave) */
         .ripple-wave {
             position: absolute;
             border-radius: 50%;
@@ -98,7 +99,6 @@
 
         <div id="bento-container" class="flex flex-col gap-5">
             
-            <!-- Bilan Hebdomadaire -->
             <div id="weekly-insight" class="bento-card insight-card hidden" draggable="true">
                 <div class="flex items-center justify-between mb-4 text-blue-400 pointer-events-none">
                     <div class="flex items-center gap-2">
@@ -123,7 +123,6 @@
                 </div>
             </div>
 
-            <!-- Grille Stats Principales -->
             <div id="widgets-triple-grid" class="grid grid-cols-1 md:grid-cols-3 gap-5" draggable="true">
                 <div class="bento-card flex flex-col justify-center min-h-[130px]">
                     <div class="flex items-center justify-between mb-2">
@@ -150,7 +149,6 @@
                 </div>
             </div>
 
-            <!-- Calendrier & Recurrence -->
             <div id="widgets-calendrier" class="bento-card" draggable="true">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div class="flex items-center gap-2">
@@ -171,7 +169,6 @@
                 <div class="calendar-grid" id="calendar"></div>
             </div>
 
-            <!-- Data & Graphiques -->
             <div id="widgets-data-split" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <div class="bento-card" id="section-cardio" draggable="true">
                     <div class="flex items-center justify-between mb-6">
@@ -206,7 +203,6 @@
         </div>
     </div>
 
-    <!-- Modale Profil -->
     <div id="settings-modal" class="fixed inset-0 modal-blur hidden flex items-center justify-center p-4 z-[100]">
         <div class="bg-white rounded-[28px] p-6 max-w-lg w-full shadow-2xl relative border border-slate-100">
             <button onclick="toggleSettings()" class="absolute top-5 right-5 text-slate-400"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -220,7 +216,6 @@
         </div>
     </div>
 
-    <!-- Modale Calendrier -->
     <div id="calendar-modal" class="fixed inset-0 modal-blur hidden flex items-center justify-center p-4 z-[90]">
         <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl">
             <h3 id="modal-date-label" class="text-xl font-black mb-5"></h3>
@@ -233,7 +228,6 @@
         </div>
     </div>
 
-    <!-- Modale Configuration Récurrence -->
     <div id="recurrence-modal" class="fixed inset-0 modal-blur hidden flex items-center justify-center p-4 z-[95]">
         <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl">
             <h3 class="text-xl font-black mb-2">Semaine Type</h3>
@@ -244,7 +238,6 @@
         </div>
     </div>
 
-    <!-- Quick Menu -->
     <div class="fixed bottom-6 right-6 z-[80] flex flex-col items-end gap-3">
         <div id="quick-menu-options" class="hidden flex flex-col gap-2.5 items-end mb-1">
             <button onclick="quickAction('cardio')" class="glass-menu flex items-center gap-2.5 text-slate-700 px-5 py-3 rounded-xl font-bold shadow-xl text-sm"><i data-lucide="run" class="w-4 h-4"></i> Cardio</button>
@@ -260,7 +253,7 @@
         // SERVICE WORKER
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'ht-cache-v4';
+                const CACHE_NAME = 'ht-cache-v5';
                 const ASSETS = [window.location.href, 'https://cdn.tailwindcss.com', 'https://cdn.jsdelivr.net/npm/chart.js', 'https://unpkg.com/lucide@latest'];
                 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
@@ -269,12 +262,57 @@
             navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
         }
 
+        // DEMANDE DE PERSISTANCE PWA (Point 3 & 4)
+        if (navigator.storage && navigator.storage.persist) {
+            navigator.storage.persist().catch(() => {});
+        }
+
         let currentMonth = new Date();
         let cardioData = JSON.parse(localStorage.getItem('cardio')) || [];
         let poidsData = JSON.parse(localStorage.getItem('poids')) || [];
         let profileSettings = JSON.parse(localStorage.getItem('profileSettings')) || { poids: '', taille: '', targetPoids: '' };
         let recurringDays = JSON.parse(localStorage.getItem('recurringDays')) || []; 
         
+        // INDEXEDDB SYNC (Stockage Sécurisé)
+        const dbName = "HealthTrackerDB";
+        let db;
+        const request = indexedDB.open(dbName, 1);
+        
+        request.onupgradeneeded = (e) => {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains('store')) db.createObjectStore('store');
+        };
+        
+        request.onsuccess = (e) => {
+            db = e.target.result;
+            const tx = db.transaction('store', 'readonly');
+            const getReq = tx.objectStore('store').get('appData');
+            getReq.onsuccess = (e) => {
+                if (e.target.result) {
+                    const data = JSON.parse(e.target.result);
+                    if(data.cardio) { cardioData = data.cardio; localStorage.setItem('cardio', JSON.stringify(cardioData)); }
+                    if(data.poids) { poidsData = data.poids; localStorage.setItem('poids', JSON.stringify(poidsData)); }
+                    if(data.profileSettings) { profileSettings = data.profileSettings; localStorage.setItem('profileSettings', JSON.stringify(profileSettings)); }
+                    if(data.recurringDays) { recurringDays = data.recurringDays; localStorage.setItem('recurringDays', JSON.stringify(recurringDays)); }
+                    if(data.bentoOrder) { localStorage.setItem('bentoOrder', JSON.stringify(data.bentoOrder)); restoreBentoOrder(); }
+                    updateUI();
+                }
+            };
+        };
+
+        function persistDataToDB() {
+            if (!db) return;
+            const dataToSave = JSON.stringify({
+                cardio: cardioData,
+                poids: poidsData,
+                profileSettings: profileSettings,
+                recurringDays: recurringDays,
+                bentoOrder: JSON.parse(localStorage.getItem('bentoOrder')) || []
+            });
+            const tx = db.transaction('store', 'readwrite');
+            tx.objectStore('store').put(dataToSave, 'appData');
+        }
+
         let charts = {};
         let selectedDate = '';
         let editCardioIdx = null, editPoidsIdx = null, editModalIdx = null;
@@ -373,6 +411,7 @@
             localStorage.setItem('cardio', JSON.stringify(cardioData));
             localStorage.setItem('poids', JSON.stringify(poidsData));
             localStorage.setItem('profileSettings', JSON.stringify(profileSettings));
+            persistDataToDB(); // Sync automatique vers IndexedDB
             lucide.createIcons();
         }
 
@@ -526,6 +565,7 @@
                 const rect = drop.getBoundingClientRect();
                 container.insertBefore(dragTarget, (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5 ? drop.nextSibling : drop);
                 localStorage.setItem('bentoOrder', JSON.stringify(Array.from(container.children).map(c => c.id)));
+                persistDataToDB(); // Sync layout change
             }
         });
 
