@@ -41,15 +41,56 @@
             color: #0f172a;
         }
 
+        /* --- NOUVELLES ANIMATIONS & MICRO-INTERACTIONS --- */
+        @keyframes fadeSlideUp {
+            0% { opacity: 0; transform: translateY(30px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .stagger-1 { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+        .stagger-2 { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both; }
+        .stagger-3 { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both; }
+        .stagger-4 { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both; }
+
+        @keyframes modalPop {
+            0% { opacity: 0; transform: scale(0.92) translateY(15px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-content {
+            animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes menuPop {
+            0% { opacity: 0; transform: translateY(10px) scale(0.9); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .menu-anim {
+            animation: menuPop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Amélioration de la fluidité des transitions globales */
+        button, a, input, select {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+
         .bento-card { 
             background: linear-gradient(145deg, #ffffff 0%, #fafbfc 60%, #f1f5f9 100%); 
             border-radius: 24px; 
             box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.04), 0 8px 16px -6px rgba(15, 23, 42, 0.03); 
             padding: 20px; 
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.5s ease, background 0.5s ease; 
+            /* Courbe d'animation très souple pour le survol */
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s ease, background 0.4s ease; 
             border: 1px solid rgba(226, 232, 240, 0.9);
             position: relative;
             overflow: hidden; 
+        }
+
+        .bento-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 30px -5px rgba(15, 23, 42, 0.08), 0 10px 15px -6px rgba(15, 23, 42, 0.04);
+            border-color: rgba(42, 75, 247, 0.3);
         }
         
         .ripple-wave {
@@ -79,8 +120,8 @@
         }
         
         .bento-card[draggable="true"] { cursor: grab; }
-        .bento-card[draggable="true"]:active { cursor: grabbing; }
-        .bento-drag-over { border: 2px dashed #2a4bf7 !important; background-color: #e0e7ff !important; opacity: 0.9; }
+        .bento-card[draggable="true"]:active { cursor: grabbing; transform: scale(0.98); }
+        .bento-drag-over { border: 2px dashed #2a4bf7 !important; background-color: #e0e7ff !important; opacity: 0.9; transform: scale(1.02); }
         
         .insight-card { 
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important; 
@@ -92,21 +133,23 @@
         
         .day-cell { 
             min-height: 85px; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); padding: 6px; cursor: pointer; 
-            border-radius: 16px; border: 1px solid #e2e8f0; transition: all 0.2s ease; position: relative; 
+            border-radius: 16px; border: 1px solid #e2e8f0; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; 
         }
         @media (max-width: 640px) {
             .day-cell { min-height: 75px; padding: 4px; border-radius: 12px; }
             .bento-card { padding: 16px; border-radius: 20px; }
         }
-        .day-cell:hover { border-color: #2a4bf7; background: #f1f5f9; z-index: 10; transform: translateY(-1px); }
+        .day-cell:hover { border-color: #2a4bf7; background: #f1f5f9; z-index: 10; transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 15px -3px rgba(42, 75, 247, 0.1); }
         
         .progress-bar { height: 10px; border-radius: 20px; background: #e2e8f0; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #10b981 0%, #059669 100%); transition: width 0.8s ease; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #10b981 0%, #059669 100%); transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); }
         
-        .modal-blur { backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); background-color: rgba(255, 255, 255, 0.75); }
+        .modal-blur { backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); background-color: rgba(255, 255, 255, 0.75); transition: opacity 0.3s ease; }
         .glass-menu { backdrop-filter: blur(12px); background-color: rgba(255, 255, 255, 0.92); border: 1px solid rgba(255, 255, 255, 0.6); }
+        .glass-menu:hover { background-color: #ffffff; box-shadow: 0 15px 25px -5px rgba(42, 75, 247, 0.15); transform: translateY(-2px); }
         
-        .icon-box { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; background: #f1f5f9; color: #475569; }
+        .icon-box { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; background: #f1f5f9; color: #475569; transition: all 0.3s ease; }
+        .bento-card:hover .icon-box { transform: scale(1.1); }
         
         @media all and (display-mode: standalone) { body { padding-top: env(safe-area-inset-top); } }
     </style>
@@ -114,51 +157,51 @@
 <body class="p-4 md:p-8 relative min-h-screen pb-28">
 
     <div class="max-w-6xl mx-auto">
-        <header class="flex justify-between items-center mb-8 mt-2">
+        <header class="flex justify-between items-center mb-8 mt-2 stagger-1">
             <div class="flex items-center gap-3">
-                <div class="bg-signature p-2.5 rounded-xl text-white shadow-lg shadow-indigo-200"><i data-lucide="activity" class="w-6 h-6"></i></div>
+                <div class="bg-signature p-2.5 rounded-xl text-white shadow-lg shadow-indigo-200 transition-transform duration-300 hover:scale-110 hover:rotate-3"><i data-lucide="activity" class="w-6 h-6"></i></div>
                 <h1 class="text-2xl md:text-3xl font-black tracking-tight">Health<span class="text-signature">Tracker</span></h1>
             </div>
             <div class="flex items-center gap-2">
-                <button onclick="toggleSettings()" class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200/80 active:scale-90 text-slate-600 hover:text-signature transition-colors">
-                    <i data-lucide="settings" class="w-6 h-6"></i>
+                <button onclick="toggleSettings()" class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200/80 text-slate-600 hover:text-signature hover:shadow-md hover:-translate-y-1 transition-all">
+                    <i data-lucide="settings" class="w-6 h-6 hover:rotate-90 transition-transform duration-500"></i>
                 </button>
             </div>
         </header>
 
         <div id="bento-container" class="flex flex-col gap-5">
             
-            <div id="weekly-insight" class="bento-card insight-card hidden" draggable="true">
+            <div id="weekly-insight" class="bento-card insight-card hidden stagger-1" draggable="true">
                 <div class="flex items-center justify-between mb-4 text-indigo-300 pointer-events-none">
                     <div class="flex items-center gap-2">
-                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        <i data-lucide="sparkles" class="w-5 h-5 animate-pulse"></i>
                         <span class="text-xs font-black uppercase tracking-widest text-white">Bilan Hebdomadaire</span>
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-2 pointer-events-none">
-                    <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left bg-white/10 p-2 rounded-xl">
+                    <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left bg-white/10 p-2 rounded-xl transition-colors hover:bg-white/20">
                         <div class="p-2 bg-white/15 rounded-xl"><i data-lucide="footprints" class="w-5 h-5 text-white"></i></div>
                         <div><div id="insight-dist" class="text-base sm:text-xl font-black text-white">0 km</div><div class="text-[9px] text-slate-300 uppercase font-bold">Parcourus</div></div>
                     </div>
-                    <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left bg-white/10 p-2 rounded-xl">
+                    <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left bg-white/10 p-2 rounded-xl transition-colors hover:bg-white/20">
                         <div class="p-2 bg-white/15 rounded-xl"><i data-lucide="trending-down" class="w-5 h-5 text-white"></i></div>
                         <div><div id="insight-weight" class="text-base sm:text-xl font-black text-white">-- kg</div><div class="text-[9px] text-slate-300 uppercase font-bold">Poids</div></div>
                     </div>
-                    <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left bg-white/10 p-2 rounded-xl">
+                    <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left bg-white/10 p-2 rounded-xl transition-colors hover:bg-white/20">
                         <div class="p-2 bg-white/15 rounded-xl"><i data-lucide="check-circle" class="w-5 h-5 text-white"></i></div>
                         <div><div id="insight-success" class="text-base sm:text-xl font-black text-white">0%</div><div class="text-[9px] text-slate-300 uppercase font-bold">Planning</div></div>
                     </div>
                 </div>
             </div>
 
-            <div id="widgets-quad-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" draggable="true">
+            <div id="widgets-quad-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 stagger-2" draggable="true">
                 <div class="bento-card flex flex-col justify-center min-h-[140px]">
                     <div class="flex items-center justify-between mb-1">
                         <div class="flex items-center gap-2"><div class="icon-box text-signature bg-indigo-50/50"><i data-lucide="scale" class="w-4 h-4"></i></div><span class="text-slate-500 font-bold text-xs uppercase tracking-widest">IMC</span></div>
-                        <div id="imc-statut" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">En attente</div>
+                        <div id="imc-statut" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 transition-colors duration-500">En attente</div>
                     </div>
                     <div class="flex items-center justify-between gap-2 mt-1">
-                        <div id="resultat-imc" class="text-4xl font-black text-slate-800">--</div>
+                        <div id="resultat-imc" class="text-4xl font-black text-slate-800 transition-all duration-500">--</div>
                         <div class="relative w-24 h-12 flex items-center justify-center">
                             <canvas id="imc-gauge" width="120" height="60" class="w-full h-full"></canvas>
                         </div>
@@ -168,52 +211,52 @@
                 <div class="bento-card flex flex-col justify-center min-h-[140px]">
                     <div class="flex justify-between items-center mb-2">
                         <div class="flex items-center gap-2"><div class="icon-box text-emerald-600 bg-emerald-50/50"><i data-lucide="target" class="w-4 h-4"></i></div><span class="text-slate-500 font-bold text-xs uppercase tracking-widest">Objectif</span></div>
-                        <span id="poids-target-display" class="text-semanticGreen font-black text-base">-- kg</span>
+                        <span id="poids-target-display" class="text-semanticGreen font-black text-base transition-all duration-500">-- kg</span>
                     </div>
                     <div class="progress-bar mb-1.5"><div id="poids-progress-fill" class="progress-fill" style="width: 0%"></div></div>
                     <div class="text-xs font-medium text-slate-400 flex flex-col gap-1">
-                        <div>Reste <span id="poids-diff-display" class="text-slate-700 font-bold">-- kg</span></div>
-                        <div id="poids-projection-display" class="text-[10px] text-signature font-bold bg-indigo-50/70 p-1.5 rounded-xl border border-indigo-100/50 mt-1 hidden"></div>
+                        <div>Reste <span id="poids-diff-display" class="text-slate-700 font-bold transition-all duration-500">-- kg</span></div>
+                        <div id="poids-projection-display" class="text-[10px] text-signature font-bold bg-indigo-50/70 p-1.5 rounded-xl border border-indigo-100/50 mt-1 hidden animate-[fadeSlideUp_0.4s_ease-out]"></div>
                     </div>
                 </div>
 
                 <div class="bento-card flex flex-col justify-center min-h-[140px]">
                     <div class="flex items-center gap-2 mb-2"><div class="icon-box text-orange-500 bg-orange-50/50"><i data-lucide="zap" class="w-4 h-4"></i></div><span class="text-slate-500 font-bold text-xs uppercase tracking-widest">Persévérance</span></div>
-                    <div id="perseverance-score" class="text-4xl font-black text-signature">0%</div>
-                    <div id="perseverance-text" class="text-xs font-bold text-slate-400 mt-1 italic">0 séance validée</div>
+                    <div id="perseverance-score" class="text-4xl font-black text-signature transition-all duration-500">0%</div>
+                    <div id="perseverance-text" class="text-xs font-bold text-slate-400 mt-1 italic transition-all duration-500">0 séance validée</div>
                 </div>
 
                 <div id="records-card" class="bento-card flex flex-col justify-center min-h-[140px]">
                     <div class="flex items-center gap-2 mb-2"><div class="icon-box text-amber-500 bg-amber-50/70"><i data-lucide="trophy" class="w-4 h-4"></i></div><span class="text-slate-500 font-bold text-xs uppercase tracking-widest">Records</span></div>
                     <div class="grid grid-cols-3 gap-1 text-center mt-1">
-                        <div>
-                            <div id="record-poids" class="text-sm font-black text-slate-800 truncate">--</div>
+                        <div class="transition-transform duration-300 hover:scale-110">
+                            <div id="record-poids" class="text-sm font-black text-slate-800 truncate transition-all">--</div>
                             <div class="text-[9px] text-slate-400 font-bold uppercase">Poids Max</div>
                         </div>
-                        <div>
-                            <div id="record-distance" class="text-sm font-black text-slate-800 truncate">--</div>
+                        <div class="transition-transform duration-300 hover:scale-110">
+                            <div id="record-distance" class="text-sm font-black text-slate-800 truncate transition-all">--</div>
                             <div class="text-[9px] text-slate-400 font-bold uppercase">Dist. Max</div>
                         </div>
-                        <div>
-                            <div id="record-temps" class="text-sm font-black text-slate-800 truncate">--</div>
+                        <div class="transition-transform duration-300 hover:scale-110">
+                            <div id="record-temps" class="text-sm font-black text-slate-800 truncate transition-all">--</div>
                             <div class="text-[9px] text-slate-400 font-bold uppercase">Temps Min</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="widgets-calendrier" class="bento-card" draggable="true">
+            <div id="widgets-calendrier" class="bento-card stagger-3" draggable="true">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div class="flex items-center gap-2">
-                        <h2 id="month-label" class="text-xl font-black capitalize text-slate-800"></h2>
+                        <h2 id="month-label" class="text-xl font-black capitalize text-slate-800 transition-all"></h2>
                     </div>
                     <div class="flex justify-between w-full sm:w-auto items-center gap-4">
-                        <button onclick="toggleRecurrenceModal()" class="text-xs bg-orange-50/80 text-orange-700 border border-orange-200 px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 active:scale-95 transition hover:bg-orange-100">
+                        <button onclick="toggleRecurrenceModal()" class="text-xs bg-orange-50/80 text-orange-700 border border-orange-200 px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 transition-all hover:bg-orange-100 hover:-translate-y-0.5 hover:shadow-md">
                             <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Semaine Type
                         </button>
                         <div class="flex gap-2">
-                            <button onclick="changeMonth(-1)" class="p-2.5 bg-slate-100/80 hover:bg-slate-200/80 rounded-xl text-slate-600 transition-colors"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
-                            <button onclick="changeMonth(1)" class="p-2.5 bg-slate-100/80 hover:bg-slate-200/80 rounded-xl text-slate-600 transition-colors"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
+                            <button onclick="changeMonth(-1)" class="p-2.5 bg-slate-100/80 hover:bg-white hover:shadow-md hover:-translate-y-0.5 rounded-xl text-slate-600 transition-all"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
+                            <button onclick="changeMonth(1)" class="p-2.5 bg-slate-100/80 hover:bg-white hover:shadow-md hover:-translate-y-0.5 rounded-xl text-slate-600 transition-all"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
                         </div>
                     </div>
                 </div>
@@ -221,12 +264,12 @@
                 <div class="calendar-grid" id="calendar"></div>
             </div>
 
-            <div id="widgets-data-split" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div id="widgets-data-split" class="grid grid-cols-1 lg:grid-cols-2 gap-5 stagger-4">
                 <div class="bento-card" id="section-cardio" draggable="true">
                     <div class="flex items-center justify-between mb-6">
                         <div class="flex items-center gap-3"><div class="p-2 bg-indigo-50 text-signature rounded-xl"><i data-lucide="footprints" class="w-5 h-5"></i></div><h2 class="text-lg font-black text-slate-800">Cardio</h2></div>
                     </div>
-                    <button onclick="openHistoryModal('cardio'); triggerRipple(event);" class="w-full bg-slate-100/80 text-slate-700 hover:text-signature border border-slate-200/60 py-3 rounded-xl font-bold mb-4 flex items-center justify-center gap-2 transition-colors"><i data-lucide="history" class="w-4 h-4"></i> Voir l'historique</button>
+                    <button onclick="openHistoryModal('cardio'); triggerRipple(event);" class="w-full bg-slate-100/80 text-slate-700 hover:text-signature hover:bg-white hover:shadow-md border border-slate-200/60 py-3 rounded-xl font-bold mb-4 flex items-center justify-center gap-2 transition-all hover:-translate-y-1"><i data-lucide="history" class="w-4 h-4"></i> Voir l'historique</button>
                     <div class="h-44 w-full"><canvas id="chartCardioDual"></canvas></div>
                 </div>
 
@@ -234,7 +277,7 @@
                     <div class="flex items-center justify-between mb-6">
                         <div class="flex items-center gap-3"><div class="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="bar-chart-3" class="w-5 h-5"></i></div><h2 class="text-lg font-black text-slate-800">Poids</h2></div>
                     </div>
-                    <button onclick="openHistoryModal('poids'); triggerRipple(event);" class="w-full bg-slate-100/80 text-slate-700 hover:text-emerald-600 border border-slate-200/60 py-3 rounded-xl font-bold mb-4 flex items-center justify-center gap-2 transition-colors"><i data-lucide="history" class="w-4 h-4"></i> Voir l'historique</button>
+                    <button onclick="openHistoryModal('poids'); triggerRipple(event);" class="w-full bg-slate-100/80 text-slate-700 hover:text-emerald-600 hover:bg-white hover:shadow-md border border-slate-200/60 py-3 rounded-xl font-bold mb-4 flex items-center justify-center gap-2 transition-all hover:-translate-y-1"><i data-lucide="history" class="w-4 h-4"></i> Voir l'historique</button>
                     <div class="h-44 w-full"><canvas id="chartPoids"></canvas></div>
                 </div>
             </div>
@@ -242,118 +285,126 @@
     </div>
 
     <div id="settings-modal" class="fixed inset-0 modal-blur hidden flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white rounded-[28px] p-6 max-w-lg w-full shadow-2xl relative border border-slate-100">
-            <button onclick="toggleSettings()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+        <div class="bg-white rounded-[28px] p-6 max-w-lg w-full shadow-2xl relative border border-slate-100 modal-content">
+            <button onclick="toggleSettings()" class="absolute top-5 right-5 text-slate-400 hover:text-signature transition-colors hover:rotate-90 duration-300"><i data-lucide="x" class="w-6 h-6"></i></button>
             <h3 class="text-xl font-black mb-6">Mon Profil</h3>
             <div class="grid grid-cols-2 gap-4 mb-4">
-                <div class="col-span-2 sm:col-span-1"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Poids Départ</label><input type="number" id="imc-poids" class="bg-slate-50 border border-slate-200/80 p-3.5 rounded-xl w-full focus:ring-2 focus:ring-signature focus:outline-none"></div>
-                <div class="col-span-2 sm:col-span-1"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Taille (cm)</label><input type="number" id="imc-taille" class="bg-slate-50 border border-slate-200/80 p-3.5 rounded-xl w-full focus:ring-2 focus:ring-signature focus:outline-none"></div>
-                <div class="col-span-2"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Objectif (kg)</label><input type="number" id="target-poids" class="bg-emerald-50/60 border border-emerald-200/80 p-3.5 rounded-xl w-full text-emerald-800 font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none"></div>
+                <div class="col-span-2 sm:col-span-1"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Poids Départ</label><input type="number" id="imc-poids" class="bg-slate-50 border border-slate-200/80 p-3.5 rounded-xl w-full focus:ring-2 focus:ring-signature focus:bg-white transition-all"></div>
+                <div class="col-span-2 sm:col-span-1"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Taille (cm)</label><input type="number" id="imc-taille" class="bg-slate-50 border border-slate-200/80 p-3.5 rounded-xl w-full focus:ring-2 focus:ring-signature focus:bg-white transition-all"></div>
+                <div class="col-span-2"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Objectif (kg)</label><input type="number" id="target-poids" class="bg-emerald-50/60 border border-emerald-200/80 p-3.5 rounded-xl w-full text-emerald-800 font-bold focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"></div>
             </div>
             
-            <label class="flex items-center justify-between bg-slate-50 p-4 rounded-xl cursor-pointer mb-4 border border-slate-200/80">
+            <label class="flex items-center justify-between bg-slate-50 hover:bg-slate-100 p-4 rounded-xl cursor-pointer mb-4 border border-slate-200/80 transition-colors">
                 <span class="font-bold text-sm text-slate-600 flex items-center gap-2"><i data-lucide="bell" class="w-4 h-4 text-signature"></i> Notifications intelligentes</span>
-                <input type="checkbox" id="notif-toggle" class="w-5 h-5 rounded border-slate-300 text-signature focus:ring-signature" onchange="requestNotificationPermission(this)">
+                <input type="checkbox" id="notif-toggle" class="w-5 h-5 rounded border-slate-300 text-signature focus:ring-signature transition-transform hover:scale-110" onchange="requestNotificationPermission(this)">
             </label>
 
             <div class="flex gap-2 mb-5">
-                <button onclick="exportData()" class="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-xs hover:bg-slate-200 transition"><i data-lucide="download" class="w-4 h-4"></i> Exporter</button>
-                <label class="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-xs hover:bg-slate-200 transition cursor-pointer text-center">
+                <button onclick="exportData()" class="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-xs hover:bg-white hover:shadow-md hover:-translate-y-1 hover:text-signature transition-all"><i data-lucide="download" class="w-4 h-4"></i> Exporter</button>
+                <label class="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-xs hover:bg-white hover:shadow-md hover:-translate-y-1 hover:text-emerald-600 transition-all cursor-pointer text-center">
                     <i data-lucide="upload" class="w-4 h-4 inline mr-1"></i> Importer
                     <input type="file" class="hidden" accept=".json" onchange="importData(event)">
                 </label>
             </div>
 
-            <button onclick="saveSettings()" class="w-full bg-signature text-white py-3.5 rounded-xl font-black shadow-lg shadow-indigo-100 active:scale-[0.99] transition-transform">Sauvegarder</button>
+            <button onclick="saveSettings(); triggerRipple(event);" class="w-full bg-signature hover:bg-indigo-700 text-white py-3.5 rounded-xl font-black shadow-lg shadow-indigo-200 active:scale-[0.98] transition-all hover:shadow-xl hover:-translate-y-1">Sauvegarder</button>
         </div>
     </div>
 
     <div id="input-cardio-modal" class="fixed inset-0 modal-blur hidden flex items-center justify-center p-4 z-[110]">
-        <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl relative">
-            <button onclick="closeInputModal('cardio')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+        <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl relative modal-content">
+            <button onclick="closeInputModal('cardio')" class="absolute top-5 right-5 text-slate-400 hover:text-signature transition-colors hover:rotate-90 duration-300"><i data-lucide="x" class="w-6 h-6"></i></button>
             <h3 class="text-xl font-black mb-6 flex items-center gap-2"><i data-lucide="footprints" class="w-5 h-5 text-signature"></i> Saisir Cardio</h3>
             <div class="space-y-3 mb-6">
-                <input type="date" id="c-date" class="bg-slate-50 p-3.5 rounded-xl text-sm border border-slate-200 focus:ring-2 focus:ring-signature focus:outline-none w-full">
-                <input type="number" id="c-vit" placeholder="Vitesse (km/h)" class="bg-slate-50 p-3.5 rounded-xl text-sm border border-slate-200 focus:ring-2 focus:ring-signature focus:outline-none w-full">
-                <input type="number" id="c-temps" placeholder="Temps (min)" class="bg-slate-50 p-3.5 rounded-xl text-sm border border-slate-200 focus:ring-2 focus:ring-signature focus:outline-none w-full">
-                <input type="number" id="c-dist" placeholder="Distance (km)" class="bg-slate-50 p-3.5 rounded-xl text-sm border border-slate-200 focus:ring-2 focus:ring-signature focus:outline-none w-full">
+                <input type="date" id="c-date" class="bg-slate-50 p-3.5 rounded-xl text-sm border border-slate-200 focus:ring-2 focus:ring-signature focus:bg-white transition-all w-full">
+                <input type="number" id="c-vit" placeholder="Vitesse (km/h)" class="bg-slate-50 p-3.5 rounded-xl text-sm border border-slate-200 focus:ring-2 focus:ring-signature focus:bg-white transition-all w-full">
+                <input type="number" id="c-temps" placeholder="Temps (min)" class="bg-slate-50 p-3.5 rounded-xl text-sm border border-slate-200 focus:ring-2 focus:ring-signature focus:bg-white transition-all w-full">
+                <input type="number" id="c-dist" placeholder="Distance (km)" class="bg-slate-50 p-3.5 rounded-xl text-sm border border-slate-200 focus:ring-2 focus:ring-signature focus:bg-white transition-all w-full">
             </div>
-            <button onclick="saveCardio(); triggerRipple(event);" id="btn-save-cardio" class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold active:scale-[0.98] transition-transform">Ajouter</button>
+            <button onclick="saveCardio(); triggerRipple(event);" id="btn-save-cardio" class="w-full bg-slate-900 hover:bg-black text-white py-3.5 rounded-xl font-bold active:scale-[0.98] transition-all hover:shadow-lg hover:-translate-y-1">Ajouter</button>
         </div>
     </div>
 
     <div id="input-poids-modal" class="fixed inset-0 modal-blur hidden flex items-center justify-center p-4 z-[110]">
-        <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl relative">
-            <button onclick="closeInputModal('poids')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+        <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl relative modal-content">
+            <button onclick="closeInputModal('poids')" class="absolute top-5 right-5 text-slate-400 hover:text-emerald-500 transition-colors hover:rotate-90 duration-300"><i data-lucide="x" class="w-6 h-6"></i></button>
             <h3 class="text-xl font-black mb-6 flex items-center gap-2"><i data-lucide="scale" class="w-5 h-5 text-emerald-500"></i> Nouvelle Pesée</h3>
             <div class="space-y-3 mb-6">
-                <input type="date" id="p-date" class="bg-slate-50 p-3.5 rounded-xl text-sm border border-slate-200 w-full focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                <input type="number" id="p-poids" placeholder="Poids (kg)" class="bg-slate-50 p-3.5 rounded-xl text-sm border border-slate-200 w-full focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                <input type="date" id="p-date" class="bg-slate-50 p-3.5 rounded-xl text-sm border border-slate-200 w-full focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all">
+                <input type="number" id="p-poids" placeholder="Poids (kg)" class="bg-slate-50 p-3.5 rounded-xl text-sm border border-slate-200 w-full focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all">
             </div>
-            <button onclick="savePoids(); triggerRipple(event);" id="btn-save-poids" class="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold active:scale-[0.98] transition-transform">Enregistrer</button>
+            <button onclick="savePoids(); triggerRipple(event);" id="btn-save-poids" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-bold active:scale-[0.98] transition-all hover:shadow-lg hover:shadow-emerald-200 hover:-translate-y-1">Enregistrer</button>
         </div>
     </div>
 
     <div id="history-cardio-modal" class="fixed inset-0 modal-blur hidden flex items-center justify-center p-4 z-[110]">
-        <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl relative">
-            <button onclick="closeHistoryModal('cardio')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+        <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl relative modal-content">
+            <button onclick="closeHistoryModal('cardio')" class="absolute top-5 right-5 text-slate-400 hover:text-signature transition-colors hover:rotate-90 duration-300"><i data-lucide="x" class="w-6 h-6"></i></button>
             <h3 class="text-xl font-black mb-4 flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-signature"></i> Historique Cardio</h3>
-            <div class="overflow-x-auto max-h-64 overflow-y-auto mb-4">
+            <div class="overflow-x-auto max-h-64 overflow-y-auto mb-4 custom-scrollbar">
                 <table class="w-full text-sm text-left"><tbody id="table-cardio" class="divide-y divide-slate-100"></tbody></table>
             </div>
-            <button onclick="closeHistoryModal('cardio')" class="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-bold">Fermer</button>
+            <button onclick="closeHistoryModal('cardio')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 py-3 rounded-xl font-bold transition-colors">Fermer</button>
         </div>
     </div>
 
     <div id="history-poids-modal" class="fixed inset-0 modal-blur hidden flex items-center justify-center p-4 z-[110]">
-        <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl relative">
-            <button onclick="closeHistoryModal('poids')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+        <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl relative modal-content">
+            <button onclick="closeHistoryModal('poids')" class="absolute top-5 right-5 text-slate-400 hover:text-emerald-500 transition-colors hover:rotate-90 duration-300"><i data-lucide="x" class="w-6 h-6"></i></button>
             <h3 class="text-xl font-black mb-4 flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-emerald-500"></i> Historique Poids</h3>
-            <div class="overflow-x-auto max-h-64 overflow-y-auto mb-4">
+            <div class="overflow-x-auto max-h-64 overflow-y-auto mb-4 custom-scrollbar">
                 <table class="w-full text-sm text-left"><tbody id="table-poids" class="divide-y divide-slate-100"></tbody></table>
             </div>
-            <button onclick="closeHistoryModal('poids')" class="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-bold">Fermer</button>
+            <button onclick="closeHistoryModal('poids')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 py-3 rounded-xl font-bold transition-colors">Fermer</button>
         </div>
     </div>
 
     <div id="calendar-modal" class="fixed inset-0 modal-blur hidden flex items-center justify-center p-4 z-[90]">
-        <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl">
+        <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl modal-content">
             <h3 id="modal-date-label" class="text-xl font-black mb-5"></h3>
-            <div id="modal-sessions-list" class="mb-5 space-y-2.5 max-h-52 overflow-y-auto"></div>
+            <div id="modal-sessions-list" class="mb-5 space-y-2.5 max-h-52 overflow-y-auto custom-scrollbar"></div>
             <div class="space-y-3">
-                <input type="text" id="m-nom" placeholder="Nouvelle séance..." class="bg-slate-50 border border-slate-200 p-3.5 w-full rounded-xl focus:ring-2 focus:ring-signature focus:outline-none">
-                <button onclick="saveModalCardio(); triggerRipple(event);" id="btn-modal-save" class="w-full bg-signature text-white py-3.5 rounded-xl font-black shadow-lg shadow-indigo-100">Planifier</button>
+                <input type="text" id="m-nom" placeholder="Nouvelle séance..." class="bg-slate-50 border border-slate-200 p-3.5 w-full rounded-xl focus:ring-2 focus:ring-signature focus:bg-white transition-all">
+                <button onclick="saveModalCardio(); triggerRipple(event);" id="btn-modal-save" class="w-full bg-signature hover:bg-indigo-700 text-white py-3.5 rounded-xl font-black shadow-lg shadow-indigo-200 transition-all hover:shadow-xl hover:-translate-y-1">Planifier</button>
             </div>
-            <button onclick="closeModal()" class="mt-4 w-full text-slate-400 hover:text-slate-600 font-bold text-sm text-center">Fermer</button>
+            <button onclick="closeModal()" class="mt-4 w-full text-slate-400 hover:text-slate-600 transition-colors font-bold text-sm text-center">Fermer</button>
         </div>
     </div>
 
     <div id="recurrence-modal" class="fixed inset-0 modal-blur hidden flex items-center justify-center p-4 z-[95]">
-        <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl">
+        <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl modal-content">
             <h3 class="text-xl font-black mb-2">Semaine Type</h3>
             <p class="text-xs text-slate-400 mb-4">Sélectionnez les jours pour pré-remplir automatiquement vos séances prévisionnelles.</p>
             <div class="space-y-2 mb-6" id="recurrence-days-list"></div>
-            <button onclick="saveRecurrence(); triggerRipple(event);" class="w-full bg-orange-500 text-white py-3.5 rounded-xl font-black shadow-lg shadow-orange-100">Appliquer au calendrier</button>
-            <button onclick="toggleRecurrenceModal()" class="mt-3 w-full text-slate-400 hover:text-slate-600 font-bold text-sm text-center">Annuler</button>
+            <button onclick="saveRecurrence(); triggerRipple(event);" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-3.5 rounded-xl font-black shadow-lg shadow-orange-200 transition-all hover:-translate-y-1 hover:shadow-xl">Appliquer au calendrier</button>
+            <button onclick="toggleRecurrenceModal()" class="mt-3 w-full text-slate-400 hover:text-slate-600 transition-colors font-bold text-sm text-center">Annuler</button>
         </div>
     </div>
 
-    <div class="fixed bottom-6 right-6 z-[80] flex flex-col items-end gap-3">
+    <div class="fixed bottom-6 right-6 z-[80] flex flex-col items-end gap-3 stagger-4">
         <div id="quick-menu-options" class="hidden flex flex-col gap-2.5 items-end mb-1">
-            <button onclick="quickAction('cardio')" class="glass-menu flex items-center gap-2.5 text-slate-700 px-5 py-3 rounded-xl font-bold shadow-xl text-sm hover:text-signature transition-colors"><i data-lucide="footprints" class="w-4 h-4"></i> Cardio</button>
-            <button onclick="quickAction('poids')" class="glass-menu flex items-center gap-2.5 text-slate-700 px-5 py-3 rounded-xl font-bold shadow-xl text-sm hover:text-emerald-600 transition-colors"><i data-lucide="scale" class="w-4 h-4"></i> Pesée</button>
-            <button onclick="quickAction('calendrier')" class="glass-menu flex items-center gap-2.5 text-slate-700 px-5 py-3 rounded-xl font-bold shadow-xl text-sm hover:text-orange-500 transition-colors"><i data-lucide="calendar" class="w-4 h-4"></i> Séance</button>
+            <button onclick="quickAction('cardio')" class="glass-menu flex items-center gap-2.5 text-slate-700 px-5 py-3 rounded-xl font-bold shadow-xl text-sm hover:text-signature transition-all menu-anim" style="animation-delay: 0.15s"><i data-lucide="footprints" class="w-4 h-4"></i> Cardio</button>
+            <button onclick="quickAction('poids')" class="glass-menu flex items-center gap-2.5 text-slate-700 px-5 py-3 rounded-xl font-bold shadow-xl text-sm hover:text-emerald-600 transition-all menu-anim" style="animation-delay: 0.1s"><i data-lucide="scale" class="w-4 h-4"></i> Pesée</button>
+            <button onclick="quickAction('calendrier')" class="glass-menu flex items-center gap-2.5 text-slate-700 px-5 py-3 rounded-xl font-bold shadow-xl text-sm hover:text-orange-500 transition-all menu-anim" style="animation-delay: 0.05s"><i data-lucide="calendar" class="w-4 h-4"></i> Séance</button>
         </div>
-        <button onclick="toggleQuickMenu()" class="bg-signature text-white w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-300 shadow-indigo-300" id="quick-menu-btn">
-            <i data-lucide="plus" id="btn-icon" class="w-7 h-7"></i>
+        <button onclick="toggleQuickMenu()" class="bg-signature hover:bg-indigo-700 text-white w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-400 shadow-indigo-300 hover:scale-110" id="quick-menu-btn">
+            <i data-lucide="plus" id="btn-icon" class="w-7 h-7 transition-transform duration-300"></i>
         </button>
     </div>
+
+    <style>
+        /* Scrollbar custom pour les modales */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
 
     <script>
         // SERVICE WORKER
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'ht-cache-v12';
+                const CACHE_NAME = 'ht-cache-v13';
                 const ASSETS = [window.location.href, 'https://cdn.tailwindcss.com', 'https://cdn.jsdelivr.net/npm/chart.js', 'https://unpkg.com/lucide@latest'];
                 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
@@ -536,25 +587,53 @@
         }
 
         function toggleSettings() { 
-            document.getElementById('settings-modal').classList.toggle('hidden'); 
+            const modal = document.getElementById('settings-modal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                // Réinitialise l'animation
+                const content = modal.querySelector('.modal-content');
+                content.style.animation = 'none';
+                content.offsetHeight; /* trigger reflow */
+                content.style.animation = null; 
+            } else {
+                modal.classList.add('hidden');
+            }
             document.getElementById('notif-toggle').checked = profileSettings.notifs || false;
         }
         
-        function openHistoryModal(type) { document.getElementById(`history-${type}-modal`).classList.remove('hidden'); }
+        function openHistoryModal(type) { 
+            const modal = document.getElementById(`history-${type}-modal`);
+            modal.classList.remove('hidden'); 
+            const content = modal.querySelector('.modal-content');
+            content.style.animation = 'none'; content.offsetHeight; content.style.animation = null;
+        }
         function closeHistoryModal(type) { document.getElementById(`history-${type}-modal`).classList.add('hidden'); }
         function closeInputModal(type) { document.getElementById(`input-${type}-modal`).classList.add('hidden'); editCardioIdx = null; editPoidsIdx = null; }
 
         function toggleQuickMenu() {
             const options = document.getElementById('quick-menu-options');
             const btn = document.getElementById('quick-menu-btn');
-            options.classList.toggle('hidden');
-            btn.style.transform = options.classList.contains('hidden') ? "rotate(0deg)" : "rotate(45deg)";
+            const icon = document.getElementById('btn-icon');
+            
+            if (options.classList.contains('hidden')) {
+                options.classList.remove('hidden');
+                icon.style.transform = "rotate(135deg)";
+            } else {
+                options.classList.add('hidden');
+                icon.style.transform = "rotate(0deg)";
+            }
         }
 
         function toggleRecurrenceModal() {
             const modal = document.getElementById('recurrence-modal');
-            modal.classList.toggle('hidden');
-            if(!modal.classList.contains('hidden')) renderRecurrenceDays();
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                const content = modal.querySelector('.modal-content');
+                content.style.animation = 'none'; content.offsetHeight; content.style.animation = null;
+                renderRecurrenceDays();
+            } else {
+                modal.classList.add('hidden');
+            }
         }
 
         function renderRecurrenceDays() {
@@ -563,9 +642,9 @@
             container.innerHTML = daysNames.map((name, index) => {
                 const dayNum = index + 1;
                 const checked = recurringDays.includes(dayNum) ? 'checked' : '';
-                return `<label class="flex items-center justify-between bg-slate-50 p-3 rounded-xl cursor-pointer border border-slate-200/50">
+                return `<label class="flex items-center justify-between bg-slate-50 hover:bg-slate-100 p-3 rounded-xl cursor-pointer border border-slate-200/50 transition-all">
                     <span class="font-bold text-sm">${name}</span>
-                    <input type="checkbox" value="${dayNum}" ${checked} class="w-5 h-5 rounded border-slate-300 text-orange-500 focus:ring-orange-500">
+                    <input type="checkbox" value="${dayNum}" ${checked} class="w-5 h-5 rounded border-slate-300 text-orange-500 focus:ring-orange-500 transition-transform hover:scale-110">
                 </label>`;
             }).join('');
         }
@@ -608,13 +687,19 @@
                 document.getElementById('c-temps').value = '';
                 document.getElementById('c-dist').value = '';
                 document.getElementById('btn-save-cardio').innerText = "Ajouter"; 
-                document.getElementById('input-cardio-modal').classList.remove('hidden');
+                const modal = document.getElementById('input-cardio-modal');
+                modal.classList.remove('hidden');
+                const content = modal.querySelector('.modal-content');
+                content.style.animation = 'none'; content.offsetHeight; content.style.animation = null;
             }
             else if (action === 'poids') { 
                 document.getElementById('p-date').value = t; 
                 document.getElementById('p-poids').value = '';
                 document.getElementById('btn-save-poids').innerText = "Enregistrer"; 
-                document.getElementById('input-poids-modal').classList.remove('hidden');
+                const modal = document.getElementById('input-poids-modal');
+                modal.classList.remove('hidden');
+                const content = modal.querySelector('.modal-content');
+                content.style.animation = 'none'; content.offsetHeight; content.style.animation = null;
             }
             else if (action === 'calendrier') { openModal(t); }
         }
@@ -626,7 +711,9 @@
                 targetPoids: document.getElementById('target-poids').value,
                 notifs: document.getElementById('notif-toggle').checked
             };
-            updateUI(); toggleSettings();
+            updateUI(); 
+            // Petite temporisation pour laisser le ripple effect se finir
+            setTimeout(() => { toggleSettings(); }, 150);
         }
 
         function updateUI() {
@@ -739,23 +826,23 @@
                 if (imc < 18.5) {
                     statutText = "Insuffisance";
                     colorClass = "bg-sky-100 text-sky-700";
-                    activeColor = "#0284c7"; 
+                    activeColor = "#0ea5e9"; 
                 } else if (imc < 25) {
                     statutText = "Normal";
                     colorClass = "bg-emerald-100 text-emerald-800";
-                    activeColor = "#059669"; 
+                    activeColor = "#10b981"; 
                 } else if (imc < 30) {
                     statutText = "Surpoids";
                     colorClass = "bg-amber-100 text-amber-800";
-                    activeColor = "#d97706"; 
+                    activeColor = "#f59e0b"; 
                 } else {
                     statutText = "Obésité";
                     colorClass = "bg-rose-100 text-rose-800";
-                    activeColor = "#dc2626"; 
+                    activeColor = "#e11d48"; 
                 }
                 
                 document.getElementById('imc-statut').innerText = statutText;
-                document.getElementById('imc-statut').className = `text-[10px] font-bold px-2 py-0.5 rounded-full ${colorClass}`;
+                document.getElementById('imc-statut').className = `text-[10px] font-bold px-2 py-0.5 rounded-full ${colorClass} transition-colors duration-500`;
                 
                 drawIMCGauge(parseFloat(imc), activeColor);
             } else {
@@ -853,7 +940,7 @@
                     <div class="flex justify-between items-center mb-1"><span class="font-black text-xs ${d === today ? 'text-signature' : 'text-slate-400'}">${i}</span></div>
                     <div class="space-y-1">${sess.map(s => {
                         const designClass = s.done ? 'bg-emerald-50 text-emerald-600 line-through' : (s.isFromCalendar ? 'bg-orange-50 text-orange-700 border-orange-200' : 'bg-indigo-50 text-signature border-indigo-100');
-                        return `<div class="${designClass} text-[7px] font-extrabold px-1 py-0.5 rounded-md truncate border opacity-95">${s.isFromCalendar ? s.nom : s.dist+'km'}</div>`
+                        return `<div class="${designClass} text-[7px] font-extrabold px-1 py-0.5 rounded-md truncate border opacity-95 transition-all hover:scale-105">${s.isFromCalendar ? s.nom : s.dist+'km'}</div>`
                     }).join('')}</div>
                 </div>`;
             }
@@ -862,9 +949,9 @@
         function renderTables() {
             document.getElementById('table-cardio').innerHTML = cardioData.filter(c => !c.isFromCalendar).map((c, i) => {
                 const idx = cardioData.indexOf(c);
-                return `<tr class="hover:bg-slate-50/50"><td class="py-3 font-bold">${c.date}</td><td class="py-3 text-slate-500">${c.dist}km</td><td class="text-right"><button onclick="startEditCardio(${idx})" class="text-signature mr-3"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteData('cardio', ${idx})" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`;
+                return `<tr class="hover:bg-indigo-50/50 transition-colors"><td class="py-3 font-bold px-2">${c.date}</td><td class="py-3 text-slate-500">${c.dist}km</td><td class="text-right px-2"><button onclick="startEditCardio(${idx})" class="text-signature mr-3 hover:scale-110 transition-transform"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteData('cardio', ${idx})" class="text-slate-300 hover:text-red-500 hover:scale-110 transition-transform"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`;
             }).join('');
-            document.getElementById('table-poids').innerHTML = poidsData.map((p, i) => `<tr class="hover:bg-slate-50/50"><td class="py-3 font-bold">${p.date}</td><td class="py-3 text-slate-500">${p.val}kg</td><td class="text-right"><button onclick="startEditPoids(${i})" class="text-signature mr-3"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteData('poids', ${i})" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('');
+            document.getElementById('table-poids').innerHTML = poidsData.map((p, i) => `<tr class="hover:bg-emerald-50/50 transition-colors"><td class="py-3 font-bold px-2">${p.date}</td><td class="py-3 text-slate-500">${p.val}kg</td><td class="text-right px-2"><button onclick="startEditPoids(${i})" class="text-signature mr-3 hover:scale-110 transition-transform"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteData('poids', ${i})" class="text-slate-300 hover:text-red-500 hover:scale-110 transition-transform"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('');
             lucide.createIcons();
         }
 
@@ -905,7 +992,7 @@
                 triggerRecordAnimation();
             }
 
-            closeInputModal('cardio');
+            setTimeout(() => { closeInputModal('cardio'); }, 150);
             updateUI();
         }
 
@@ -923,13 +1010,17 @@
                 triggerRecordAnimation();
             }
 
-            closeInputModal('poids');
+            setTimeout(() => { closeInputModal('poids'); }, 150);
             updateUI();
         }
 
         function openModal(date) {
             selectedDate = date; document.getElementById('modal-date-label').innerText = new Date(date).toLocaleDateString('fr-FR', { day:'numeric', month:'long' });
-            document.getElementById('calendar-modal').classList.remove('hidden'); renderModalSessions();
+            const modal = document.getElementById('calendar-modal');
+            modal.classList.remove('hidden');
+            const content = modal.querySelector('.modal-content');
+            content.style.animation = 'none'; content.offsetHeight; content.style.animation = null;
+            renderModalSessions();
         }
         function closeModal() { document.getElementById('calendar-modal').classList.add('hidden'); editModalIdx = null; document.getElementById('btn-modal-save').innerText = "Planifier"; }
         
@@ -937,8 +1028,8 @@
             const list = document.getElementById('modal-sessions-list'); list.innerHTML = '';
             cardioData.forEach((s, idx) => {
                 if (s.date === selectedDate) {
-                    const content = s.isFromCalendar ? `<div class="flex items-center gap-3"><input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleS(${idx})" class="w-5 h-5 rounded-lg border-slate-200 text-signature focus:ring-signature"><span class="font-bold text-slate-700 ${s.done ? 'line-through text-slate-300' : ''}">${s.nom}</span></div>` : `<span>🏃‍♂️ Cardio ${s.dist}km</span>`;
-                    list.innerHTML += `<div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">${content}<div class="flex gap-3"><button onclick="startEditM(${idx})" class="text-signature"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteData('cardio', ${idx}); renderModalSessions();" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;
+                    const content = s.isFromCalendar ? `<div class="flex items-center gap-3"><input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleS(${idx})" class="w-5 h-5 rounded-lg border-slate-200 text-signature focus:ring-signature transition-transform hover:scale-110 cursor-pointer"><span class="font-bold text-slate-700 transition-all ${s.done ? 'line-through text-slate-400' : ''}">${s.nom}</span></div>` : `<span class="flex items-center gap-2"><i data-lucide="footprints" class="w-4 h-4 text-signature"></i> Cardio ${s.dist}km</span>`;
+                    list.innerHTML += `<div class="flex justify-between items-center bg-slate-50 hover:bg-slate-100 transition-colors p-3 rounded-xl border border-slate-100">${content}<div class="flex gap-3"><button onclick="startEditM(${idx})" class="text-signature hover:scale-110 transition-transform"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteData('cardio', ${idx}); renderModalSessions();" class="text-slate-300 hover:text-red-500 hover:scale-110 transition-transform"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;
                 }
             });
             lucide.createIcons();
@@ -983,7 +1074,11 @@
             document.getElementById('c-temps').value = c.temps; 
             document.getElementById('c-dist').value = c.dist; 
             document.getElementById('btn-save-cardio').innerText = "Modifier"; 
-            document.getElementById('input-cardio-modal').classList.remove('hidden'); 
+            
+            const modal = document.getElementById('input-cardio-modal');
+            modal.classList.remove('hidden');
+            const content = modal.querySelector('.modal-content');
+            content.style.animation = 'none'; content.offsetHeight; content.style.animation = null;
         }
         
         function startEditPoids(i) { 
@@ -993,7 +1088,11 @@
             document.getElementById('p-date').value = p.date; 
             document.getElementById('p-poids').value = p.val; 
             document.getElementById('btn-save-poids').innerText = "Modifier"; 
-            document.getElementById('input-poids-modal').classList.remove('hidden'); 
+            
+            const modal = document.getElementById('input-poids-modal');
+            modal.classList.remove('hidden');
+            const content = modal.querySelector('.modal-content');
+            content.style.animation = 'none'; content.offsetHeight; content.style.animation = null;
         }
         
         function deleteData(t, i) { 
@@ -1042,6 +1141,8 @@
         document.getElementById('imc-poids').value = profileSettings.poids || '';
         document.getElementById('imc-taille').value = profileSettings.taille || '';
         document.getElementById('target-poids').value = profileSettings.targetPoids || '';
+        
+        // Initialiser l'UI (le fade in est géré automatiquement par le CSS)
         updateUI();
     </script>
 </body>
