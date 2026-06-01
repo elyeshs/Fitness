@@ -170,13 +170,6 @@
                     <div class="flex items-center justify-between mb-6">
                         <div class="flex items-center gap-3"><div class="p-2 bg-blue-50 text-blue-600 rounded-xl"><i data-lucide="footprints" class="w-5 h-5"></i></div><h2 class="text-lg font-black text-slate-800">Cardio</h2></div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <input type="date" id="c-date" class="bg-slate-50 p-3.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 w-full">
-                        <input type="number" id="c-vit" placeholder="Vitesse" class="bg-slate-50 p-3.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 w-full">
-                        <input type="number" id="c-temps" placeholder="Temps (min)" class="bg-slate-50 p-3.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 w-full">
-                        <input type="number" id="c-dist" placeholder="Distance (km)" class="bg-slate-50 p-3.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 w-full">
-                    </div>
-                    <button onclick="saveCardio(); triggerRipple(event);" id="btn-save-cardio" class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold mb-4 active:scale-[0.98]">Ajouter</button>
                     <button onclick="openHistoryModal('cardio'); triggerRipple(event);" class="w-full bg-slate-50 text-slate-600 border border-slate-100 py-3 rounded-xl font-bold mb-4 flex items-center justify-center gap-2"><i data-lucide="history" class="w-4 h-4"></i> Voir l'historique</button>
                     <div class="h-44 w-full"><canvas id="chartCardioDual"></canvas></div>
                 </div>
@@ -185,11 +178,6 @@
                     <div class="flex items-center justify-between mb-6">
                         <div class="flex items-center gap-3"><div class="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="bar-chart-3" class="w-5 h-5"></i></div><h2 class="text-lg font-black text-slate-800">Poids</h2></div>
                     </div>
-                    <div class="flex gap-3 mb-4">
-                        <input type="date" id="p-date" class="bg-slate-50 p-3.5 rounded-xl text-sm border-0 flex-1 focus:ring-2 focus:ring-emerald-500">
-                        <input type="number" id="p-poids" placeholder="Poids (kg)" class="bg-slate-50 p-3.5 rounded-xl text-sm border-0 flex-1 focus:ring-2 focus:ring-emerald-500">
-                    </div>
-                    <button onclick="savePoids(); triggerRipple(event);" id="btn-save-poids" class="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold mb-4 active:scale-[0.98]">Enregistrer</button>
                     <button onclick="openHistoryModal('poids'); triggerRipple(event);" class="w-full bg-slate-50 text-slate-600 border border-slate-100 py-3 rounded-xl font-bold mb-4 flex items-center justify-center gap-2"><i data-lucide="history" class="w-4 h-4"></i> Voir l'historique</button>
                     <div class="h-44 w-full"><canvas id="chartPoids"></canvas></div>
                 </div>
@@ -207,12 +195,46 @@
                 <div class="col-span-2"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Objectif (kg)</label><input type="number" id="target-poids" class="bg-emerald-50 border-0 p-3.5 rounded-xl w-full text-emerald-700 font-bold"></div>
             </div>
             
-            <label class="flex items-center justify-between bg-slate-50 p-4 rounded-xl cursor-pointer mb-5 border border-slate-100">
+            <label class="flex items-center justify-between bg-slate-50 p-4 rounded-xl cursor-pointer mb-4 border border-slate-100">
                 <span class="font-bold text-sm text-slate-600 flex items-center gap-2"><i data-lucide="bell" class="w-4 h-4 text-blue-500"></i> Notifications intelligentes</span>
                 <input type="checkbox" id="notif-toggle" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" onchange="requestNotificationPermission(this)">
             </label>
 
+            <div class="flex gap-2 mb-5">
+                <button onclick="exportData()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-xs hover:bg-slate-200 transition"><i data-lucide="download" class="w-4 h-4"></i> Exporter</button>
+                <label class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-xs hover:bg-slate-200 transition cursor-pointer">
+                    <i data-lucide="upload" class="w-4 h-4"></i> Importer
+                    <input type="file" class="hidden" accept=".json" onchange="importData(event)">
+                </label>
+            </div>
+
             <button onclick="saveSettings()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-black">Sauvegarder</button>
+        </div>
+    </div>
+
+    <div id="input-cardio-modal" class="fixed inset-0 modal-blur hidden flex items-center justify-center p-4 z-[110]">
+        <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl relative">
+            <button onclick="closeInputModal('cardio')" class="absolute top-5 right-5 text-slate-400"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <h3 class="text-xl font-black mb-6 flex items-center gap-2"><i data-lucide="footprints" class="w-5 h-5 text-blue-500"></i> Saisir Cardio</h3>
+            <div class="space-y-3 mb-6">
+                <input type="date" id="c-date" class="bg-slate-50 p-3.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 w-full">
+                <input type="number" id="c-vit" placeholder="Vitesse (km/h)" class="bg-slate-50 p-3.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 w-full">
+                <input type="number" id="c-temps" placeholder="Temps (min)" class="bg-slate-50 p-3.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 w-full">
+                <input type="number" id="c-dist" placeholder="Distance (km)" class="bg-slate-50 p-3.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 w-full">
+            </div>
+            <button onclick="saveCardio(); triggerRipple(event);" id="btn-save-cardio" class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold active:scale-[0.98]">Ajouter</button>
+        </div>
+    </div>
+
+    <div id="input-poids-modal" class="fixed inset-0 modal-blur hidden flex items-center justify-center p-4 z-[110]">
+        <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl relative">
+            <button onclick="closeInputModal('poids')" class="absolute top-5 right-5 text-slate-400"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <h3 class="text-xl font-black mb-6 flex items-center gap-2"><i data-lucide="scale" class="w-5 h-5 text-emerald-500"></i> Nouvelle Pesée</h3>
+            <div class="space-y-3 mb-6">
+                <input type="date" id="p-date" class="bg-slate-50 p-3.5 rounded-xl text-sm border-0 w-full focus:ring-2 focus:ring-emerald-500">
+                <input type="number" id="p-poids" placeholder="Poids (kg)" class="bg-slate-50 p-3.5 rounded-xl text-sm border-0 w-full focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <button onclick="savePoids(); triggerRipple(event);" id="btn-save-poids" class="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold active:scale-[0.98]">Enregistrer</button>
         </div>
     </div>
 
@@ -275,7 +297,7 @@
         // SERVICE WORKER
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'ht-cache-v8';
+                const CACHE_NAME = 'ht-cache-v9';
                 const ASSETS = [window.location.href, 'https://cdn.tailwindcss.com', 'https://cdn.jsdelivr.net/npm/chart.js', 'https://unpkg.com/lucide@latest'];
                 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
@@ -401,13 +423,57 @@
             tx.objectStore('store').put(dataToSave, 'appData');
         }
 
+        // Export/Import System
+        function exportData() {
+            const dataToExport = {
+                cardio: cardioData,
+                poids: poidsData,
+                profileSettings: profileSettings,
+                recurringDays: recurringDays,
+                bentoOrder: JSON.parse(localStorage.getItem('bentoOrder')) || []
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `healthtracker-backup-${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchorNode); 
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if(data.cardio) { cardioData = data.cardio; localStorage.setItem('cardio', JSON.stringify(cardioData)); }
+                    if(data.poids) { poidsData = data.poids; localStorage.setItem('poids', JSON.stringify(poidsData)); }
+                    if(data.profileSettings) { profileSettings = data.profileSettings; localStorage.setItem('profileSettings', JSON.stringify(profileSettings)); }
+                    if(data.recurringDays) { recurringDays = data.recurringDays; localStorage.setItem('recurringDays', JSON.stringify(recurringDays)); }
+                    if(data.bentoOrder) { localStorage.setItem('bentoOrder', JSON.stringify(data.bentoOrder)); restoreBentoOrder(); }
+                    
+                    document.getElementById('notif-toggle').checked = profileSettings.notifs || false;
+                    persistDataToDB();
+                    updateUI();
+                    alert("Données restaurées avec succès !");
+                    toggleSettings();
+                } catch(error) {
+                    alert("Erreur lors de l'importation. Le fichier est invalide.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; 
+        }
+
         let charts = {};
         let selectedDate = '';
         let editCardioIdx = null, editPoidsIdx = null, editModalIdx = null;
 
         function triggerRipple(event) {
             const button = event.currentTarget;
-            const card = button.closest('.bento-card');
+            const card = button.closest('.bento-card') || button.closest('.bg-white');
             if (!card) return;
             const circle = document.createElement('div');
             circle.classList.add('ripple-wave');
@@ -428,6 +494,7 @@
         
         function openHistoryModal(type) { document.getElementById(`history-${type}-modal`).classList.remove('hidden'); }
         function closeHistoryModal(type) { document.getElementById(`history-${type}-modal`).classList.add('hidden'); }
+        function closeInputModal(type) { document.getElementById(`input-${type}-modal`).classList.add('hidden'); editCardioIdx = null; editPoidsIdx = null; }
 
         function toggleQuickMenu() {
             const options = document.getElementById('quick-menu-options');
@@ -487,8 +554,20 @@
         function quickAction(action) {
             toggleQuickMenu();
             const t = new Date().toISOString().split('T')[0];
-            if (action === 'cardio') { document.getElementById('c-date').value = t; document.getElementById('section-cardio').scrollIntoView({behavior:'smooth'}); }
-            else if (action === 'poids') { document.getElementById('p-date').value = t; document.getElementById('section-poids').scrollIntoView({behavior:'smooth'}); }
+            if (action === 'cardio') { 
+                document.getElementById('c-date').value = t;
+                document.getElementById('c-vit').value = '';
+                document.getElementById('c-temps').value = '';
+                document.getElementById('c-dist').value = '';
+                document.getElementById('btn-save-cardio').innerText = "Ajouter"; 
+                document.getElementById('input-cardio-modal').classList.remove('hidden');
+            }
+            else if (action === 'poids') { 
+                document.getElementById('p-date').value = t; 
+                document.getElementById('p-poids').value = '';
+                document.getElementById('btn-save-poids').innerText = "Enregistrer"; 
+                document.getElementById('input-poids-modal').classList.remove('hidden');
+            }
             else if (action === 'calendrier') { openModal(t); }
         }
 
@@ -601,6 +680,7 @@
             if(!d || !dist) return;
             if (editCardioIdx !== null) { cardioData[editCardioIdx] = { date: d, vit: v, temps: t, dist: dist, isFromCalendar: false }; editCardioIdx = null; document.getElementById('btn-save-cardio').innerText = "Ajouter"; }
             else cardioData.push({ date: d, vit: v, temps: t, dist: dist, isFromCalendar: false });
+            closeInputModal('cardio');
             updateUI();
         }
 
@@ -609,6 +689,7 @@
             if(!d || !v) return;
             if (editPoidsIdx !== null) { poidsData[editPoidsIdx] = { date: d, val: v }; editPoidsIdx = null; document.getElementById('btn-save-poids').innerText = "Enregistrer"; }
             else poidsData.push({ date: d, val: v });
+            closeInputModal('poids');
             updateUI();
         }
 
@@ -659,21 +740,48 @@
         }
 
         function startEditM(i) { if (cardioData[i].isFromCalendar) { document.getElementById('m-nom').value = cardioData[i].nom; editModalIdx = i; document.getElementById('btn-modal-save').innerText = "Modifier"; } else { closeModal(); startEditCardio(i); } }
-        function startEditCardio(i) { closeHistoryModal('cardio'); editCardioIdx = i; const c = cardioData[i]; document.getElementById('c-date').value = c.date; document.getElementById('c-vit').value = c.vit; document.getElementById('c-temps').value = c.temps; document.getElementById('c-dist').value = c.dist; document.getElementById('btn-save-cardio').innerText = "Modifier"; document.getElementById('section-cardio').scrollIntoView({behavior:'smooth'}); }
-        function startEditPoids(i) { closeHistoryModal('poids'); editPoidsIdx = i; const p = poidsData[i]; document.getElementById('p-date').value = p.date; document.getElementById('p-poids').value = p.val; document.getElementById('btn-save-poids').innerText = "Modifier"; document.getElementById('section-poids').scrollIntoView({behavior:'smooth'}); }
-        function deleteData(t, i) { if(t==='cardio') cardioData.splice(i,1); else poidsData.splice(i,1); updateUI(); }
+        
+        function startEditCardio(i) { 
+            closeHistoryModal('cardio'); 
+            editCardioIdx = i; 
+            const c = cardioData[i]; 
+            document.getElementById('c-date').value = c.date; 
+            document.getElementById('c-vit').value = c.vit; 
+            document.getElementById('c-temps').value = c.temps; 
+            document.getElementById('c-dist').value = c.dist; 
+            document.getElementById('btn-save-cardio').innerText = "Modifier"; 
+            document.getElementById('input-cardio-modal').classList.remove('hidden'); 
+        }
+        
+        function startEditPoids(i) { 
+            closeHistoryModal('poids'); 
+            editPoidsIdx = i; 
+            const p = poidsData[i]; 
+            document.getElementById('p-date').value = p.date; 
+            document.getElementById('p-poids').value = p.val; 
+            document.getElementById('btn-save-poids').innerText = "Modifier"; 
+            document.getElementById('input-poids-modal').classList.remove('hidden'); 
+        }
+        
+        function deleteData(t, i) { 
+            if(t==='cardio') { cardioData.splice(i,1); renderTables(); } 
+            else { poidsData.splice(i,1); renderTables(); } 
+            updateUI(); 
+        }
+        
         function changeMonth(d) { currentMonth.setMonth(currentMonth.getMonth() + d); updateUI(); }
 
         window.addEventListener('keydown', (e) => {
             if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-            if (e.key.toLowerCase() === 'c') { document.getElementById('section-cardio').scrollIntoView({behavior:'smooth'}); }
-            if (e.key.toLowerCase() === 'p') { document.getElementById('section-poids').scrollIntoView({behavior:'smooth'}); }
+            // Removed c and p hotkeys since the inputs are now in modals and those keys might interfere
             if (e.key === 'Escape') { 
                 closeModal(); 
                 document.getElementById('settings-modal').classList.add('hidden'); 
                 document.getElementById('recurrence-modal').classList.add('hidden'); 
                 closeHistoryModal('cardio'); 
-                closeHistoryModal('poids'); 
+                closeHistoryModal('poids');
+                closeInputModal('cardio');
+                closeInputModal('poids');
             }
         });
 
