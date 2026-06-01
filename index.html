@@ -245,10 +245,10 @@
     </div>
 
     <script>
-        // SERVICE WORKER & NOTIFICATIONS
+        // SERVICE WORKER
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'ht-cache-v6';
+                const CACHE_NAME = 'ht-cache-v7';
                 const ASSETS = [window.location.href, 'https://cdn.tailwindcss.com', 'https://cdn.jsdelivr.net/npm/chart.js', 'https://unpkg.com/lucide@latest'];
                 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
@@ -260,20 +260,60 @@
         function requestNotificationPermission() {
             if ("Notification" in window) {
                 Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') alert('Rappels activés !');
+                    if (permission === 'granted') alert('Rappels activés avec succès !');
                 });
             }
         }
 
+        // NOTIFICATION 1 : Rappel des séances à venir (Quotidien)
         function sendDailyReminder() {
-            if (Notification.permission === 'granted') {
+            if ("Notification" in window && Notification.permission === 'granted') {
                 const today = new Date().toISOString().split('T')[0];
-                const pending = cardioData.filter(c => c.date === today && c.isFromCalendar && !c.done);
-                if (pending.length > 0) {
-                    new Notification("HealthTracker", {
-                        body: "Tu as des séances prévues aujourd'hui ! Ne lâche rien.",
-                        icon: "https://cdn-icons-png.flaticon.com/512/3233/3233630.png"
-                    });
+                const lastReminder = localStorage.getItem('lastDailyReminder');
+                
+                if (lastReminder !== today) {
+                    const pending = cardioData.filter(c => c.date === today && c.isFromCalendar && !c.done);
+                    if (pending.length > 0) {
+                        new Notification("Rappel HealthTracker", {
+                            body: `Tu as ${pending.length} séance(s) prévue(s) aujourd'hui ! C'est le moment de t'y mettre.`,
+                            icon: "https://cdn-icons-png.flaticon.com/512/3233/3233630.png"
+                        });
+                        localStorage.setItem('lastDailyReminder', today);
+                    }
+                }
+            }
+        }
+
+        // NOTIFICATION 3 : Rapport d'évolution (Hebdomadaire - Lundi)
+        function sendWeeklyReport() {
+            if ("Notification" in window && Notification.permission === 'granted') {
+                const now = new Date();
+                // 1 = Lundi
+                if (now.getDay() === 1) {
+                    const todayStr = now.toISOString().split('T')[0];
+                    const lastReport = localStorage.getItem('lastWeeklyReport');
+                    
+                    if (lastReport !== todayStr) {
+                        const sDA = new Date(); sDA.setDate(sDA.getDate() - 7);
+                        
+                        // Calcul KM
+                        const wC = cardioData.filter(c => new Date(c.date) >= sDA && !c.isFromCalendar);
+                        const dist = wC.reduce((a, b) => a + parseFloat(b.dist || 0), 0);
+                        
+                        // Calcul Poids
+                        const wP = poidsData.filter(p => new Date(p.date) >= sDA).sort((a,b) => new Date(a.date) - new Date(b.date));
+                        let weightText = "Poids stable";
+                        if (wP.length >= 2) {
+                            const diff = (wP[wP.length-1].val - wP[0].val).toFixed(1);
+                            weightText = diff <= 0 ? `${diff} kg` : `+${diff} kg`;
+                        }
+
+                        new Notification("Bilan Hebdomadaire 📊", {
+                            body: `Cette semaine, vous avez fait ${weightText} et vous avez couru ${dist.toFixed(1)} km. Continuez ainsi !`,
+                            icon: "https://cdn-icons-png.flaticon.com/512/3233/3233630.png"
+                        });
+                        localStorage.setItem('lastWeeklyReport', todayStr);
+                    }
                 }
             }
         }
@@ -307,7 +347,8 @@
                     if(data.profileSettings) { profileSettings = data.profileSettings; }
                     if(data.recurringDays) { recurringDays = data.recurringDays; }
                     updateUI();
-                    sendDailyReminder(); // Check for tasks on load
+                    sendDailyReminder();
+                    sendWeeklyReport();
                 }
             };
         };
@@ -547,7 +588,29 @@
             else { cardioData.push({ date: selectedDate, nom: n, isFromCalendar: true, done: false }); }
             updateUI(); renderModalSessions(); document.getElementById('m-nom').value = '';
         }
-        function toggleS(i) { cardioData[i].done = !cardioData[i].done; updateUI(); renderModalSessions(); }
+
+        // NOTIFICATION 2 : Motivation post-séance et compte restant
+        function toggleS(i) { 
+            cardioData[i].done = !cardioData[i].done; 
+            
+            if (cardioData[i].done && "Notification" in window && Notification.permission === 'granted') {
+                const today = new Date().toISOString().split('T')[0];
+                const remaining = cardioData.filter(c => c.date === today && c.isFromCalendar && !c.done).length;
+                
+                const msg = remaining > 0 
+                    ? `Bien joué ! Il te reste encore ${remaining} séance(s) prévue(s) aujourd'hui. Lâche rien !` 
+                    : `Excellent travail ! Tu as terminé toutes tes séances prévues pour aujourd'hui 🏆`;
+                
+                new Notification("Séance Validée !", { 
+                    body: msg, 
+                    icon: "https://cdn-icons-png.flaticon.com/512/3233/3233630.png" 
+                });
+            }
+
+            updateUI(); 
+            renderModalSessions(); 
+        }
+
         function startEditM(i) { if (cardioData[i].isFromCalendar) { document.getElementById('m-nom').value = cardioData[i].nom; editModalIdx = i; document.getElementById('btn-modal-save').innerText = "Modifier"; } else { closeModal(); startEditCardio(i); } }
         function startEditCardio(i) { editCardioIdx = i; const c = cardioData[i]; document.getElementById('c-date').value = c.date; document.getElementById('c-vit').value = c.vit; document.getElementById('c-temps').value = c.temps; document.getElementById('c-dist').value = c.dist; document.getElementById('btn-save-cardio').innerText = "Modifier"; document.getElementById('section-cardio').scrollIntoView({behavior:'smooth'}); }
         function startEditPoids(i) { editPoidsIdx = i; const p = poidsData[i]; document.getElementById('p-date').value = p.date; document.getElementById('p-poids').value = p.val; document.getElementById('btn-save-poids').innerText = "Modifier"; document.getElementById('section-poids').scrollIntoView({behavior:'smooth'}); }
