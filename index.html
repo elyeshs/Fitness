@@ -268,6 +268,10 @@
                         <div class="text-[9px] text-slate-400 font-extrabold uppercase mt-1 tracking-wider">Séances Faites</div>
                     </div>
                 </div>
+                
+                <button onclick="openMonthsHistoryModal(); triggerRipple(event);" class="w-full bg-slate-100/80 text-slate-700 hover:text-signature hover:bg-white hover:shadow-md border border-slate-200/60 py-3 rounded-xl font-bold mt-4 flex items-center justify-center gap-2 transition-all hover:-translate-y-1">
+                    <i data-lucide="history" class="w-4 h-4"></i> Voir l'historique des mois
+                </button>
             </div>
 
             <div id="widgets-calendrier" class="bento-card stagger-4" draggable="true">
@@ -384,6 +388,29 @@
         </div>
     </div>
 
+    <div id="history-months-modal" class="fixed inset-0 modal-blur hidden flex items-center justify-center p-4 z-[110]">
+        <div class="bg-white rounded-[28px] p-6 max-w-2xl w-full shadow-2xl relative modal-content">
+            <button onclick="closeMonthsHistoryModal()" class="absolute top-5 right-5 text-slate-400 hover:text-signature transition-colors hover:rotate-90 duration-300"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <h3 class="text-xl font-black mb-4 flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-signature"></i> Historique des Mois</h3>
+            <div class="overflow-x-auto max-h-80 overflow-y-auto mb-4 custom-scrollbar">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-[10px] uppercase font-bold text-slate-400 bg-slate-50/50 sticky top-0">
+                        <tr>
+                            <th class="py-2.5 px-2">Mois</th>
+                            <th class="py-2.5 px-2">Dist. Totale</th>
+                            <th class="py-2.5 px-2">Dist. Max</th>
+                            <th class="py-2.5 px-2">Temps Max</th>
+                            <th class="py-2.5 px-2">Évol. Poids</th>
+                            <th class="py-2.5 px-2 text-center">Séances</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-months-history" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
+                </table>
+            </div>
+            <button onclick="closeMonthsHistoryModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 py-3 rounded-xl font-bold transition-colors">Fermer</button>
+        </div>
+    </div>
+
     <div id="calendar-modal" class="fixed inset-0 modal-blur hidden flex items-center justify-center p-4 z-[90]">
         <div class="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl modal-content">
             <h3 id="modal-date-label" class="text-xl font-black mb-5"></h3>
@@ -429,7 +456,7 @@
         // SERVICE WORKER
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'ht-cache-v13';
+                const CACHE_NAME = 'ht-cache-v14';
                 const ASSETS = [window.location.href, 'https://cdn.tailwindcss.com', 'https://cdn.jsdelivr.net/npm/chart.js', 'https://unpkg.com/lucide@latest'];
                 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
@@ -632,6 +659,16 @@
             content.style.animation = 'none'; content.offsetHeight; content.style.animation = null;
         }
         function closeHistoryModal(type) { document.getElementById(`history-${type}-modal`).classList.add('hidden'); }
+        
+        function openMonthsHistoryModal() {
+            const modal = document.getElementById('history-months-modal');
+            modal.classList.remove('hidden');
+            const content = modal.querySelector('.modal-content');
+            content.style.animation = 'none'; content.offsetHeight; content.style.animation = null;
+            renderMonthsHistory();
+        }
+        function closeMonthsHistoryModal() { document.getElementById('history-months-modal').classList.add('hidden'); }
+        
         function closeInputModal(type) { document.getElementById(`input-${type}-modal`).classList.add('hidden'); editCardioIdx = null; editPoidsIdx = null; }
 
         function toggleQuickMenu() {
@@ -799,6 +836,56 @@
             document.getElementById('monthly-max-time').innerText = maxTime > 0 ? `${maxTime} min` : '--';
             document.getElementById('monthly-weight-evol').innerText = weightEvolTxt;
             document.getElementById('monthly-sessions-done').innerText = checkedSessions;
+        }
+
+        function renderMonthsHistory() {
+            const tbody = document.getElementById('table-months-history');
+            tbody.innerHTML = '';
+            
+            // Collecte de tous les mois uniques présents dans les bases de données
+            const allMonths = new Set();
+            cardioData.forEach(c => { if(c.date) allMonths.add(c.date.substring(0, 7)); });
+            poidsData.forEach(p => { if(p.date) allMonths.add(p.date.substring(0, 7)); });
+            
+            // Assure l'affichage du mois en cours s'il n'y a pas encore d'anciennes données
+            allMonths.add(new Date().toISOString().substring(0, 7));
+            
+            // Tri décroissant des mois (le plus récent en haut)
+            const sorted = Array.from(allMonths).sort((a, b) => b.localeCompare(a));
+            
+            sorted.forEach(mStr => {
+                const [year, month] = mStr.split('-').map(Number);
+                const dObj = new Date(year, month - 1, 1);
+                const label = dObj.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                
+                const mCardio = cardioData.filter(c => c.date && c.date.startsWith(mStr));
+                const rCardio = mCardio.filter(c => !c.isFromCalendar);
+                const pCardio = mCardio.filter(c => c.isFromCalendar);
+                
+                const totalD = rCardio.reduce((sum, c) => sum + (parseFloat(c.dist) || 0), 0);
+                const maxD = rCardio.length > 0 ? Math.max(...rCardio.map(c => parseFloat(c.dist) || 0)) : 0;
+                const maxT = rCardio.length > 0 ? Math.max(...rCardio.map(c => parseFloat(c.temps) || 0)) : 0;
+                const doneSessions = pCardio.filter(c => c.done).length;
+                
+                const mPoids = poidsData.filter(p => p.date && p.date.startsWith(mStr)).sort((a,b) => new Date(a.date) - new Date(b.date));
+                let wEvol = '--';
+                if (mPoids.length >= 2) {
+                    const diff = mPoids[mPoids.length - 1].val - mPoids[0].val;
+                    wEvol = diff <= 0 ? `${diff.toFixed(1)} kg` : `+${diff.toFixed(1)} kg`;
+                }
+                
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="py-3 px-2 font-black capitalize text-slate-800">${label}</td>
+                        <td class="py-3 px-2 text-slate-600">${totalD > 0 ? totalD.toFixed(1) + ' km' : '--'}</td>
+                        <td class="py-3 px-2 text-slate-600">${maxD > 0 ? maxD.toFixed(1) + ' km' : '--'}</td>
+                        <td class="py-3 px-2 text-slate-600">${maxT > 0 ? maxT + ' min' : '--'}</td>
+                        <td class="py-3 px-2 font-bold ${wEvol.startsWith('-') ? 'text-emerald-600' : (wEvol.startsWith('+') ? 'text-rose-500' : 'text-slate-600')}">${wEvol}</td>
+                        <td class="py-3 px-2 text-center text-signature font-black bg-indigo-50/30 rounded-xl">${doneSessions}</td>
+                    </tr>
+                `;
+            });
+            lucide.createIcons();
         }
 
         function triggerRecordAnimation() {
@@ -1166,6 +1253,7 @@
                 document.getElementById('recurrence-modal').classList.add('hidden'); 
                 closeHistoryModal('cardio'); 
                 closeHistoryModal('poids');
+                closeMonthsHistoryModal();
                 closeInputModal('cardio');
                 closeInputModal('poids');
             }
