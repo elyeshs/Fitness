@@ -122,24 +122,32 @@
             </div>
 
             <div id="widgets-triple-grid" class="grid grid-cols-1 md:grid-cols-3 gap-5" draggable="true">
-                <div class="bento-card flex flex-col justify-center min-h-[130px]">
-                    <div class="flex items-center justify-between mb-2">
+                <div class="bento-card flex flex-col justify-center min-h-[140px]">
+                    <div class="flex items-center justify-between mb-1">
                         <div class="flex items-center gap-2"><div class="icon-box"><i data-lucide="scale" class="w-4 h-4"></i></div><span class="text-slate-500 font-bold text-xs uppercase tracking-widest">IMC</span></div>
+                        <div id="imc-statut" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">En attente</div>
                     </div>
-                    <div id="resultat-imc" class="text-4xl font-black text-slate-800">--</div>
-                    <div id="imc-statut" class="text-xs mt-2 font-bold px-3 py-1 rounded-full w-fit bg-slate-100 text-slate-500">En attente</div>
+                    <div class="flex items-center justify-between gap-2 mt-1">
+                        <div id="resultat-imc" class="text-4xl font-black text-slate-800">--</div>
+                        <div class="relative w-28 h-14 flex items-center justify-center">
+                            <canvas id="imc-gauge" width="120" height="60" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="bento-card flex flex-col justify-center min-h-[130px]">
-                    <div class="flex justify-between items-center mb-3">
+                <div class="bento-card flex flex-col justify-center min-h-[140px]">
+                    <div class="flex justify-between items-center mb-2">
                         <div class="flex items-center gap-2"><div class="icon-box"><i data-lucide="target" class="w-4 h-4"></i></div><span class="text-slate-500 font-bold text-xs uppercase tracking-widest">Objectif</span></div>
                         <span id="poids-target-display" class="text-emerald-600 font-black text-base">-- kg</span>
                     </div>
-                    <div class="progress-bar mb-2"><div id="poids-progress-fill" class="progress-fill" style="width: 0%"></div></div>
-                    <div class="text-xs font-medium text-slate-400">Reste <span id="poids-diff-display" class="text-slate-700 font-bold">-- kg</span></div>
+                    <div class="progress-bar mb-1.5"><div id="poids-progress-fill" class="progress-fill" style="width: 0%"></div></div>
+                    <div class="text-xs font-medium text-slate-400 flex flex-col gap-1">
+                        <div>Reste <span id="poids-diff-display" class="text-slate-700 font-bold">-- kg</span></div>
+                        <div id="poids-projection-display" class="text-[10px] text-blue-600 font-bold bg-blue-50/70 p-1.5 rounded-xl border border-blue-100/50 mt-1 hidden"></div>
+                    </div>
                 </div>
 
-                <div class="bento-card flex flex-col justify-center min-h-[130px]">
+                <div class="bento-card flex flex-col justify-center min-h-[140px]">
                     <div class="flex items-center gap-2 mb-2"><div class="icon-box"><i data-lucide="zap" class="w-4 h-4 text-orange-500"></i></div><span class="text-slate-500 font-bold text-xs uppercase tracking-widest">Persévérance</span></div>
                     <div id="perseverance-score" class="text-4xl font-black text-blue-600">0%</div>
                     <div id="perseverance-text" class="text-xs font-bold text-slate-400 mt-1 italic">0 séance validée</div>
@@ -297,7 +305,7 @@
         // SERVICE WORKER
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'ht-cache-v9';
+                const CACHE_NAME = 'ht-cache-v10';
                 const ASSETS = [window.location.href, 'https://cdn.tailwindcss.com', 'https://cdn.jsdelivr.net/npm/chart.js', 'https://unpkg.com/lucide@latest'];
                 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
@@ -319,7 +327,6 @@
             }
         }
 
-        // NOTIFICATION 1 : Rappel des séances à venir (Quotidien)
         function sendDailyReminder() {
             if (profileSettings.notifs && "Notification" in window && Notification.permission === 'granted') {
                 const today = new Date().toISOString().split('T')[0];
@@ -338,23 +345,17 @@
             }
         }
 
-        // NOTIFICATION 3 : Rapport d'évolution (Hebdomadaire - Lundi)
         function sendWeeklyReport() {
             if (profileSettings.notifs && "Notification" in window && Notification.permission === 'granted') {
                 const now = new Date();
-                // 1 = Lundi
                 if (now.getDay() === 1) {
                     const todayStr = now.toISOString().split('T')[0];
                     const lastReport = localStorage.getItem('lastWeeklyReport');
                     
                     if (lastReport !== todayStr) {
                         const sDA = new Date(); sDA.setDate(sDA.getDate() - 7);
-                        
-                        // Calcul KM
                         const wC = cardioData.filter(c => new Date(c.date) >= sDA && !c.isFromCalendar);
                         const dist = wC.reduce((a, b) => a + parseFloat(b.dist || 0), 0);
-                        
-                        // Calcul Poids
                         const wP = poidsData.filter(p => new Date(p.date) >= sDA).sort((a,b) => new Date(a.date) - new Date(b.date));
                         let weightText = "Poids stable";
                         if (wP.length >= 2) {
@@ -423,7 +424,6 @@
             tx.objectStore('store').put(dataToSave, 'appData');
         }
 
-        // Export/Import System
         function exportData() {
             const dataToExport = {
                 cardio: cardioData,
@@ -602,6 +602,58 @@
             if(wC.length > 0 || wP.length > 0 || wPl.length > 0) document.getElementById('weekly-insight').classList.remove('hidden');
         }
 
+        function drawIMCGauge(imc, activeColor) {
+            const canvas = document.getElementById('imc-gauge');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const cx = canvas.width / 2;
+            const cy = canvas.height - 5;
+            const radius = canvas.height - 12;
+            
+            const zones = [
+                { start: 15, end: 18.5, color: '#e0f2fe' }, 
+                { start: 18.5, end: 25, color: '#d1fae5' },  
+                { start: 25, end: 30, color: '#fef3c7' },   
+                { start: 30, end: 35, color: '#ffe4e6' }    
+            ];
+            
+            function imcToAngle(val) {
+                const clamped = Math.min(Math.max(val, 15), 35);
+                return Math.PI + ((clamped - 15) / (35 - 15)) * Math.PI;
+            }
+            
+            zones.forEach(z => {
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, imcToAngle(z.start), imcToAngle(z.end));
+                ctx.lineWidth = 8;
+                ctx.strokeStyle = z.color;
+                ctx.stroke();
+            });
+            
+            if (imc >= 15) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, Math.PI, imcToAngle(imc));
+                ctx.lineWidth = 8;
+                ctx.strokeStyle = activeColor;
+                ctx.stroke();
+                
+                const angle = imcToAngle(imc);
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(angle) * (radius - 3), cy + Math.sin(angle) * (radius - 3));
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = '#1e293b';
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.arc(cx, cy, 4, 0, 2 * Math.PI);
+                ctx.fillStyle = '#1e293b';
+                ctx.fill();
+            }
+        }
+
         function calculerIMCDynamique() {
             let p = profileSettings.poids;
             if (poidsData.length > 0) p = [...poidsData].sort((a,b) => new Date(b.date) - new Date(a.date))[0].val;
@@ -609,24 +661,111 @@
             if(p && t) {
                 const imc = (p / ((t/100)**2)).toFixed(1);
                 document.getElementById('resultat-imc').innerText = imc;
-                document.getElementById('imc-statut').innerText = imc < 18.5 ? "Insuffisance" : imc < 25 ? "Normal" : imc < 30 ? "Surpoids" : "Obésité";
-                document.getElementById('imc-statut').className = "text-xs mt-2 font-bold px-3 py-1 rounded-full w-fit bg-blue-50 text-blue-600";
+                
+                let statutText = "En attente";
+                let colorClass = "bg-slate-100 text-slate-500";
+                let activeColor = "#cbd5e1";
+                
+                if (imc < 18.5) {
+                    statutText = "Insuffisance";
+                    colorClass = "bg-sky-100 text-sky-700";
+                    activeColor = "#38bdf8"; 
+                } else if (imc < 25) {
+                    statutText = "Normal";
+                    colorClass = "bg-emerald-100 text-emerald-700";
+                    activeColor = "#10b981"; 
+                } else if (imc < 30) {
+                    statutText = "Surpoids";
+                    colorClass = "bg-amber-100 text-amber-700";
+                    activeColor = "#f59e0b"; 
+                } else {
+                    statutText = "Obésité";
+                    colorClass = "bg-rose-100 text-rose-700";
+                    activeColor = "#f43f5e"; 
+                }
+                
+                document.getElementById('imc-statut').innerText = statutText;
+                document.getElementById('imc-statut').className = `text-[10px] font-bold px-2 py-0.5 rounded-full ${colorClass}`;
+                
+                drawIMCGauge(parseFloat(imc), activeColor);
+            } else {
+                drawIMCGauge(0, "#cbd5e1");
             }
             return p;
         }
 
         function updateObjectivesAndPerseverance(dp) {
-            const tp = profileSettings.targetPoids || 0, ip = profileSettings.poids || 0;
+            const tp = parseFloat(profileSettings.targetPoids) || 0;
+            const ip = parseFloat(profileSettings.poids) || 0;
             document.getElementById('poids-target-display').innerText = tp > 0 ? `${tp} kg` : "-- kg";
+            
             if (dp && tp > 0) {
-                document.getElementById('poids-diff-display').innerText = (dp - tp).toFixed(1) + " kg";
+                document.getElementById('poids-diff-display').innerText = Math.abs(dp - tp).toFixed(1) + " kg";
                 let pct = ip > tp ? ((ip - dp) / (ip - tp)) * 100 : ((dp - ip) / (tp - ip)) * 100;
                 document.getElementById('poids-progress-fill').style.width = Math.min(Math.max(pct, 0), 100) + '%';
+                
+                // IA Locale : Algorithme de projection prédictive
+                calculerProjectionPoids(dp, tp);
+            } else {
+                document.getElementById('poids-projection-display').classList.add('hidden');
             }
+            
             const cS = cardioData.filter(c => c.isFromCalendar);
             const done = cS.filter(c => c.done).length;
             document.getElementById('perseverance-score').innerText = cS.length > 0 ? `${Math.round((done/cS.length)*100)}%` : "0%";
             document.getElementById('perseverance-text').innerText = `${done} / ${cS.length} séance(s) validée(s)`;
+        }
+
+        function calculerProjectionPoids(currentWeight, targetWeight) {
+            const projectionBlock = document.getElementById('poids-projection-display');
+            if (!projectionBlock) return;
+            
+            const sortedHistory = [...poidsData].sort((a, b) => new Date(a.date) - new Date(b.date));
+            if (sortedHistory.length < 2) {
+                projectionBlock.classList.add('hidden');
+                return;
+            }
+            
+            const standardDateNow = new Date();
+            const horizonTrenteJours = new Date();
+            horizonTrenteJours.setDate(standardDateNow.getDate() - 30);
+            
+            const filteredHistory = sortedHistory.filter(p => new Date(p.date) >= horizonTrenteJours);
+            
+            if (filteredHistory.length < 2) {
+                projectionBlock.classList.add('hidden');
+                return;
+            }
+            
+            const initialPoint = filteredHistory[0];
+            const finalPoint = filteredHistory[filteredHistory.length - 1];
+            
+            const intervalTime = new Date(finalPoint.date) - new Date(initialPoint.date);
+            const intervalDays = intervalTime / (1000 * 60 * 60 * 24);
+            
+            if (intervalDays <= 0) {
+                projectionBlock.classList.add('hidden');
+                return;
+            }
+            
+            const totalDeltaWeight = finalPoint.val - initialPoint.val;
+            const velocityPerDay = totalDeltaWeight / intervalDays; 
+            const remainingDelta = targetWeight - currentWeight;
+            
+            const objectiveDirectionCorrect = (remainingDelta < 0 && velocityPerDay < 0) || (remainingDelta > 0 && velocityPerDay > 0);
+            
+            if (objectiveDirectionCorrect && velocityPerDay !== 0) {
+                const daysCalculated = remainingDelta / velocityPerDay;
+                const predictionDate = new Date();
+                predictionDate.setDate(predictionDate.getDate() + daysCalculated);
+                
+                const formattedDate = predictionDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+                projectionBlock.innerHTML = `Si vous continuez à ce rythme, vous atteindrez votre objectif le <span class="text-blue-700 font-extrabold">${formattedDate}</span>.`;
+                projectionBlock.classList.remove('hidden');
+            } else {
+                projectionBlock.innerHTML = `Rythme stable ou inversé. Maintenez la régularité pour générer votre projection cible.`;
+                projectionBlock.classList.remove('hidden');
+            }
         }
 
         function renderCalendar() {
@@ -717,7 +856,6 @@
             updateUI(); renderModalSessions(); document.getElementById('m-nom').value = '';
         }
 
-        // NOTIFICATION 2 : Motivation post-séance et compte restant
         function toggleS(i) { 
             cardioData[i].done = !cardioData[i].done; 
             
@@ -773,7 +911,6 @@
 
         window.addEventListener('keydown', (e) => {
             if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-            // Removed c and p hotkeys since the inputs are now in modals and those keys might interfere
             if (e.key === 'Escape') { 
                 closeModal(); 
                 document.getElementById('settings-modal').classList.add('hidden'); 
