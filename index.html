@@ -41,7 +41,7 @@
             color: #0f172a;
         }
 
-        /* --- NOUVELLES ANIMATIONS & MICRO-INTERACTIONS --- */
+        /* --- ANIMATIONS & MICRO-INTERACTIONS --- */
         @keyframes fadeSlideUp {
             0% { opacity: 0; transform: translateY(30px) scale(0.98); }
             100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -50,6 +50,7 @@
         .stagger-2 { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both; }
         .stagger-3 { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both; }
         .stagger-4 { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both; }
+        .stagger-5 { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both; }
 
         @keyframes modalPop {
             0% { opacity: 0; transform: scale(0.92) translateY(15px); }
@@ -240,7 +241,36 @@
                 </div>
             </div>
 
-            <div id="widgets-calendrier" class="bento-card stagger-3" draggable="true">
+            <div id="widgets-bilan-mensuel" class="bento-card stagger-3" draggable="true">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="icon-box text-signature bg-indigo-50/50"><i data-lucide="calendar" class="w-4 h-4"></i></div>
+                    <span class="text-slate-500 font-bold text-xs uppercase tracking-widest">Bilan Mensuel (<span id="bilan-mois-label" class="normal-case font-extrabold text-slate-700"></span>)</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-center">
+                    <div class="p-3.5 bg-slate-50/60 rounded-2xl border border-slate-200/40 transition-transform duration-300 hover:scale-105">
+                        <div id="monthly-total-dist" class="text-xl font-black text-slate-800">--</div>
+                        <div class="text-[9px] text-slate-400 font-extrabold uppercase mt-1 tracking-wider">Distance Totale</div>
+                    </div>
+                    <div class="p-3.5 bg-slate-50/60 rounded-2xl border border-slate-200/40 transition-transform duration-300 hover:scale-105">
+                        <div id="monthly-max-dist" class="text-xl font-black text-slate-800">--</div>
+                        <div class="text-[9px] text-slate-400 font-extrabold uppercase mt-1 tracking-wider">Distance Max</div>
+                    </div>
+                    <div class="p-3.5 bg-slate-50/60 rounded-2xl border border-slate-200/40 transition-transform duration-300 hover:scale-105">
+                        <div id="monthly-max-time" class="text-xl font-black text-slate-800">--</div>
+                        <div class="text-[9px] text-slate-400 font-extrabold uppercase mt-1 tracking-wider">Temps Max</div>
+                    </div>
+                    <div class="p-3.5 bg-slate-50/60 rounded-2xl border border-slate-200/40 transition-transform duration-300 hover:scale-105">
+                        <div id="monthly-weight-evol" class="text-xl font-black text-slate-800">--</div>
+                        <div class="text-[9px] text-slate-400 font-extrabold uppercase mt-1 tracking-wider">Évol. Poids</div>
+                    </div>
+                    <div class="p-3.5 bg-slate-50/60 rounded-2xl border border-slate-200/40 transition-transform duration-300 hover:scale-105 col-span-2 sm:col-span-1">
+                        <div id="monthly-sessions-done" class="text-xl font-black text-slate-800">0</div>
+                        <div class="text-[9px] text-slate-400 font-extrabold uppercase mt-1 tracking-wider">Séances Faites</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="widgets-calendrier" class="bento-card stagger-4" draggable="true">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div class="flex items-center gap-2">
                         <h2 id="month-label" class="text-xl font-black capitalize text-slate-800 transition-all"></h2>
@@ -259,7 +289,7 @@
                 <div class="calendar-grid" id="calendar"></div>
             </div>
 
-            <div id="widgets-data-split" class="grid grid-cols-1 lg:grid-cols-2 gap-5 stagger-4">
+            <div id="widgets-data-split" class="grid grid-cols-1 lg:grid-cols-2 gap-5 stagger-5">
                 <div class="bento-card" id="section-cardio" draggable="true">
                     <div class="flex items-center justify-between mb-6">
                         <div class="flex items-center gap-3"><div class="p-2 bg-indigo-50 text-signature rounded-xl"><i data-lucide="footprints" class="w-5 h-5"></i></div><h2 class="text-lg font-black text-slate-800">Cardio</h2></div>
@@ -376,7 +406,7 @@
         </div>
     </div>
 
-    <div class="fixed bottom-6 right-6 z-[80] flex flex-col items-end gap-3 stagger-4">
+    <div class="fixed bottom-6 right-6 z-[80] flex flex-col items-end gap-3 stagger-5">
         <div id="quick-menu-options" class="hidden flex flex-col gap-2.5 items-end mb-1">
             <button onclick="quickAction('cardio')" class="glass-menu flex items-center gap-2.5 text-slate-700 px-5 py-3 rounded-xl font-bold shadow-xl text-sm hover:text-signature transition-all menu-anim" style="animation-delay: 0.15s"><i data-lucide="footprints" class="w-4 h-4"></i> Cardio</button>
             <button onclick="quickAction('poids')" class="glass-menu flex items-center gap-2.5 text-slate-700 px-5 py-3 rounded-xl font-bold shadow-xl text-sm hover:text-emerald-600 transition-all menu-anim" style="animation-delay: 0.1s"><i data-lucide="scale" class="w-4 h-4"></i> Pesée</button>
@@ -712,6 +742,7 @@
             let dp = calculerIMCDynamique();
             updateObjectivesAndPerseverance(dp);
             updateWeeklyInsight();
+            updateMonthlyInsight();
             updateRecordsDisplay();
             renderCalendar(); renderTables(); renderCharts();
             persistDataToDB();
@@ -728,6 +759,46 @@
             const wPl = cardioData.filter(c => new Date(c.date) >= sDA && c.isFromCalendar);
             document.getElementById('insight-success').innerText = wPl.length > 0 ? Math.round((wPl.filter(p => p.done).length/wPl.length)*100) + "%" : "0%";
             if(wC.length > 0 || wP.length > 0 || wPl.length > 0) document.getElementById('weekly-insight').classList.remove('hidden');
+        }
+
+        function updateMonthlyInsight() {
+            const targetYear = currentMonth.getFullYear();
+            const targetMonthIdx = currentMonth.getMonth();
+            
+            const monthName = currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+            document.getElementById('bilan-mois-label').innerText = monthName;
+
+            const monthlyCardio = cardioData.filter(c => {
+                if (!c.date) return false;
+                const parts = c.date.split('-');
+                return parseInt(parts[0]) === targetYear && (parseInt(parts[1]) - 1) === targetMonthIdx;
+            });
+
+            const realCardio = monthlyCardio.filter(c => !c.isFromCalendar);
+            const planCardio = monthlyCardio.filter(c => c.isFromCalendar);
+
+            const totalDist = realCardio.reduce((sum, c) => sum + (parseFloat(c.dist) || 0), 0);
+            const maxDist = realCardio.length > 0 ? Math.max(...realCardio.map(c => parseFloat(c.dist) || 0)) : 0;
+            const maxTime = realCardio.length > 0 ? Math.max(...realCardio.map(c => parseFloat(c.temps) || 0)) : 0;
+            const checkedSessions = planCardio.filter(c => c.done).length;
+
+            const monthlyPoids = poidsData.filter(p => {
+                if (!p.date) return false;
+                const parts = p.date.split('-');
+                return parseInt(parts[0]) === targetYear && (parseInt(parts[1]) - 1) === targetMonthIdx;
+            }).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            let weightEvolTxt = '--';
+            if (monthlyPoids.length >= 2) {
+                const diff = monthlyPoids[monthlyPoids.length - 1].val - monthlyPoids[0].val;
+                weightEvolTxt = diff <= 0 ? `${diff.toFixed(1)} kg` : `+${diff.toFixed(1)} kg`;
+            }
+
+            document.getElementById('monthly-total-dist').innerText = totalDist > 0 ? `${totalDist.toFixed(1)} km` : '--';
+            document.getElementById('monthly-max-dist').innerText = maxDist > 0 ? `${maxDist.toFixed(1)} km` : '--';
+            document.getElementById('monthly-max-time').innerText = maxTime > 0 ? `${maxTime} min` : '--';
+            document.getElementById('monthly-weight-evol').innerText = weightEvolTxt;
+            document.getElementById('monthly-sessions-done').innerText = checkedSessions;
         }
 
         function triggerRecordAnimation() {
@@ -1118,7 +1189,14 @@
 
         function restoreBentoOrder() {
             const order = JSON.parse(localStorage.getItem('bentoOrder'));
-            if (order) order.forEach(id => { const el = document.getElementById(id); if (el) container.appendChild(el); });
+            if (order) {
+                order.forEach(id => { const el = document.getElementById(id); if (el) container.appendChild(el); });
+                Array.from(container.children).forEach(el => {
+                    if (el.id && !order.includes(el.id)) {
+                        container.appendChild(el);
+                    }
+                });
+            }
         }
 
         restoreBentoOrder();
