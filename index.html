@@ -31,7 +31,7 @@
             border-radius: 24px; 
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 10px 15px -3px rgba(0,0,0,0.03); 
             padding: 20px; 
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease; 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.5s ease, background 0.5s ease; 
             border: 1px solid rgba(226, 232, 240, 0.8);
             position: relative;
             overflow: hidden; 
@@ -50,6 +50,17 @@
                 transform: scale(4);
                 opacity: 0;
             }
+        }
+        
+        @keyframes gold-glow {
+            0% { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 0 0 0 rgba(245, 158, 11, 0.6); transform: scale(1); }
+            50% { box-shadow: 0 10px 25px 10px rgba(245, 158, 11, 0.35); transform: scale(1.03); }
+            100% { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 0 0 0 rgba(245, 158, 11, 0); transform: scale(1); }
+        }
+        .record-broken {
+            animation: gold-glow 1.4s ease-in-out 2;
+            border-color: #f59e0b !important;
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
         }
         
         .bento-card[draggable="true"] { cursor: grab; }
@@ -121,7 +132,7 @@
                 </div>
             </div>
 
-            <div id="widgets-triple-grid" class="grid grid-cols-1 md:grid-cols-3 gap-5" draggable="true">
+            <div id="widgets-quad-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" draggable="true">
                 <div class="bento-card flex flex-col justify-center min-h-[140px]">
                     <div class="flex items-center justify-between mb-1">
                         <div class="flex items-center gap-2"><div class="icon-box"><i data-lucide="scale" class="w-4 h-4"></i></div><span class="text-slate-500 font-bold text-xs uppercase tracking-widest">IMC</span></div>
@@ -129,7 +140,7 @@
                     </div>
                     <div class="flex items-center justify-between gap-2 mt-1">
                         <div id="resultat-imc" class="text-4xl font-black text-slate-800">--</div>
-                        <div class="relative w-28 h-14 flex items-center justify-center">
+                        <div class="relative w-24 h-12 flex items-center justify-center">
                             <canvas id="imc-gauge" width="120" height="60" class="w-full h-full"></canvas>
                         </div>
                     </div>
@@ -151,6 +162,24 @@
                     <div class="flex items-center gap-2 mb-2"><div class="icon-box"><i data-lucide="zap" class="w-4 h-4 text-orange-500"></i></div><span class="text-slate-500 font-bold text-xs uppercase tracking-widest">Persévérance</span></div>
                     <div id="perseverance-score" class="text-4xl font-black text-blue-600">0%</div>
                     <div id="perseverance-text" class="text-xs font-bold text-slate-400 mt-1 italic">0 séance validée</div>
+                </div>
+
+                <div id="records-card" class="bento-card flex flex-col justify-center min-h-[140px]">
+                    <div class="flex items-center gap-2 mb-2"><div class="icon-box text-amber-500 bg-amber-50"><i data-lucide="trophy" class="w-4 h-4"></i></div><span class="text-slate-500 font-bold text-xs uppercase tracking-widest">Records</span></div>
+                    <div class="grid grid-cols-3 gap-1 text-center mt-1">
+                        <div>
+                            <div id="record-poids" class="text-sm font-black text-slate-800 truncate">--</div>
+                            <div class="text-[9px] text-slate-400 font-bold uppercase">Poids Max</div>
+                        </div>
+                        <div>
+                            <div id="record-distance" class="text-sm font-black text-slate-800 truncate">--</div>
+                            <div class="text-[9px] text-slate-400 font-bold uppercase">Dist. Max</div>
+                        </div>
+                        <div>
+                            <div id="record-temps" class="text-sm font-black text-slate-800 truncate">--</div>
+                            <div class="text-[9px] text-slate-400 font-bold uppercase">Temps Min</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -305,7 +334,7 @@
         // SERVICE WORKER
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'ht-cache-v10';
+                const CACHE_NAME = 'ht-cache-v11';
                 const ASSETS = [window.location.href, 'https://cdn.tailwindcss.com', 'https://cdn.jsdelivr.net/npm/chart.js', 'https://unpkg.com/lucide@latest'];
                 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
@@ -585,6 +614,7 @@
             let dp = calculerIMCDynamique();
             updateObjectivesAndPerseverance(dp);
             updateWeeklyInsight();
+            updateRecordsDisplay();
             renderCalendar(); renderTables(); renderCharts();
             persistDataToDB();
             lucide.createIcons();
@@ -600,6 +630,27 @@
             const wPl = cardioData.filter(c => new Date(c.date) >= sDA && c.isFromCalendar);
             document.getElementById('insight-success').innerText = wPl.length > 0 ? Math.round((wPl.filter(p => p.done).length/wPl.length)*100) + "%" : "0%";
             if(wC.length > 0 || wP.length > 0 || wPl.length > 0) document.getElementById('weekly-insight').classList.remove('hidden');
+        }
+
+        function triggerRecordAnimation() {
+            const card = document.getElementById('records-card');
+            if (!card) return;
+            card.classList.remove('record-broken');
+            void card.offsetWidth; // Force reflow pour relancer l'animation
+            card.classList.add('record-broken');
+            setTimeout(() => { card.classList.remove('record-broken'); }, 2800);
+        }
+
+        function updateRecordsDisplay() {
+            let maxP = poidsData.length > 0 ? Math.max(...poidsData.map(p => parseFloat(p.val) || 0)) : 0;
+            let validC = cardioData.filter(c => !c.isFromCalendar);
+            let maxD = validC.length > 0 ? Math.max(...validC.map(c => parseFloat(c.dist) || 0)) : 0;
+            let timedC = validC.filter(c => parseFloat(c.temps) > 0);
+            let minT = timedC.length > 0 ? Math.min(...timedC.map(c => parseFloat(c.temps))) : Infinity;
+
+            document.getElementById('record-poids').innerText = maxP > 0 ? `${maxP} kg` : '--';
+            document.getElementById('record-distance').innerText = maxD > 0 ? `${maxD} km` : '--';
+            document.getElementById('record-temps').innerText = minT !== Infinity ? `${minT} min` : '--';
         }
 
         function drawIMCGauge(imc, activeColor) {
@@ -817,8 +868,24 @@
         function saveCardio() {
             const d = document.getElementById('c-date').value, v = document.getElementById('c-vit').value, t = document.getElementById('c-temps').value, dist = document.getElementById('c-dist').value;
             if(!d || !dist) return;
+
+            let validC = cardioData.filter(c => !c.isFromCalendar);
+            let prevMaxD = validC.length > 0 ? Math.max(...validC.map(c => parseFloat(c.dist) || 0)) : 0;
+            let timedC = validC.filter(c => parseFloat(c.temps) > 0);
+            let prevMinT = timedC.length > 0 ? Math.min(...timedC.map(c => parseFloat(c.temps))) : Infinity;
+
             if (editCardioIdx !== null) { cardioData[editCardioIdx] = { date: d, vit: v, temps: t, dist: dist, isFromCalendar: false }; editCardioIdx = null; document.getElementById('btn-save-cardio').innerText = "Ajouter"; }
             else cardioData.push({ date: d, vit: v, temps: t, dist: dist, isFromCalendar: false });
+            
+            let newValidC = cardioData.filter(c => !c.isFromCalendar);
+            let newMaxD = newValidC.length > 0 ? Math.max(...newValidC.map(c => parseFloat(c.dist) || 0)) : 0;
+            let newTimedC = newValidC.filter(c => parseFloat(c.temps) > 0);
+            let newMinT = newTimedC.length > 0 ? Math.min(...newTimedC.map(c => parseFloat(c.temps))) : Infinity;
+
+            if ((prevMaxD > 0 && newMaxD > prevMaxD) || (prevMinT !== Infinity && newMinT < prevMinT)) {
+                triggerRecordAnimation();
+            }
+
             closeInputModal('cardio');
             updateUI();
         }
@@ -826,8 +893,17 @@
         function savePoids() {
             const d = document.getElementById('p-date').value, v = document.getElementById('p-poids').value;
             if(!d || !v) return;
+
+            let prevMaxP = poidsData.length > 0 ? Math.max(...poidsData.map(p => parseFloat(p.val) || 0)) : 0;
+
             if (editPoidsIdx !== null) { poidsData[editPoidsIdx] = { date: d, val: v }; editPoidsIdx = null; document.getElementById('btn-save-poids').innerText = "Enregistrer"; }
             else poidsData.push({ date: d, val: v });
+
+            let newMaxP = poidsData.length > 0 ? Math.max(...poidsData.map(p => parseFloat(p.val) || 0)) : 0;
+            if (prevMaxP > 0 && newMaxP > prevMaxP) {
+                triggerRecordAnimation();
+            }
+
             closeInputModal('poids');
             updateUI();
         }
